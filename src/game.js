@@ -853,6 +853,12 @@ function openSkillDialog() {
 }
 
 function damageEnemy(enemy, rawDmg, isCrit = false, sourceLabel = "strike", knockX = 0, knockY = 0, options = {}) {
+  if ((enemy.evadeTimer || 0) > 0 && !options.ignoreDodge) {
+    addFloat(enemy.x, enemy.y - 0.45, "DODGED!", "#38bdf8");
+    spawnBurst(enemy.x, enemy.y, "#38bdf8", 8, 0.9);
+    addLog(`${enemy.name} dodged your ${sourceLabel}!`, "info");
+    return;
+  }
   const baseDef = (enemy.def || 0) + (enemy.bonusDef || 0);
   const sunderPenalty = (enemy.sunderTimer || 0) > 0 ? Math.max(3, Math.floor(baseDef * 0.35)) : 0;
   const effectiveDef = Math.max(0, baseDef - sunderPenalty);
@@ -3177,6 +3183,58 @@ function findBossTeleportSpot(boss, p, bossRoom) {
   return { x: boss.x, y: boss.y };
 }
 
+function tryTriggerBossDodge(boss, threatX, threatY, bossRoom) {
+  if (!boss?.isBoss || (boss.dodgeCd || 0) > 0 || boss.bossAction || boss.bossDodge) return false;
+  if ((boss.stunTimer || 0) > 0 || (boss.frozenTimer || 0) > 0) return false;
+
+  const baseAng = Math.atan2(boss.y - threatY, boss.x - threatX);
+  const candidates = [baseAng + Math.PI / 2, baseAng - Math.PI / 2, baseAng + Math.PI * 0.35, baseAng - Math.PI * 0.35, baseAng];
+  const sidestepSign = Math.random() < 0.5 ? 1 : -1;
+  const ordered = [
+    baseAng + (Math.PI / 2) * sidestepSign,
+    baseAng - (Math.PI / 2) * sidestepSign,
+    baseAng + 0.55 * sidestepSign,
+    baseAng - 0.55 * sidestepSign,
+    baseAng,
+  ];
+
+  let bestSpot = null;
+  for (const ang of ordered) {
+    for (const stepDist of [2.1, 1.55]) {
+      const tx = boss.x + Math.cos(ang) * stepDist;
+      const ty = boss.y + Math.sin(ang) * stepDist;
+      if (bossRoom && (tx < bossRoom.x + 0.55 || tx > bossRoom.x + bossRoom.w - 0.55 || ty < bossRoom.y + 0.55 || ty > bossRoom.y + bossRoom.h - 0.55)) {
+        continue;
+      }
+      if (canOccupy(tx, ty, 0.38)) {
+        bestSpot = { x: tx, y: ty };
+        break;
+      }
+    }
+    if (bestSpot) break;
+  }
+  if (!bestSpot) return false;
+
+  const dashColor = boss.id === "void_king" ? "#c084fc" : boss.id === "gilded_knight" ? "#fde047" : "#38bdf8";
+  boss.bossDodge = {
+    startX: boss.x,
+    startY: boss.y,
+    tx: bestSpot.x,
+    ty: bestSpot.y,
+    timer: 0.16,
+    duration: 0.16,
+    color: dashColor,
+  };
+  boss.evadeTimer = 0.2;
+  boss.dodgeCd = boss.enraged ? 3.8 : 5.2;
+  boss.windupTimer = 0;
+  sfx.dash();
+  spawnBurst(boss.x, boss.y, dashColor, 10, 1.0);
+  spawnRing(boss.x, boss.y, 26, dashColor, 0.22);
+  addFloat(boss.x, boss.y - 0.45, "DODGE!", dashColor);
+  return true;
+}
+
 function startBossMatch(boss, lockDoorNow = true) {
   if (state.bossFightStarted) return;
   state.bossFightStarted = true;
@@ -4009,6 +4067,8 @@ function updateSimulation(dt) {
     e.frozenTimer = Math.max(0, (e.frozenTimer || 0) - dt);
     e.stunTimer = Math.max(0, (e.stunTimer || 0) - dt);
     e.sunderTimer = Math.max(0, (e.sunderTimer || 0) - dt);
+    e.dodgeCd = Math.max(0, (e.dodgeCd || 0) - dt);
+    e.evadeTimer = Math.max(0, (e.evadeTimer || 0) - dt);
     e.animTimer = Math.max(0, e.animTimer - dt);
     if (e.animTimer <= 0) e.anim = "idle";
 
@@ -4047,7 +4107,36 @@ function updateSimulation(dt) {
     if (e.stunTimer > 0 || e.frozenTimer > 0) {
       e.windupTimer = 0;
       e.bossAction = null;
+      e.bossDodge = null;
       e.z = 0;
+      continue;
+    }
+
+    if (e.bossDodge) {
+      const bd = e.bossDodge;
+      bd.timer -= dt;
+      const prog = Math.min(1, 1 - Math.max(0, bd.timer) / bd.duration);
+      e.x = bd.startX + (bd.tx - bd.startX) * prog;
+      e.y = bd.startY + (bd.ty - bd.startY) * prog;
+      e.anim = "walk";
+      if (Math.random() < 0.7) {
+        state.particles.push({
+          x: e.x * TILE_SIZE,
+          y: e.y * TILE_SIZE,
+          vx: (Math.random() - 0.5) * 18,
+          vy: (Math.random() - 0.5) * 18,
+          color: bd.color || "#38bdf8",
+          size: 3.5,
+          life: 0.22,
+          maxLife: 0.22,
+        });
+      }
+      if (bd.timer <= 0) {
+        e.x = bd.tx;
+        e.y = bd.ty;
+        e.bossDodge = null;
+        spawnBurst(e.x, e.y, bd.color || "#38bdf8", 8, 0.9);
+      }
       continue;
     }
 
@@ -4166,6 +4255,53 @@ function updateSimulation(dt) {
         }
       }
       continue;
+    }
+
+    // Smart Boss Skill Dodge: react to incoming skill projectiles & telegraphed player charges/AOEs
+    if (e.isBoss && seesPlayer && (e.dodgeCd || 0) <= 0 && !e.bossAction && !e.bossDodge) {
+      const rooms = state.level.rooms || [];
+      const bossRoom = rooms[rooms.length - 1];
+      let dodged = false;
+
+      // 1) Detect incoming player skill projectiles headed toward the boss
+      for (const pr of state.projectiles) {
+        if (pr.isEnemy) continue;
+        const pDist = Math.hypot(e.x - pr.x, e.y - pr.y);
+        if (pDist > 4.2) continue;
+        const speedSq = pr.vx * pr.vx + pr.vy * pr.vy;
+        if (speedSq <= 0.1) continue;
+        const dot = (e.x - pr.x) * pr.vx + (e.y - pr.y) * pr.vy;
+        if (dot > 0) {
+          const speed = Math.sqrt(speedSq);
+          const perp = Math.abs((e.x - pr.x) * pr.vy - (e.y - pr.y) * pr.vx) / speed;
+          if (perp <= (pr.radius || 0.3) + 0.95) {
+            dodged = tryTriggerBossDodge(e, pr.x, pr.y, bossRoom);
+            if (dodged) break;
+          }
+        }
+      }
+
+      // 2) Detect telegraphed player skill windups/charges aiming at or around the boss
+      if (!dodged) {
+        if (p.radiantCharge && p.radiantCharge.timer < 0.25 && dist <= 6.8) {
+          const tipX = p.x + Math.cos(p.radiantCharge.angle) * 6.5;
+          const tipY = p.y + Math.sin(p.radiantCharge.angle) * 6.5;
+          if (distPointToSegment(e.x, e.y, p.x, p.y, tipX, tipY) <= 1.35) {
+            dodged = tryTriggerBossDodge(e, p.x, p.y, bossRoom);
+          }
+        } else if (p.valiantCharge && p.valiantCharge.phase === "windup") {
+          if (distPointToSegment(e.x, e.y, p.valiantCharge.startX, p.valiantCharge.startY, p.valiantCharge.targetX, p.valiantCharge.targetY) <= 1.35) {
+            dodged = tryTriggerBossDodge(e, p.x, p.y, bossRoom);
+          }
+        } else if (p.ultCharge && p.ultCharge.timer < 0.65 && dist <= (p.ultCharge.spell.radii[p.ultCharge.rankIdx] + 0.35)) {
+          dodged = tryTriggerBossDodge(e, p.x, p.y, bossRoom);
+        } else if (p.leap && p.leap.progress > 0.68 && dist <= 4.2) {
+          dodged = tryTriggerBossDodge(e, p.x, p.y, bossRoom);
+        } else if (p.rapidSlash && dist <= 2.75) {
+          dodged = tryTriggerBossDodge(e, p.x, p.y, bossRoom);
+        }
+      }
+      if (dodged) continue;
     }
 
     // Boss Signature Skills (works across the entire Boss Chamber once unlocked)
