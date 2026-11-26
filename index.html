@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Chronicles of the Shattered Crown — Roguelike RPG</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="assets/generated/game_logo.png" />
+  <meta name="theme-color" content="#0c0e14" />
+  <link rel="stylesheet" href="styles/main.css" />
+</head>
+<body>
+  <!-- Studio Intro Animation -->
+  <div id="studio-intro" class="fullscreen-overlay studio-intro" role="presentation">
+    <div class="studio-intro-box">
+      <img src="assets/jan_gamedev_logo.jpg" alt="JAN GAMEDEV" class="studio-logo" />
+      <span class="studio-presents">Presents</span>
+    </div>
+  </div>
+
+  <!-- Loading Screen -->
+  <div id="loading-screen" class="fullscreen-overlay" role="status" aria-live="polite" hidden>
+    <div class="loading-box">
+      <img src="assets/generated/game_logo.png" alt="Chronicles of the Shattered Crown" class="loading-emblem game-logo-lg" />
+      <span class="eyebrow">Aethelgard Chronicles</span>
+      <h1>Chronicles of the Shattered Crown</h1>
+      <div class="loading-bar-track">
+        <div id="loading-bar-fill" class="loading-bar-fill" style="width: 0%"></div>
+      </div>
+      <p id="loading-status" class="loading-status">Awakening the Sanctum...</p>
+    </div>
+  </div>
+
+  <!-- Game Intro & Main Menu -->
+  <div id="main-menu" class="fullscreen-overlay" hidden>
+    <div class="menu-card medieval-card">
+      <div class="title-hero-banner medieval-banner">
+        <img src="spritecook-isometric-buildings/castle.webp" alt="Oakhaven Bastion" class="bastion-img" />
+        <div class="title-overlay medieval-overlay">
+          <img src="assets/generated/game_logo.png" alt="" class="menu-crest-logo" />
+          <span class="eyebrow">Aethelgard Chronicles</span>
+          <h1>Chronicles of the Shattered Crown</h1>
+        </div>
+      </div>
+      <div class="menu-body">
+        <p class="story-lead">
+          Ten winters ago, the <strong>Crown of Aethelgard</strong> shattered into three shards.
+          Descend 12 floors, master your skills, and vanquish the Hollow King.
+        </p>
+        <div class="menu-buttons">
+          <button type="button" id="menu-btn-play" class="btn btn-primary btn-lg medieval-btn">New Quest</button>
+          <button type="button" id="menu-btn-resume" class="btn btn-secondary btn-lg medieval-btn" hidden>Resume</button>
+          <button type="button" id="menu-btn-settings" class="btn btn-secondary btn-lg medieval-btn">Settings</button>
+          <button type="button" id="menu-btn-exit" class="btn btn-secondary btn-lg medieval-btn">Exit</button>
+        </div>
+        <div class="menu-footer-credit">
+          <img src="assets/jan_gamedev_logo.jpg" alt="JAN GAMEDEV" class="menu-studio-logo" />
+          <div class="menu-credit-text">
+            <strong>JAN GAMEDEV</strong>
+            <span>Feel free to send suggestions: <a href="mailto:herme.tabigne@gmail.com">herme.tabigne@gmail.com</a></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="app">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <div class="brand">
+        <img src="assets/generated/game_logo.png" alt="" class="pixel-icon brand-logo" />
+        <div>
+          <h1>Chronicles of the Shattered Crown</h1>
+          <p id="act-subtitle" class="subtitle">Prologue — Oakhaven Bastion</p>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <div class="meta-badge" title="Soul Shards persist across runs">
+          <img src="spritecook-inventory-icons/cube.png" alt="" class="pixel-icon" />
+          <span id="soul-shards-count">0</span> Shards
+        </div>
+        <button type="button" id="btn-codex" class="btn btn-secondary">Lore Codex</button>
+        <button type="button" id="btn-mute" class="btn btn-secondary" aria-pressed="false">SFX: On</button>
+        <button type="button" id="btn-help" class="btn btn-secondary">Controls</button>
+        <button type="button" id="btn-menu" class="btn btn-secondary">Menu</button>
+        <button type="button" id="btn-new-run" class="btn btn-primary">New Run</button>
+      </div>
+    </header>
+
+    <!-- Main Game Layout -->
+    <main class="game-layout">
+      <!-- Left Sidebar: Hero Stats & Equipment -->
+      <aside id="panel-stats" class="panel sidebar-left" aria-label="Hero Status and Equipment">
+        <div class="mobile-drawer-head">
+          <strong>Hero Stats &amp; Gear</strong>
+          <div style="display:flex;gap:6px">
+            <button type="button" id="mhud-btn-skills" class="btn btn-secondary">Skills (<span id="mhud-skill-pts">0</span>)</button>
+            <button type="button" id="btn-close-stats" class="btn btn-secondary">Close</button>
+          </div>
+        </div>
+        <section class="hero-card">
+          <div class="hero-header">
+            <canvas id="hero-portrait" width="64" height="64" aria-hidden="true"></canvas>
+            <div>
+              <h2 id="hero-name">Sir Aldric</h2>
+              <p class="hero-class">Paladin of Aethelgard &middot; Lv <span id="stat-level">1</span></p>
+            </div>
+          </div>
+
+          <div class="bars">
+            <div class="bar-row">
+              <div class="bar-label"><span>HP</span><span id="stat-hp">40 / 40</span></div>
+              <div class="bar-track"><div id="bar-hp" class="bar-fill hp" style="width: 100%"></div></div>
+            </div>
+            <div class="bar-row">
+              <div class="bar-label"><span>MP</span><span id="stat-mp">20 / 20</span></div>
+              <div class="bar-track"><div id="bar-mp" class="bar-fill mp" style="width: 100%"></div></div>
+            </div>
+            <div class="bar-row">
+              <div class="bar-label"><span>XP</span><span id="stat-xp">0 / 25</span></div>
+              <div class="bar-track"><div id="bar-xp" class="bar-fill xp" style="width: 0%"></div></div>
+            </div>
+          </div>
+
+          <div class="stat-grid">
+            <div class="stat-pill"><span>ATK</span><strong id="stat-atk">7</strong></div>
+            <div class="stat-pill"><span>DEF</span><strong id="stat-def">2</strong></div>
+            <div class="stat-pill"><span>CRIT</span><strong id="stat-crit">10%</strong></div>
+            <div class="stat-pill"><span>GOLD</span><strong id="stat-gold">0</strong></div>
+          </div>
+        </section>
+
+        <section class="equip-section">
+          <h3>Equipment</h3>
+          <div id="equipment-slots" class="equip-grid"></div>
+        </section>
+
+        <section class="shards-section">
+          <h3>Crown Shards (<span id="shards-collected">0</span>/3)</h3>
+          <div class="crown-shards">
+            <div class="shard-slot" id="crown-shard-1" title="Goblin Catacombs Shard">I</div>
+            <div class="shard-slot" id="crown-shard-2" title="Sunken Foundry Shard">II</div>
+            <div class="shard-slot" id="crown-shard-3" title="Abyssal Sanctum Shard">III</div>
+          </div>
+        </section>
+      </aside>
+
+      <!-- Center: Dungeon Canvas + Action Bar -->
+      <section class="stage-wrap">
+        <div class="canvas-frame">
+          <canvas id="game-canvas" width="768" height="528" tabindex="0" aria-label="Dungeon Map"></canvas>
+          <div id="floor-banner" class="floor-banner" aria-live="polite"></div>
+          <div id="room-enemy-badge" class="room-enemy-badge">Room: Clear</div>
+          <div id="boss-hud-bar" class="boss-hud-bar" hidden>
+            <div class="boss-hud-head">
+              <strong id="boss-hud-name">Boss</strong>
+              <span id="boss-hud-hp-text">100 / 100</span>
+            </div>
+            <div class="boss-hud-track">
+              <div id="boss-hud-fill" class="boss-hud-fill" style="width:100%"></div>
+            </div>
+          </div>
+          <div id="boss-intro-overlay" class="boss-intro-overlay" hidden>
+            <div class="boss-intro-card">
+              <canvas id="boss-intro-canvas" width="96" height="96" aria-hidden="true"></canvas>
+              <div class="boss-intro-meta">
+                <span id="boss-intro-act" class="eyebrow">Boss Encounter</span>
+                <h2 id="boss-intro-name">Boss Name</h2>
+                <p id="boss-intro-skills" class="boss-intro-skills"></p>
+              </div>
+            </div>
+          </div>
+          <div id="targeting-banner" class="targeting-banner" hidden>
+            Select a target tile or enemy (Click or press Esc to cancel)
+          </div>
+
+          <!-- Mobile Fullscreen HUD Overlay (matches MOBA / Action RPG layout) -->
+          <div id="mobile-hud" class="mobile-hud">
+            <!-- Top-Left: Character Portrait (opens Stats), Name/Lv, HP/MP/XP bars, Inventory & 4 Shortcuts -->
+            <div class="mhud-top-left">
+              <button type="button" id="btn-mobile-stats" class="mhud-char-btn" title="Open Character Stats & Gear">
+                <canvas id="mobile-portrait" width="44" height="44" aria-hidden="true"></canvas>
+                <div class="mhud-char-meta">
+                  <strong id="mhud-name">Sir Aldric</strong>
+                  <span>Lv <strong id="mhud-level">1</strong></span>
+                </div>
+              </button>
+              <div class="mhud-bars">
+                <div class="mhud-bar-track"><div id="mhud-bar-hp" class="bar-fill hp" style="width:100%"></div><span id="mhud-hp">42/42</span></div>
+                <div class="mhud-bar-track"><div id="mhud-bar-mp" class="bar-fill mp" style="width:100%"></div><span id="mhud-mp">20/20</span></div>
+                <div class="mhud-bar-track"><div id="mhud-bar-xp" class="bar-fill xp" style="width:0%"></div><span id="mhud-xp">0/20</span></div>
+              </div>
+              <div class="mhud-inv-row">
+                <button type="button" id="btn-mobile-bag" class="mhud-inv-btn" title="Open Inventory & Chronicle">
+                  <img src="spritecook-game-asset-pack/chest_closed.png" alt="" />
+                  <span>Bag</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Top-Right: Minimap + Menu -->
+            <div class="mhud-top-right">
+              <div class="minimap-box" title="Dungeon Map">
+                <canvas id="minimap-canvas" width="84" height="60" aria-label="Dungeon Minimap"></canvas>
+              </div>
+              <button type="button" id="mhud-btn-menu" class="btn btn-secondary">Menu</button>
+            </div>
+
+            <!-- Bottom-Center: 4 Item Shortcuts -->
+            <div id="mobile-shortcuts" class="mhud-shortcuts-bottom"></div>
+          </div>
+
+          <!-- On-Screen Touch Controller (Mobile / Touch Devices) -->
+          <div id="touch-controls" class="touch-controls" aria-label="Touch Controller">
+            <div id="touch-joy-zone" class="touch-joy-zone">
+              <div id="touch-joystick" class="touch-joystick" aria-label="Movement Joystick">
+                <div id="touch-stick-knob" class="touch-stick-knob"></div>
+              </div>
+            </div>
+
+            <div class="touch-right-cluster">
+              <button type="button" id="touch-skill-1" class="touch-skill-btn s1" data-spell-idx="0"></button>
+              <button type="button" id="touch-skill-2" class="touch-skill-btn s2" data-spell-idx="1"></button>
+              <button type="button" id="touch-skill-3" class="touch-skill-btn s3" data-spell-idx="2"></button>
+              <button type="button" id="touch-skill-4" class="touch-skill-btn s4 ult" data-spell-idx="3"></button>
+              <button type="button" id="touch-btn-dash" class="touch-action-btn dash" aria-label="Dash">
+                <img src="assets/dash_icon.png" alt="" class="touch-btn-icon dash-icon" />
+                <span id="touch-dash-cd" class="ts-cd" hidden></span>
+              </button>
+              <button type="button" id="touch-btn-attack" class="touch-action-btn atk" aria-label="Attack"></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Spell & Quick Action Bar -->
+        <div class="action-bar" role="toolbar" aria-label="Spells and Actions">
+          <div id="spell-bar" class="spell-slots"></div>
+          <div class="quick-controls">
+            <button type="button" id="btn-skills" class="btn btn-secondary" title="Unlock or Upgrade Skills">
+              Skills (<span id="skill-points-count">0</span>)
+            </button>
+            <button type="button" id="btn-attack" class="btn btn-secondary" title="Melee Slash (J or Left Click)">
+              Attack (J / Click)
+            </button>
+            <button type="button" id="btn-dash" class="btn btn-secondary" title="Dodge Dash with brief invulnerability (Space)">
+              Dash (Space)
+            </button>
+            <button type="button" id="btn-potion-hp" class="btn btn-secondary" title="Drink Health Potion (Q)">
+              <img src="spritecook-inventory-icons/health_potion.png" alt="" class="pixel-icon" />
+              <span id="quick-hp-count">0</span>
+            </button>
+            <button type="button" id="btn-potion-mp" class="btn btn-secondary" title="Drink Mana Potion (E)">
+              <img src="spritecook-inventory-icons/mana_potion.png" alt="" class="pixel-icon" />
+              <span id="quick-mp-count">0</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Sidebar: Inventory & Chronicle Log -->
+      <aside id="panel-bag" class="panel sidebar-right" aria-label="Inventory and Chronicle">
+        <div class="mobile-drawer-head">
+          <strong>Satchel &amp; Chronicle</strong>
+          <button type="button" id="btn-close-bag" class="btn btn-secondary">Close</button>
+        </div>
+        <section class="inventory-section">
+          <div class="section-head">
+            <h3>Satchel (<span id="inv-count">0</span>/<span id="inv-max">15</span>)</h3>
+            <span class="hint-text">Tap item for options</span>
+          </div>
+          <div id="inventory-grid" class="inventory-grid"></div>
+          <div class="shortcut-section">
+            <h4>Quick Shortcuts (4 Slots)</h4>
+            <div id="drawer-shortcuts" class="drawer-shortcuts"></div>
+          </div>
+        </section>
+
+        <section class="log-section">
+          <h3>Chronicle</h3>
+          <div id="combat-log" class="combat-log" aria-live="polite"></div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Title / Prologue / Sanctum Modal -->
+  <dialog id="title-dialog" aria-labelledby="title-dialog-heading">
+    <div class="dialog-card title-card">
+      <div class="title-hero-banner">
+        <img src="spritecook-isometric-buildings/castle.webp" alt="Oakhaven Bastion" class="bastion-img" />
+        <div class="title-overlay">
+          <span class="eyebrow">Real-Time Action Roguelike</span>
+          <h1 id="title-dialog-heading">Chronicles of the Shattered Crown</h1>
+        </div>
+      </div>
+      <div class="dialog-body">
+        <p class="story-lead">
+          Ten winters ago, the <strong>Crown of Aethelgard</strong> was shattered into three shards.
+          Its guardian, Sir Aurelius, vanished into the Sunken Foundry, while King Grak's goblins
+          seized the upper catacombs. You are <strong>Sir Aldric</strong>, last Paladin of Oakhaven.
+          Descend 8 floors, reclaim all 3 Shards, and confront the Hollow King.
+        </p>
+
+        <div class="hero-name-field">
+          <label for="hero-name-input">Hero Name</label>
+          <input id="hero-name-input" type="text" maxlength="20" placeholder="Enter your hero's name..." />
+        </div>
+
+        <div class="hero-name-field">
+          <label for="difficulty-select">Difficulty</label>
+          <select id="difficulty-select" class="difficulty-select">
+            <option value="normal">Normal (Standard)</option>
+            <option value="hard">Hard (+35% Enemy HP, +25% ATK, +1 Shard)</option>
+            <option value="nightmare">Nightmare (+75% Enemy HP, +50% ATK, +2 Shards)</option>
+          </select>
+        </div>
+
+        <div class="sanctum-upgrades">
+          <h3>Oakhaven Sanctum — Soul Shard Blessings (<span id="sanctum-shards">0</span> Shards)</h3>
+          <div id="meta-upgrades-list" class="meta-grid"></div>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" id="btn-start-adventure" class="btn btn-primary btn-lg" autofocus>
+          Descend into the Catacombs
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- NPC / Story Event Modal -->
+  <dialog id="story-dialog" aria-labelledby="story-dialog-title">
+    <div class="dialog-card story-card">
+      <div class="story-speaker">
+        <canvas id="story-portrait" width="80" height="80" aria-hidden="true"></canvas>
+        <div>
+          <span id="story-role" class="eyebrow">Encounter</span>
+          <h1 id="story-dialog-title">Speaker</h1>
+        </div>
+      </div>
+      <div id="story-dialog-text" class="story-text"></div>
+      <div id="story-choices" class="story-choices"></div>
+    </div>
+  </dialog>
+
+  <!-- Quartermaster Armory Shop Modal -->
+  <dialog id="shop-dialog" closedby="any" aria-labelledby="shop-dialog-title">
+    <div class="dialog-card shop-card">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">Boss Threshold Armory</span>
+          <h1 id="shop-dialog-title">Quartermaster Shop</h1>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="shop-gold-pill">Gold: <strong id="shop-gold">0</strong></span>
+          <form method="dialog">
+            <button value="close" class="btn btn-secondary">Close</button>
+          </form>
+        </div>
+      </div>
+      <div id="shop-status-banner" class="shop-status"></div>
+      <div id="shop-main-view">
+        <div id="shop-stock-list" class="shop-list"></div>
+        <div id="shop-skill-section" class="shop-skill-section">
+          <h4>Skill Swap (Buy Once · Basic 1000g / Ult 2500g)</h4>
+          <div id="shop-skill-offer"></div>
+        </div>
+        <div class="shop-sell-section">
+          <h4>Sell from Satchel (45% Value)</h4>
+          <div id="shop-sell-list" class="shop-list"></div>
+        </div>
+      </div>
+      <div id="shop-skill-swap-panel" class="shop-skill-swap-panel" hidden></div>
+    </div>
+  </dialog>
+
+  <!-- Lore Codex Modal -->
+  <dialog id="codex-dialog" closedby="any" aria-labelledby="codex-dialog-title">
+    <div class="dialog-card">
+      <div class="dialog-header">
+        <h1 id="codex-dialog-title">Lore Codex</h1>
+        <form method="dialog">
+          <button value="close" class="btn btn-secondary" autofocus>Close</button>
+        </form>
+      </div>
+      <div id="codex-entries" class="codex-list"></div>
+    </div>
+  </dialog>
+
+  <!-- Controls / Help Modal -->
+  <dialog id="help-dialog" closedby="any" aria-labelledby="help-dialog-title">
+    <div class="dialog-card">
+      <div class="dialog-header">
+        <h1 id="help-dialog-title">How to Play</h1>
+        <form method="dialog">
+          <button value="close" class="btn btn-secondary" autofocus>Close</button>
+        </form>
+      </div>
+      <div class="help-content">
+        <ul>
+          <li><strong>Move:</strong> Hold <kbd>WASD</kbd> or Arrow keys for smooth real-time movement. Walk into chests, wells, stairs, and NPCs to interact!</li>
+          <li><strong>Melee Attack:</strong> Press <kbd>J</kbd> or <strong>Left Click</strong> on the map to slash toward your cursor/facing direction and smash crates/barrels.</li>
+          <li><strong>Dodge Dash:</strong> Press <kbd>Space</kbd> to dash quickly with brief invulnerability frames—dodge enemy windups and boss orbs!</li>
+          <li><strong>Spells:</strong> Press <kbd>1</kbd>–<kbd>4</kbd> or click a spell icon to cast immediately toward your cursor.</li>
+          <li><strong>Quick Potions:</strong> Press <kbd>Q</kbd> for Health Potion, <kbd>E</kbd> for Mana Potion.</li>
+          <li><strong>Victory:</strong> Defeat the 3 Act Bosses (Floors 3, 6, and 8) to reforge the Crown. Even if you fall, you keep <strong>Soul Shards</strong> for permanent Sanctum blessings!</li>
+        </ul>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Skill Unlock / Upgrade Modal -->
+  <dialog id="skill-dialog" aria-labelledby="skill-dialog-title">
+    <div class="dialog-card">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">Level Up</span>
+          <h1 id="skill-dialog-title">Choose a Skill to Unlock or Upgrade</h1>
+        </div>
+        <span class="meta-badge"><strong id="modal-skill-points">0</strong>&nbsp;Skill Pt</span>
+      </div>
+      <div id="skill-upgrade-list" class="skill-upgrade-grid"></div>
+      <div class="dialog-actions">
+        <form method="dialog">
+          <button value="close" class="btn btn-secondary">Close</button>
+        </form>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Pre-Run Hero Class Selection Modal -->
+  <dialog id="hero-dialog" aria-labelledby="hero-dialog-title">
+    <div class="dialog-card hero-dialog-card">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">Choose Your Champion</span>
+          <h1 id="hero-dialog-title">Select Your Knight</h1>
+          <p class="hint-text" style="margin:4px 0 0">Pick your knight before choosing your combat skills.</p>
+        </div>
+      </div>
+      <div class="hero-class-grid">
+        <button type="button" id="btn-hero-paladin" class="hero-class-card" data-hero="paladin">
+          <canvas id="hero-preview-paladin" width="72" height="72" aria-hidden="true"></canvas>
+          <div class="hero-class-info">
+            <strong>Paladin Knight</strong>
+            <span class="hero-class-role">Sanctum Crusader</span>
+            <p>+4 Max HP, +2 Max MP. Balanced bastion of Oakhaven.</p>
+          </div>
+        </button>
+        <button type="button" id="btn-hero-gilded" class="hero-class-card" data-hero="gilded">
+          <canvas id="hero-preview-gilded" width="72" height="72" aria-hidden="true"></canvas>
+          <div class="hero-class-info">
+            <strong>Gilded Knight</strong>
+            <span class="hero-class-role">Golden Champion</span>
+            <p>+2 ATK, +5% CRIT. Swift golden templar duelist.</p>
+          </div>
+        </button>
+        <button type="button" id="btn-hero-soldier" class="hero-class-card" data-hero="soldier">
+          <canvas id="hero-preview-soldier" width="72" height="72" aria-hidden="true"></canvas>
+          <div class="hero-class-info">
+            <strong>Oakhaven Soldier</strong>
+            <span class="hero-class-role">Vanguard Marksman</span>
+            <p>+1 ATK, +1 DEF, +Speed. Versatile sword &amp; bow tactician.</p>
+          </div>
+        </button>
+      </div>
+      <div class="dialog-actions loadout-actions">
+        <button type="button" id="btn-hero-back" class="btn btn-secondary">Back</button>
+        <button type="button" id="btn-hero-next" class="btn btn-primary" disabled>Next: Choose Skills</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Pre-Run Skill Loadout Selection Modal -->
+  <dialog id="loadout-dialog" aria-labelledby="loadout-dialog-title">
+    <div class="dialog-card loadout-dialog-card">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">Prepare Your Knight</span>
+          <h1 id="loadout-dialog-title">Choose Your Combat Skills</h1>
+          <p class="hint-text" style="margin:4px 0 0">Select <strong>3 Basic Skills</strong> and <strong>1 Ultimate Skill</strong> for this descent.</p>
+        </div>
+        <span id="loadout-count-badge" class="meta-badge">0/3 Basic · 0/1 Ult</span>
+      </div>
+      <div class="loadout-section-title">Basic Skills (Choose 3)</div>
+      <div id="loadout-basic-list" class="loadout-grid"></div>
+      <div class="loadout-section-title">Ultimate Skill (Choose 1)</div>
+      <div id="loadout-ult-list" class="loadout-grid"></div>
+      <div class="dialog-actions loadout-actions">
+        <button type="button" id="btn-loadout-cancel" class="btn btn-secondary">Back</button>
+        <button type="button" id="btn-loadout-confirm" class="btn btn-primary" disabled>Begin Descent</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Item Options Modal (Consume / Equip / Add Shortcut) -->
+  <dialog id="item-action-dialog" closedby="any" aria-labelledby="item-action-title">
+    <div class="dialog-card item-action-card">
+      <div class="dialog-header">
+        <div class="item-action-head">
+          <img id="item-action-icon" src="" alt="" class="pixel-icon" />
+          <div>
+            <h1 id="item-action-title">Item</h1>
+            <p id="item-action-desc" class="hint-text" style="margin:2px 0 0"></p>
+          </div>
+        </div>
+        <form method="dialog">
+          <button value="close" class="btn btn-secondary">Close</button>
+        </form>
+      </div>
+      <div id="item-action-compare" class="item-compare" hidden></div>
+      <div id="item-action-buttons" class="item-action-buttons"></div>
+    </div>
+  </dialog>
+
+  <!-- Settings Modal -->
+  <dialog id="settings-dialog" closedby="any" aria-labelledby="settings-dialog-title">
+    <div class="dialog-card">
+      <div class="dialog-header">
+        <h1 id="settings-dialog-title">Settings</h1>
+        <form method="dialog">
+          <button value="close" class="btn btn-secondary" autofocus>Close</button>
+        </form>
+      </div>
+      <div class="settings-list">
+        <div class="setting-row">
+          <div>
+            <strong>Music Volume</strong>
+            <div class="hint-text">Background music (Off / Low / Med / High)</div>
+          </div>
+          <button type="button" id="setting-music-btn" class="btn btn-secondary">Low</button>
+        </div>
+        <div class="setting-row">
+          <div>
+            <strong>Sound Effects (SFX)</strong>
+            <div class="hint-text">Combat &amp; UI audio (Off / Low / Med / High)</div>
+          </div>
+          <button type="button" id="setting-sfx-btn" class="btn btn-secondary">High</button>
+        </div>
+        <div class="setting-row">
+          <div>
+            <strong>Screen Shake</strong>
+            <div class="hint-text">Camera shake on crits and Skyfall Judgment</div>
+          </div>
+          <button type="button" id="setting-shake-btn" class="btn btn-secondary">On</button>
+        </div>
+        <div class="setting-row">
+          <div>
+            <strong>Controls Guide</strong>
+            <div class="hint-text">View keyboard, mouse, and skill controls</div>
+          </div>
+          <button type="button" id="setting-controls-btn" class="btn btn-secondary">View</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Stairs Confirmation Modal -->
+  <dialog id="stairs-dialog" aria-labelledby="stairs-dialog-title">
+    <div class="dialog-card">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">Stairway Found</span>
+          <h1 id="stairs-dialog-title">Descend to Next Floor?</h1>
+        </div>
+      </div>
+      <p id="stairs-dialog-text" class="story-lead">
+        These stone stairs lead deeper into the dungeon. Do you want to proceed or stay and explore this floor?
+      </p>
+      <div class="dialog-actions">
+        <button type="button" id="btn-stairs-stay" class="btn btn-secondary">Keep Exploring</button>
+        <button type="button" id="btn-stairs-proceed" class="btn btn-primary" autofocus>Proceed to Next Floor</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Game Over / Victory Modal -->
+  <dialog id="end-dialog" aria-labelledby="end-dialog-title">
+    <div class="dialog-card end-card">
+      <h1 id="end-dialog-title">Run Ended</h1>
+      <p id="end-dialog-summary" class="story-lead"></p>
+      <div id="end-stats" class="stat-grid"></div>
+      <div class="dialog-actions">
+        <button type="button" id="btn-end-sanctum" class="btn btn-primary btn-lg" autofocus>
+          Return to Oakhaven Sanctum
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <script type="module" src="src/game.js"></script>
+</body>
+</html>
