@@ -1748,10 +1748,11 @@ body {
 .menu-card {
   width: 100%;
   max-width: 500px;
+  max-height: 92vh;
   background: linear-gradient(180deg, #17131e 0%, #0e1018 100%);
   border: 2px solid #856422;
   border-radius: 14px;
-  overflow: hidden;
+  overflow-y: auto;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 0 0 2px rgba(250, 204, 21, 0.14);
 }
 
@@ -1860,6 +1861,54 @@ body {
 
 .menu-credit-text a:hover {
   text-decoration: underline;
+}
+
+.menu-mobile-app {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.menu-mobile-app[hidden] {
+  display: none;
+}
+
+.menu-mobile-app-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 210px;
+}
+
+.menu-mobile-app-info strong {
+  font-size: 0.82rem;
+  color: #bae6fd;
+}
+
+.menu-mobile-app-info span {
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.3;
+}
+
+.menu-mobile-app-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-sm {
+  padding: 6px 10px;
+  font-size: 0.76rem;
+  text-decoration: none;
 }
 
 .settings-list {

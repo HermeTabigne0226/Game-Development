@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -44,3 +47,14 @@ jobs:
         with:
           name: Chronicles-of-the-Shattered-Crown-apk
           path: android/app/build/outputs/apk/debug/Chronicles-of-the-Shattered-Crown.apk
+
+      - name: Publish Latest Android APK Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-apk
+          name: Chronicles of the Shattered Crown (Android APK)
+          body: Latest Android APK build from main branch.
+          files: android/app/build/outputs/apk/debug/Chronicles-of-the-Shattered-Crown.apk
+          prerelease: false
+          draft: false
+          make_latest: true

@@ -6496,6 +6496,54 @@ function openLoadoutDialog(onConfirm, onBack) {
 }
 
 async function init() {
+  let deferredInstallPrompt = null;
+  const mobileAppBox = document.getElementById("menu-mobile-app-box");
+  const mobileAppHint = document.getElementById("menu-mobile-app-hint");
+  const installBtn = document.getElementById("btn-install-pwa");
+  const isNativeApk = Boolean(window.Capacitor || window.AndroidApp);
+  const isStandalone = window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone === true;
+
+  if (mobileAppBox && !isNativeApk) {
+    mobileAppBox.hidden = false;
+    if (installBtn && isStandalone) {
+      installBtn.hidden = true;
+    }
+  }
+
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    if (installBtn && !isNativeApk) {
+      installBtn.hidden = false;
+    }
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    if (installBtn) installBtn.hidden = true;
+    if (mobileAppHint) mobileAppHint.textContent = "App installed! Launch from your home screen.";
+  });
+
+  if (installBtn) {
+    installBtn.addEventListener("click", async () => {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        const choice = await deferredInstallPrompt.userChoice.catch(() => null);
+        deferredInstallPrompt = null;
+        if (choice?.outcome === "accepted" && mobileAppHint) {
+          mobileAppHint.textContent = "Installing Chronicles of the Shattered Crown...";
+        }
+        return;
+      }
+      const isIOS = /iPad|iPhone|iPod/i.test(navigator.userAgent || "");
+      if (mobileAppHint) {
+        mobileAppHint.textContent = isIOS
+          ? "On iPhone/iPad: tap Share, then choose 'Add to Home Screen'."
+          : "Open browser menu -> 'Install app' / 'Add to Home Screen', or download the Android APK.";
+      }
+    });
+  }
+
   if ("serviceWorker" in navigator) {
     if (window.Capacitor) {
       // Native APK already bundles all assets offline; clear any stale SW cache
