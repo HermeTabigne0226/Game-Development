@@ -28,8 +28,13 @@ jobs:
           distribution: "temurin"
           java-version: "21"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Prepare Android SDK licenses
+        run: |
+          SDK_MGR="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ -x "$SDK_MGR" ]; then
+            yes | "$SDK_MGR" --licenses > /dev/null 2>&1 || true
+            "$SDK_MGR" "platforms;android-36" "build-tools;35.0.0" || true
+          fi
 
       - name: Install dependencies and sync Capacitor
         run: |
@@ -40,7 +45,7 @@ jobs:
         run: |
           chmod +x android/gradlew
           cd android
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
