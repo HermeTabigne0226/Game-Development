@@ -852,103 +852,6 @@ function openSkillDialog() {
   if (!dlg.open) dlg.showModal();
 }
 
-function openUltPreviewDialog(initialUltId = null) {
-  if (!state || state.runEnded) return;
-  const dlg = document.getElementById("ult-preview-dialog");
-  const tabsEl = document.getElementById("ult-preview-tabs");
-  const bodyEl = document.getElementById("ult-preview-body");
-  if (!dlg || !tabsEl || !bodyEl) return;
-
-  const p = state.player;
-  const stats = getPlayerStats();
-  const activeUlt = getActiveSpells(p).find((s) => s.isUltimate) || SPELLS.find((s) => s.isUltimate);
-  const ultList = SPELLS.filter((s) => s.isUltimate);
-  let selectedId = initialUltId && ultList.some((u) => u.id === initialUltId) ? initialUltId : activeUlt?.id || ultList[0]?.id;
-
-  const renderPreview = () => {
-    const sp = ultList.find((u) => u.id === selectedId) || ultList[0];
-    if (!sp) return;
-    const isEquipped = activeUlt?.id === sp.id;
-    const rank = p.skillRanks[sp.id] || 0;
-    const previewIdx = Math.max(0, Math.min(rank > 0 ? rank - 1 : 0, sp.maxRank - 1));
-    const cd = sp.cooldowns[previewIdx];
-    const radius = sp.radii ? sp.radii[previewIdx] : sp.range || 3.0;
-    const estDmg = Math.round(stats.atk * (sp.mults?.[previewIdx] || 1)) + (sp.flats?.[previewIdx] || 0);
-    const reqHeroLv = rank < sp.maxRank && sp.reqLevels ? sp.reqLevels[rank] : null;
-    const canUpgrade = isEquipped && rank < sp.maxRank && (p.skillPoints || 0) > 0 && (reqHeroLv === null || p.level >= reqHeroLv);
-
-    tabsEl.innerHTML = "";
-    for (const ult of ultList) {
-      const tab = document.createElement("button");
-      tab.type = "button";
-      tab.className = `ult-preview-tab ${ult.id === sp.id ? "active" : ""}`;
-      tab.innerHTML = `<img src="${ult.icon}" alt="" /><span>${ult.name}${activeUlt?.id === ult.id ? " ★" : ""}</span>`;
-      tab.addEventListener("click", () => {
-        selectedId = ult.id;
-        renderPreview();
-      });
-      tabsEl.appendChild(tab);
-    }
-
-    const statusText = isEquipped
-      ? rank > 0
-        ? `Equipped · Rank ${rank}/${sp.maxRank}`
-        : `Equipped · Unlocks at Hero Lv ${sp.reqLevels?.[0] || 5}`
-      : `Available via Shop Skill Swap (2500g) · Lv ${sp.reqLevels?.[0] || 5}`;
-
-    const dmgLabel = sp.type === "ultimate_barrage" ? `${estDmg}/wave` : `${estDmg} DMG`;
-    bodyEl.innerHTML = `
-      <div class="ult-preview-card">
-        <div class="ult-preview-head">
-          <img src="${sp.icon}" alt="${sp.name}" />
-          <div class="ult-preview-meta">
-            <strong>${sp.name} (ULT)</strong>
-            <span class="ult-preview-status">${statusText}</span>
-          </div>
-        </div>
-        <div class="ult-preview-stats">
-          <div class="ult-preview-stat"><span>MP Cost</span><strong>${sp.mpCost} MP</strong></div>
-          <div class="ult-preview-stat"><span>Cooldown</span><strong>${cd}s</strong></div>
-          <div class="ult-preview-stat"><span>Power / AOE</span><strong>${dmgLabel} · ${radius}t</strong></div>
-        </div>
-        <p class="ult-preview-desc">${sp.desc}</p>
-        <div class="ult-preview-actions"></div>
-      </div>
-    `;
-
-    const actionsEl = bodyEl.querySelector(".ult-preview-actions");
-    if (canUpgrade && actionsEl) {
-      const upgBtn = document.createElement("button");
-      upgBtn.type = "button";
-      upgBtn.className = "btn btn-primary";
-      upgBtn.textContent = rank === 0 ? "Unlock Now (1 Skill Pt)" : `Upgrade Lv ${rank + 1} (1 Pt)`;
-      upgBtn.addEventListener("click", () => {
-        if (upgradeSkillById(sp.id)) renderPreview();
-      });
-      actionsEl.appendChild(upgBtn);
-    } else if (isEquipped && rank > 0 && (state.spellCooldowns[sp.id] || 0) <= 0 && p.mp >= sp.mpCost && actionsEl) {
-      const castBtn = document.createElement("button");
-      castBtn.type = "button";
-      castBtn.className = "btn btn-primary";
-      castBtn.textContent = "Cast Ultimate";
-      castBtn.addEventListener("click", () => {
-        dlg.close("cast");
-        castSpell(sp.id);
-      });
-      actionsEl.appendChild(castBtn);
-    }
-  };
-
-  renderPreview();
-  if (!dlg.open) {
-    keys.clear();
-    touchMove.active = false;
-    touchMove.x = 0;
-    touchMove.y = 0;
-    dlg.showModal();
-  }
-}
-
 function damageEnemy(enemy, rawDmg, isCrit = false, sourceLabel = "strike", knockX = 0, knockY = 0, options = {}) {
   const baseDef = (enemy.def || 0) + (enemy.bonusDef || 0);
   const sunderPenalty = (enemy.sunderTimer || 0) > 0 ? Math.max(3, Math.floor(baseDef * 0.35)) : 0;
@@ -2960,8 +2863,7 @@ function buildSpellButtons() {
     if (!tBtn) return;
     tBtn.dataset.spellId = sp.id;
     const pipsHtml = Array.from({ length: sp.maxRank }, () => `<span class="ts-pip"></span>`).join("");
-    const ultTag = sp.isUltimate ? `<span class="ts-ult-tag">ULT</span>` : "";
-    tBtn.innerHTML = `${ultTag}<span class="ts-plus" hidden>+</span><img src="${sp.icon}" alt="${sp.name}" /><span class="ts-cd" hidden></span><div class="ts-pips">${pipsHtml}</div>`;
+    tBtn.innerHTML = `<span class="ts-plus" hidden>+</span><img src="${sp.icon}" alt="${sp.name}" /><span class="ts-cd" hidden></span><div class="ts-pips">${pipsHtml}</div>`;
     const plusEl = tBtn.querySelector(".ts-plus");
     if (plusEl) {
       plusEl.addEventListener("pointerdown", (e) => {
@@ -2971,14 +2873,6 @@ function buildSpellButtons() {
       });
     }
   });
-
-  const ultSp = activeSpells.find((s) => s.isUltimate);
-  const mUltIcon = document.getElementById("mhud-ult-icon");
-  const mUltLabel = document.getElementById("mhud-ult-label");
-  if (ultSp) {
-    if (mUltIcon) mUltIcon.src = ultSp.icon;
-    if (mUltLabel) mUltLabel.textContent = "ULT";
-  }
 }
 
 function updateCooldownUI() {
@@ -3067,18 +2961,6 @@ function updateCooldownUI() {
     }
     const pips = tBtn.querySelectorAll(".ts-pip");
     pips.forEach((pip, idx) => pip.classList.toggle("filled", idx < rank));
-
-    if (sp.isUltimate) {
-      const mUltBtn = document.getElementById("btn-mobile-ult-preview");
-      const mUltLabel = document.getElementById("mhud-ult-label");
-      if (mUltBtn) {
-        mUltBtn.classList.toggle("locked", locked);
-        mUltBtn.classList.toggle("ready", !locked && cd <= 0 && !outOfMana);
-      }
-      if (mUltLabel) {
-        mUltLabel.textContent = !locked && cd > 0 ? `ULT ${Math.ceil(cd)}s` : "ULT";
-      }
-    }
   }
 
   const dashBtn = document.getElementById("btn-dash");
@@ -6232,18 +6114,6 @@ function setupControls() {
   }
 
   document.getElementById("mhud-btn-skills").addEventListener("click", openSkillDialog);
-  const mUltPreviewBtn = document.getElementById("btn-mobile-ult-preview");
-  if (mUltPreviewBtn) {
-    mUltPreviewBtn.addEventListener("click", () => openUltPreviewDialog());
-  }
-  const tUltPreviewBtn = document.getElementById("btn-touch-ult-preview");
-  if (tUltPreviewBtn) {
-    tUltPreviewBtn.addEventListener("pointerdown", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      openUltPreviewDialog();
-    });
-  }
   document.getElementById("mhud-btn-menu").addEventListener("click", () => {
     saveRun();
     showMainMenu();
