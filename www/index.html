@@ -213,6 +213,10 @@
                   <img src="spritecook-game-asset-pack/chest_closed.png" alt="" />
                   <span>Bag</span>
                 </button>
+                <button type="button" id="btn-mobile-ult-preview" class="mhud-inv-btn mhud-ult-btn" title="Preview Ultimate Skill">
+                  <img id="mhud-ult-icon" src="spritecook-spell-icon-set/icon_68.png" alt="" />
+                  <span id="mhud-ult-label">ULT</span>
+                </button>
               </div>
             </div>
 
@@ -241,6 +245,7 @@
               <button type="button" id="touch-skill-2" class="touch-skill-btn s2" data-spell-idx="1"></button>
               <button type="button" id="touch-skill-3" class="touch-skill-btn s3" data-spell-idx="2"></button>
               <button type="button" id="touch-skill-4" class="touch-skill-btn s4 ult" data-spell-idx="3"></button>
+              <button type="button" id="btn-touch-ult-preview" class="ts-ult-info-btn" title="Preview Ultimate Skill" aria-label="Preview Ultimate Skill">i</button>
               <button type="button" id="touch-btn-dash" class="touch-action-btn dash" aria-label="Dash">
                 <img src="assets/dash_icon.png" alt="" class="touch-btn-icon dash-icon" />
                 <span id="touch-dash-cd" class="ts-cd" hidden></span>
@@ -443,6 +448,23 @@
           <button value="close" class="btn btn-secondary">Close</button>
         </form>
       </div>
+    </div>
+  </dialog>
+
+  <!-- Mobile Ultimate Skill Preview Modal -->
+  <dialog id="ult-preview-dialog" closedby="any" aria-labelledby="ult-preview-title">
+    <div class="dialog-card ult-preview-dialog-card">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">Ultimate Skill Preview</span>
+          <h1 id="ult-preview-title">Ultimate Ability</h1>
+        </div>
+        <form method="dialog">
+          <button value="close" class="btn btn-secondary">Close</button>
+        </form>
+      </div>
+      <div id="ult-preview-tabs" class="ult-preview-tabs"></div>
+      <div id="ult-preview-body" class="ult-preview-body"></div>
     </div>
   </dialog>
 

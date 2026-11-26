@@ -2,6 +2,7 @@ node_modules/
 .vercel/
 .DS_Store
 Thumbs.db
+*.mp4
 
 # Raw / unoptimized root asset packs (used runtime assets live inside www/)
 /assets/
