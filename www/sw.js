@@ -1,4 +1,4 @@
-const CACHE_NAME = "shattered-crown-v72";
+const CACHE_NAME = "shattered-crown-v73";
 
 const PRECACHE_URLS = [
   "./",

@@ -434,6 +434,7 @@ export const pvpHooks = {
 };
 
 let pvpEndCountdownTimer = null;
+let pvpRoundLostRetryTimer = null;
 
 export function clearPvpEndCountdown() {
   if (pvpEndCountdownTimer) {
@@ -442,8 +443,16 @@ export function clearPvpEndCountdown() {
   }
 }
 
+export function clearPvpRoundLostRetry() {
+  if (pvpRoundLostRetryTimer) {
+    clearInterval(pvpRoundLostRetryTimer);
+    pvpRoundLostRetryTimer = null;
+  }
+}
+
 export function returnToPvpLobbyFromMatch({ leaveRoom = false, openLobby = true } = {}) {
   clearPvpEndCountdown();
+  clearPvpRoundLostRetry();
   const dlg = document.getElementById("end-dialog");
   if (dlg?.open) dlg.close("pvp_return");
   const vsOverlay = document.getElementById("pvp-vs-screen");
@@ -893,6 +902,7 @@ export function syncPvpIntroTimer(s = runtime.state) {
 }
 
 export function startPvpMatchSession(room, mySlot) {
+  clearPvpRoundLostRetry();
   setupPvpMatchEntities(room, mySlot, false);
   const st = runtime.state;
   setTimeout(() => { if (runtime.state === st) syncPvpIntroTimer(st); }, 4560);
@@ -911,6 +921,7 @@ export function startPvpMatchSession(room, mySlot) {
 }
 
 export function startPvpRound(room, mySlot) {
+  clearPvpRoundLostRetry();
   setupPvpMatchEntities(room, mySlot, true);
   const st = runtime.state;
   setTimeout(() => { if (runtime.state === st) syncPvpIntroTimer(st); }, 3060);
@@ -932,13 +943,38 @@ export function notifyLocalPvpDefeat() {
   const s = runtime.state;
   if (!s?.isPvp || s.pvpRoundEnded || s.runEnded) return;
   const p = s.player;
+  const stats = getPlayerStats(p);
+  const roundNum = s.pvpRound || 1;
   s.pvpRoundEnded = true;
   p.hp = 0;
   p.anim = "death";
   p.animTimer = 1.2;
   addFloat(p.x, p.y - 0.5, "K.O.!", "#ef4444");
   runtime.uiDirty = true;
-  pvpNet.send({ type: "round_lost", round: s.pvpRound || 1 });
+  pvpNet.send({
+    type: "pvp_sync",
+    round: roundNum,
+    x: Math.round(p.x * 100) / 100,
+    y: Math.round(p.y * 100) / 100,
+    z: Math.round((p.z || 0) * 10) / 10,
+    anim: "death",
+    facingLeft: Boolean(p.facingLeft),
+    aimAngle: Math.round((p.aimAngle || 0) * 1000) / 1000,
+    hp: 0,
+    maxHp: Math.round(stats.maxHp),
+  });
+  pvpNet.send({ type: "round_lost", round: roundNum });
+  clearPvpRoundLostRetry();
+  let retries = 0;
+  pvpRoundLostRetryTimer = setInterval(() => {
+    const cur = runtime.state;
+    if (!cur?.isPvp || cur.runEnded || (cur.pvpRound || 1) !== roundNum || !pvpNet.connected || retries >= 5) {
+      clearPvpRoundLostRetry();
+      return;
+    }
+    retries += 1;
+    pvpNet.send({ type: "round_lost", round: roundNum });
+  }, 1000);
 }
 
 export function notifyLocalPvpTimeout() {
@@ -1435,6 +1471,7 @@ function applyIncomingPvpHit(msg) {
 }
 
 function handleRemoteRoundOver(msg) {
+  clearPvpRoundLostRetry();
   const s = runtime.state;
   if (!s?.isPvp) return;
   s.pvpRoundEnded = true;
@@ -1475,7 +1512,7 @@ function startPvpEndLobbyCountdown(baseSummary) {
   clearPvpEndCountdown();
   const summaryEl = document.getElementById("end-dialog-summary");
   const sanctumBtn = document.getElementById("btn-end-sanctum");
-  let rem = 5;
+  let rem = 3;
   const syncText = () => {
     if (summaryEl) summaryEl.textContent = `${baseSummary} Returning to PvP Lobby in ${rem}s...`;
     if (sanctumBtn) sanctumBtn.textContent = `Return to PvP Lobby (${rem}s)`;
@@ -1497,6 +1534,7 @@ function startPvpEndLobbyCountdown(baseSummary) {
 }
 
 function handleRemoteMatchOver(msg) {
+  clearPvpRoundLostRetry();
   const s = runtime.state;
   if (!s?.isPvp) return;
   s.pvpRoundEnded = true;
