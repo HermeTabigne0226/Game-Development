@@ -1,8 +1,16 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.0.3.2 Beta";
+export const GAME_VERSION = "v.1.0.3.3 Beta";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.0.3.3 Beta",
+    title: "In-Game Pause Menu & Mobile Name Input Fix",
+    notes: [
+      "In-Game Pause Menu: Clicking Menu during a run now opens an in-game pause menu with Resume, Settings, Patch Notes, and Main Menu instead of exiting straight to the Main Menu.",
+      "Mobile Name Input Fix: Fixed reversed text typing on mobile WebViews and kept the Hero Name / Fighter Name textbox visible above the virtual keyboard in landscape.",
+    ],
+  },
   {
     version: "v.1.0.3.2 Beta",
     title: "Responsive Mobile HUD/Menus, Difficulty Cards & APK v1+v2 Signing",
