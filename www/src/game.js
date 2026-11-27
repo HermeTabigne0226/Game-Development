@@ -166,7 +166,7 @@ function setupControls() {
   let atkCenterY = 0;
 
   const updateAttackWheel = (clientX, clientY) => {
-    const maxR = 28;
+    const maxR = 34;
     let dx = clientX - atkCenterX;
     let dy = clientY - atkCenterY;
     const dist = Math.hypot(dx, dy);

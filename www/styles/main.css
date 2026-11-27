@@ -532,10 +532,10 @@ body {
   }
   .touch-right-cluster {
     position: absolute;
-    right: max(18px, env(safe-area-inset-right));
-    bottom: max(14px, env(safe-area-inset-bottom));
-    width: 292px;
-    height: 282px;
+    right: max(24px, env(safe-area-inset-right));
+    bottom: max(18px, env(safe-area-inset-bottom));
+    width: 310px;
+    height: 290px;
     pointer-events: none;
   }
   .touch-action-btn,
@@ -573,14 +573,14 @@ body {
   }
   .touch-atk-wheel {
     position: absolute;
-    right: 6px;
-    bottom: 6px;
-    width: 98px;
-    height: 98px;
+    right: 12px;
+    bottom: 10px;
+    width: 114px;
+    height: 114px;
     border-radius: 50%;
     background: url("../assets/joystick_base.png") center / contain no-repeat;
     image-rendering: pixelated;
-    opacity: 0.88;
+    opacity: 0.9;
     pointer-events: auto;
     touch-action: none;
     filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.55));
@@ -594,8 +594,8 @@ body {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 58px;
-    height: 58px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     transform: translate(-50%, -50%);
     background: url("../assets/knob_sword.svg") center / contain no-repeat;
@@ -614,10 +614,10 @@ body {
     filter: brightness(1.12);
   }
   .touch-action-btn.dash {
-    right: 16px;
-    bottom: 108px;
-    width: 58px;
-    height: 58px;
+    right: 22px;
+    bottom: 142px;
+    width: 56px;
+    height: 56px;
     background: #2b3344;
     border-color: #94a3b8;
   }
@@ -631,14 +631,14 @@ body {
     border-color: #60a5fa;
     overflow: visible;
   }
-  .touch-skill-btn.s1 { right: 112px; bottom: 14px; }
-  .touch-skill-btn.s2 { right: 132px; bottom: 84px; }
-  .touch-skill-btn.s3 { right: 102px; bottom: 154px; }
+  .touch-skill-btn.s1 { right: 146px; bottom: 14px; }
+  .touch-skill-btn.s2 { right: 148px; bottom: 88px; }
+  .touch-skill-btn.s3 { right: 102px; bottom: 158px; }
   .touch-skill-btn.s4 {
-    right: 22px;
-    bottom: 184px;
-    width: 60px;
-    height: 60px;
+    right: 21px;
+    bottom: 216px;
+    width: 58px;
+    height: 58px;
     border-color: #f97316;
   }
   .touch-skill-btn img {
