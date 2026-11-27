@@ -359,7 +359,16 @@ class PvpNetworkClient {
   connect(rawUrl) {
     const wsUrl = normalizeWsUrl(rawUrl);
     if (!wsUrl) {
-      this.lastError = "Enter a WebSocket server URL (e.g. wss://your-relay.onrender.com or ws://<PC-IP>:8080)";
+      this.lastError = "Enter a Server URL first: use wss://your-service.onrender.com/ws (Online) or ws://<PC-IP>:8080/ws (Same Wi-Fi).";
+      this.emitUI("error", { message: this.lastError });
+      return;
+    }
+    if (
+      window.location.protocol === "https:" &&
+      wsUrl.startsWith("ws://") &&
+      !/^ws:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/i.test(wsUrl)
+    ) {
+      this.lastError = "Browser security blocks ws:// from HTTPS pages (Vercel). Use a wss:// Render URL, OR open http://<PC-IP>:8080 directly on your browser.";
       this.emitUI("error", { message: this.lastError });
       return;
     }

@@ -33,7 +33,7 @@ import {
   touchMove,
 } from "./state.js";
 import { hideMainMenu, showMainMenu, syncSettingsUI, updatePerfHUD, VOLUME_CYCLE } from "./ui.js";
-import { createNewRun, descendFloor, enterEndlessMode, restoreRun } from "./world.js";
+import { createNewRun, descendFloor, enterEndlessMode, restoreRun, triggerNearbyInteract } from "./world.js";
 
 function setupControls() {
   const unlockAudio = () => bgm.unlock();
@@ -53,6 +53,7 @@ function setupControls() {
 
     if (key === " ") performDash();
     else if (key === "j") performMeleeAttack();
+    else if (key === "f") triggerNearbyInteract();
     else if (key === "q") quickPotion("health_potion");
     else if (key === "e") quickPotion("mana_potion");
     else if (["1", "2", "3", "4"].includes(key)) {
@@ -86,6 +87,14 @@ function setupControls() {
   document.getElementById("btn-skills").addEventListener("click", openSkillDialog);
   document.getElementById("btn-attack").addEventListener("click", performMeleeAttack);
   document.getElementById("btn-dash").addEventListener("click", performDash);
+  const interactBtn = document.getElementById("btn-interact-prompt");
+  if (interactBtn) {
+    interactBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
+    interactBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      triggerNearbyInteract();
+    });
+  }
 
   const panelStats = document.getElementById("panel-stats");
   const panelBag = document.getElementById("panel-bag");

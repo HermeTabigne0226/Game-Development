@@ -1,6 +1,6 @@
 import { sfx } from "./audio.js";
 import { combatHooks, damageEnemy, hurtPlayer, performMeleeAttack, unlockCodex } from "./combat.js";
-import { DEFAULT_LOADOUT, ELITE_AFFIXES, HERO_CLASSES, ITEMS, RELICS, SPELLS } from "./data.js";
+import { DEFAULT_LOADOUT, ELITE_AFFIXES, HERO_CLASSES, ITEMS, NPC_ENCOUNTERS, RELICS, SHRINE_ENCOUNTERS, SPELLS } from "./data.js";
 import { MAP_H, MAP_W, TILE, computeFOV, createScaledEnemy, generateFloor } from "./dungeon.js";
 import { checkBossSpotted, revealBossRoom, startBossMatch, updateEnemiesAndBosses } from "./enemyAI.js";
 import { broadcastPvpAction, updatePvpFrame } from "./pvp.js";
@@ -489,6 +489,25 @@ export function enterEndlessMode() {
   s.player.hp = stats.maxHp;
   s.player.mp = stats.maxMp;
   descendFloor();
+}
+
+export function triggerNearbyInteract() {
+  const s = runtime.state;
+  const ni = runtime.nearbyInteractable;
+  if (!s || s.runEnded || !ni || !ni.target) return false;
+  if (ni.kind === "shop" && worldHooks.openShopDialog) {
+    worldHooks.openShopDialog(ni.target);
+    return true;
+  }
+  if (ni.kind === "npc" && worldHooks.openStoryDialog) {
+    worldHooks.openStoryDialog(ni.target);
+    return true;
+  }
+  if (["anvil", "shrine", "well"].includes(ni.kind)) {
+    interactProp(ni.target);
+    return true;
+  }
+  return false;
 }
 
 export function interactProp(prop) {
@@ -1315,14 +1334,58 @@ export function updateSimulation(dt) {
     }
   }
 
+  runtime.nearbyInteractable = null;
+
   for (const pr of s.level.props) {
     if (pr.used || pr.opened || pr.broken) continue;
-    if (!pr.solid && !["shrine", "anvil", "well"].includes(pr.kind)) continue;
     const dist = Math.hypot(pr.x + 0.5 - p.x, pr.y + 0.5 - p.y);
-    if (dist < 1.0 && ["door", "chest", "trial_chest", "well", "shrine", "anvil", "crate", "barrel", "urn"].includes(pr.kind)) {
+    const autoKinds = s.isPvp
+      ? ["door", "chest", "trial_chest", "crate", "barrel", "urn", "well"]
+      : ["door", "chest", "trial_chest", "crate", "barrel", "urn"];
+    if (pr.solid && dist < 1.0 && autoKinds.includes(pr.kind)) {
       interactProp(pr);
     }
   }
+
+  // Find closest manual interactable (Forge, Shrine, Well, Shop, NPC) without forcing popups on walk-by
+  let bestInteract = null;
+  let bestDist = 1.25;
+  const considerInteract = (dist, candidate) => {
+    if (dist < bestDist) {
+      bestDist = dist;
+      bestInteract = candidate;
+    }
+  };
+
+  for (const pr of s.level.props) {
+    if (pr.used || pr.opened || pr.broken) continue;
+    const dist = Math.hypot(pr.x + 0.5 - p.x, pr.y + 0.5 - p.y);
+    if (dist >= 1.25) continue;
+    if (pr.kind === "anvil") {
+      considerInteract(dist, { kind: "anvil", target: pr, x: pr.x + 0.5, y: pr.y + 0.5, label: "Open Foundry Forge", color: "#fb923c" });
+    } else if (pr.kind === "shrine") {
+      const sTpl = SHRINE_ENCOUNTERS[pr.shrineId] || SHRINE_ENCOUNTERS.sanctum;
+      const col = pr.shrineId === "blood" ? "#ef4444" : pr.shrineId === "aegis" ? "#facc15" : "#38bdf8";
+      considerInteract(dist, { kind: "shrine", target: pr, x: pr.x + 0.5, y: pr.y + 0.5, label: `Use ${sTpl.title}`, color: col });
+    } else if (pr.kind === "well" && !s.isPvp) {
+      considerInteract(dist, { kind: "well", target: pr, x: pr.x + 0.5, y: pr.y + 0.5, label: "Drink Sanctum Well", color: "#38bdf8" });
+    }
+  }
+
+  for (const npc of s.level.npcs || []) {
+    if (npc.talked) continue;
+    const dist = Math.hypot(npc.x + 0.5 - p.x, npc.y + 0.5 - p.y);
+    const tpl = NPC_ENCOUNTERS[npc.id];
+    considerInteract(dist, { kind: "npc", target: npc, x: npc.x + 0.5, y: npc.y + 0.5, label: `Talk to ${tpl?.speaker || "Traveler"}`, color: "#7dd3fc" });
+  }
+
+  if (!s.bossFightStarted && Array.isArray(s.level.shops)) {
+    for (const shop of s.level.shops) {
+      const dist = Math.hypot(shop.x + 0.5 - p.x, shop.y + 0.5 - p.y);
+      considerInteract(dist, { kind: "shop", target: shop, x: shop.x + 0.5, y: shop.y + 0.5, label: `Open ${shop.name || "Shop"}`, color: "#fde047" });
+    }
+  }
+  runtime.nearbyInteractable = bestInteract;
 
   if (s.level.isBossFloor && s.bossFightStarted) {
     for (const pr of s.level.props) {
@@ -1337,23 +1400,6 @@ export function updateSimulation(dt) {
     if (bossRoom) {
       p.x = Math.max(bossRoom.x + 0.35, Math.min(bossRoom.x + bossRoom.w - 0.35, p.x));
       p.y = Math.max(bossRoom.y + 0.35, Math.min(bossRoom.y + bossRoom.h - 0.35, p.y));
-    }
-  }
-
-  if (s.npcCooldown <= 0) {
-    for (const npc of s.level.npcs) {
-      if (Math.hypot(npc.x + 0.5 - p.x, npc.y + 0.5 - p.y) < 0.85 && worldHooks.openStoryDialog) {
-        worldHooks.openStoryDialog(npc);
-        return;
-      }
-    }
-  }
-  if ((s.shopCooldown || 0) <= 0 && !s.bossFightStarted && Array.isArray(s.level.shops)) {
-    for (const shop of s.level.shops) {
-      if (Math.hypot(shop.x + 0.5 - p.x, shop.y + 0.5 - p.y) < 0.85 && worldHooks.openShopDialog) {
-        worldHooks.openShopDialog(shop);
-        return;
-      }
     }
   }
 

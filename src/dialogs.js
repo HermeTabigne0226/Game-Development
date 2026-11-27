@@ -1654,8 +1654,22 @@ export function openPvpDialog() {
   connectBtn.onclick = () => pvpNet.connect(urlInput?.value || "");
   if (lanPresetBtn) {
     lanPresetBtn.onclick = () => {
-      if (urlInput) urlInput.value = `ws://${window.location.hostname || "localhost"}:8080/ws`;
-      pvpNet.connect(urlInput.value);
+      const host = window.location.hostname || "";
+      const proto = window.location.protocol;
+      let nextUrl = "";
+      if (proto === "http:" && host && host !== "localhost" && host !== "127.0.0.1") {
+        nextUrl = `ws://${window.location.host}/ws`;
+      } else {
+        const curSaved = urlInput?.value.trim() || "";
+        const m = curSaved.match(/wss?:\/\/([^/:]+)/i);
+        const defaultIp = m && !/localhost|127\.0\.0\.1|onrender/i.test(m[1]) ? m[1] : "192.168.1.";
+        const ip = window.prompt("Enter your PC's Wi-Fi IP (printed by `node server.js`, e.g. 192.168.3.23):", defaultIp);
+        if (!ip || !ip.trim()) return;
+        const clean = ip.trim();
+        nextUrl = /^wss?:\/\//i.test(clean) ? clean : `ws://${clean.replace(/:\d+$/, "")}:8080/ws`;
+      }
+      if (urlInput) urlInput.value = nextUrl;
+      pvpNet.connect(nextUrl);
     };
   }
   refreshBtn.onclick = () => pvpNet.send({ type: "list_lobbies" });

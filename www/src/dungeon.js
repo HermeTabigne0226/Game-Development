@@ -321,12 +321,28 @@ function buildFloorCandidate(floor, difficultyId = "normal") {
     return stock;
   };
 
-  const freeTileInRoom = (room) => {
-    for (let t = 0; t < 24; t++) {
+  const isNearDoorway = (tx, ty) => {
+    const rm = rooms.find((r) => tx >= r.x && tx < r.x + r.w && ty >= r.y && ty < r.y + r.h);
+    if (!rm) return true;
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        if (dx === 0 && dy === 0) continue;
+        const nx = tx + dx;
+        const ny = ty + dy;
+        const outsideRoom = nx < rm.x || nx >= rm.x + rm.w || ny < rm.y || ny >= rm.y + rm.h;
+        if (outsideRoom && grid[ny]?.[nx] === TILE.FLOOR) return true;
+      }
+    }
+    return false;
+  };
+
+  const freeTileInRoom = (room, avoidDoorways = true) => {
+    for (let t = 0; t < 36; t++) {
       const tx = randInt(room.x, room.x + room.w - 1);
       const ty = randInt(room.y, room.y + room.h - 1);
       const key = `${tx},${ty}`;
       if (!occupied.has(key) && grid[ty][tx] === TILE.FLOOR) {
+        if (avoidDoorways && t < 28 && isNearDoorway(tx, ty)) continue;
         occupied.add(key);
         return { x: tx, y: ty };
       }

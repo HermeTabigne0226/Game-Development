@@ -3278,3 +3278,66 @@ kbd {
   color: var(--accent);
   background: rgba(250, 204, 21, 0.14);
 }
+
+.interact-prompt {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  z-index: 9;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1.5px solid #facc15;
+  color: #fef08a;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  box-shadow: 0 0 14px rgba(250, 204, 21, 0.42), 0 4px 12px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  white-space: nowrap;
+  animation: interactPulse 1.5s ease-in-out infinite;
+}
+
+.interact-prompt:hover {
+  background: rgba(30, 41, 59, 0.96);
+  border-color: #fde047;
+}
+
+@keyframes interactPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(250, 204, 21, 0.35), 0 4px 12px rgba(0, 0, 0, 0.6); }
+  50% { box-shadow: 0 0 18px rgba(250, 204, 21, 0.72), 0 4px 14px rgba(0, 0, 0, 0.7); }
+}
+
+@media (max-width: 960px), (pointer: coarse) {
+  .interact-prompt {
+    bottom: 76px;
+    font-size: 0.78rem;
+    padding: 7px 13px;
+  }
+}
+
+.pvp-help-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  font-size: 0.72rem;
+  line-height: 1.38;
+  color: #cbd5e1;
+}
+
+.pvp-help-strip strong {
+  color: #7dd3fc;
+}
+
+.pvp-help-strip code {
+  background: rgba(30, 41, 59, 0.9);
+  padding: 1px 4px;
+  border-radius: 4px;
+  color: #fde047;
+  font-size: 0.7rem;
+}

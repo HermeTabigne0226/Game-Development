@@ -239,6 +239,9 @@
           <div id="targeting-banner" class="targeting-banner" hidden>
             Select a target tile or enemy (Click or press Esc to cancel)
           </div>
+          <button type="button" id="btn-interact-prompt" class="interact-prompt" hidden>
+            Interact [F]
+          </button>
 
           <!-- Mobile Fullscreen HUD Overlay (matches MOBA / Action RPG layout) -->
           <div id="mobile-hud" class="mobile-hud">
@@ -717,11 +720,16 @@
 
       <div class="pvp-server-bar">
         <label for="pvp-server-url" class="sr-only">Multiplayer Server URL</label>
-        <input id="pvp-server-url" type="text" placeholder="wss://your-relay.onrender.com or ws://192.168.x.x:8080" />
+        <input id="pvp-server-url" type="text" placeholder="wss://your-relay.onrender.com/ws or ws://192.168.x.x:8080/ws" />
         <button type="button" id="btn-pvp-connect" class="btn btn-primary btn-sm">Connect</button>
-        <button type="button" id="btn-pvp-lan-preset" class="btn btn-secondary btn-sm" title="Use localhost:8080">Local</button>
+        <button type="button" id="btn-pvp-lan-preset" class="btn btn-secondary btn-sm" title="Connect to local PC server on Wi-Fi">LAN IP</button>
       </div>
       <div id="pvp-status-msg" class="pvp-status-msg">Connect to your local server or Render relay to find Same-Network lobbies.</div>
+      <div class="pvp-help-strip">
+        <strong>No Extra App Needed:</strong>
+        <span><b>Same Wi-Fi:</b> Run <code>node server.js</code> on PC, then open <code>http://&lt;PC-IP&gt;:8080</code> or connect APK to <code>ws://&lt;PC-IP&gt;:8080/ws</code>.</span>
+        <span><b>Vercel + APK Online:</b> Deploy <code>render.yaml</code> free on Render.com &amp; enter <code>wss://&lt;app&gt;.onrender.com/ws</code>.</span>
+      </div>
 
       <div id="pvp-browser-view" class="pvp-browser-view">
         <div class="pvp-fighter-strip">

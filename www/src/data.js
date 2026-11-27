@@ -1,8 +1,17 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.3.1";
+export const GAME_VERSION = "v.1.3.2";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.3.2",
+    title: "Interact Prompt [F], Clear Doorways & Android LAN PvP Fix",
+    notes: [
+      "Manual [F] / Tap Interact Prompt: Forges, Shrines, Wells, Shops, and Buff NPCs no longer auto-pop while walking past — walk near and press [F] or tap the on-screen Interact pill anytime.",
+      "Doorway-Free Room Spawning: Updated dungeon generator so Forges, Shrines, Chests, NPCs, Shops, and Traps avoid spawning inside or blocking corridor entrances.",
+      "Android APK & Vercel PvP Fix: Enabled Android WebView cleartext/mixed-content WebSocket support for local Wi-Fi LAN PvP (ws://<PC-IP>:8080/ws) and added an interactive LAN IP helper & HTTPS security guidance inside the PvP lobby browser.",
+    ],
+  },
   {
     version: "v.1.3.1",
     title: "Spike Trap & Slash Sprites, Non-Blocking Forge/Shrines",

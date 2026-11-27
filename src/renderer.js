@@ -1362,6 +1362,18 @@ export function renderFrame(ts) {
     ctx.globalAlpha = 1;
   }
 
+  const ni = runtime.nearbyInteractable;
+  if (ni && !modalOpen && !s.runEnded) {
+    ctx.save();
+    ctx.strokeStyle = ni.color || "#facc15";
+    ctx.globalAlpha = 0.65 + Math.sin(ts * 0.009) * 0.25;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(ni.x * TILE_SIZE, ni.y * TILE_SIZE, 16 + Math.sin(ts * 0.009) * 2, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   if (mouse.inside && mouse.x !== null && !modalOpen && !s.runEnded) {
     ctx.save();
     ctx.strokeStyle = "rgba(250, 204, 21, 0.7)";

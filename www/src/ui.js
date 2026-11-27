@@ -214,6 +214,21 @@ export function updateCooldownUI() {
     mPtsEl.textContent = pts;
     mSkillBtn.classList.toggle("has-points", pts > 0);
   }
+
+  const promptBtn = document.getElementById("btn-interact-prompt");
+  if (promptBtn) {
+    const ni = runtime.nearbyInteractable;
+    const modalOpen = Boolean(document.querySelector("dialog[open]"));
+    if (ni && !s.runEnded && !modalOpen) {
+      const mobile = window.matchMedia?.("(max-width: 960px), (pointer: coarse)")?.matches;
+      const nextText = mobile ? `Tap: ${ni.label}` : `${ni.label} [F]`;
+      if (promptBtn.hidden) promptBtn.hidden = false;
+      if (promptBtn.textContent !== nextText) promptBtn.textContent = nextText;
+      promptBtn.style.borderColor = ni.color || "#facc15";
+    } else if (!promptBtn.hidden) {
+      promptBtn.hidden = true;
+    }
+  }
 }
 
 export function renderShortcuts() {

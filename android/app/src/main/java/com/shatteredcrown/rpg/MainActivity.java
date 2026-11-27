@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.RenderProcessGoneDetail;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import androidx.core.view.WindowCompat;
@@ -21,6 +22,9 @@ public class MainActivity extends BridgeActivity {
                 WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
         }
         if (this.bridge != null && this.bridge.getWebView() != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                this.bridge.getWebView().getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+            }
             this.bridge.getWebView().addJavascriptInterface(new Object() {
                 @JavascriptInterface
                 public void exitApp() {
