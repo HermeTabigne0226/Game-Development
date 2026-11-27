@@ -1372,6 +1372,41 @@ body {
   color: #86efac;
 }
 
+.perf-hud {
+  position: absolute;
+  top: max(8px, env(safe-area-inset-top));
+  left: max(10px, env(safe-area-inset-left));
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(10, 13, 20, 0.78);
+  border: 1px solid rgba(71, 85, 105, 0.65);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  pointer-events: none;
+  z-index: 13;
+}
+
+.perf-hud .perf-sep {
+  color: #64748b;
+}
+
+.perf-hud .perf-good { color: #4ade80; }
+.perf-hud .perf-warn { color: #facc15; }
+.perf-hud .perf-bad { color: #f87171; }
+
+@media (max-width: 960px), (pointer: coarse) {
+  .perf-hud {
+    left: auto;
+    right: max(10px, env(safe-area-inset-right));
+    top: max(46px, calc(env(safe-area-inset-top) + 38px));
+  }
+}
+
 .boss-hud-bar {
   position: absolute;
   top: max(36px, calc(env(safe-area-inset-top) + 28px));

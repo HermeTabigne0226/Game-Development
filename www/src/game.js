@@ -30,7 +30,7 @@ import {
   touchAim,
   touchMove,
 } from "./state.js";
-import { hideMainMenu, showMainMenu, syncSettingsUI, VOLUME_CYCLE } from "./ui.js";
+import { hideMainMenu, showMainMenu, syncSettingsUI, updatePerfHUD, VOLUME_CYCLE } from "./ui.js";
 import { createNewRun, descendFloor, enterEndlessMode, restoreRun } from "./world.js";
 
 function setupControls() {
@@ -270,6 +270,33 @@ function setupControls() {
     saveMeta();
     syncSettingsUI();
   });
+
+  document.getElementById("setting-perf-btn")?.addEventListener("click", () => {
+    runtime.meta.settings.showPerf = runtime.meta.settings.showPerf === false;
+    saveMeta();
+    syncSettingsUI();
+  });
+
+  // Periodic lightweight HTTP RTT ping check (replaced automatically by WebSocket RTT in Multiplayer)
+  const probeHttpPing = async () => {
+    if (document.hidden || runtime.meta?.settings?.showPerf === false) return;
+    if (typeof runtime.netPingMs === "number") return;
+    if (window.location.protocol === "capacitor:" || window.location.protocol === "file:" || !navigator.onLine) {
+      runtime.httpPingMs = null;
+      updatePerfHUD();
+      return;
+    }
+    try {
+      const t0 = performance.now();
+      await fetch(`./manifest.webmanifest?ping=${Date.now()}`, { method: "HEAD", cache: "no-store" });
+      runtime.httpPingMs = Math.max(1, performance.now() - t0);
+    } catch {
+      runtime.httpPingMs = null;
+    }
+    updatePerfHUD();
+  };
+  probeHttpPing();
+  setInterval(probeHttpPing, 3500);
 
   document.getElementById("setting-controls-btn").addEventListener("click", () => {
     document.getElementById("settings-dialog").close();

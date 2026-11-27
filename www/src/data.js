@@ -1,8 +1,15 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.2.4.1";
+export const GAME_VERSION = "v.1.2.4.2";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.2.4.2",
+    title: "Hotfix — Live FPS & Ping HUD Monitor",
+    notes: [
+      "FPS & Ping Overlay: Added a color-coded real-time FPS and network Ping indicator in the corner HUD (toggleable anytime inside Settings).",
+    ],
+  },
   {
     version: "v.1.2.4.1",
     title: "Hotfix — Skyfall Judgment 4-Stage VFX",

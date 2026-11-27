@@ -463,9 +463,45 @@ export function updateRoomAndBossHUD() {
 export const VOLUME_CYCLE = ["off", "low", "med", "high"];
 export const VOLUME_LABELS = { off: "Off", low: "Low", med: "Med", high: "High" };
 
+export function updatePerfHUD() {
+  const hud = document.getElementById("perf-hud");
+  if (!hud) return;
+  const show = runtime.meta?.settings?.showPerf !== false;
+  hud.hidden = !show;
+  if (!show) return;
+
+  const fpsEl = document.getElementById("perf-fps");
+  const pingEl = document.getElementById("perf-ping");
+  if (fpsEl) {
+    const fps = runtime.perfFps ?? 60;
+    fpsEl.textContent = `${fps} FPS`;
+    fpsEl.className = fps >= 50 ? "perf-good" : fps >= 30 ? "perf-warn" : "perf-bad";
+  }
+  if (pingEl) {
+    if (typeof runtime.netPingMs === "number") {
+      const ms = Math.round(runtime.netPingMs);
+      pingEl.textContent = `${ms} ms`;
+      pingEl.className = ms <= 60 ? "perf-good" : ms <= 140 ? "perf-warn" : "perf-bad";
+    } else if (window.location.protocol === "capacitor:" || window.location.protocol === "file:") {
+      pingEl.textContent = navigator.onLine ? "Local" : "Offline";
+      pingEl.className = navigator.onLine ? "perf-good" : "perf-warn";
+    } else if (!navigator.onLine) {
+      pingEl.textContent = "Offline";
+      pingEl.className = "perf-warn";
+    } else if (typeof runtime.httpPingMs === "number") {
+      const ms = Math.round(runtime.httpPingMs);
+      pingEl.textContent = `${ms} ms`;
+      pingEl.className = ms <= 60 ? "perf-good" : ms <= 140 ? "perf-warn" : "perf-bad";
+    } else {
+      pingEl.textContent = "-- ms";
+      pingEl.className = "";
+    }
+  }
+}
+
 export function syncSettingsUI() {
   const m = runtime.meta;
-  if (!m.settings) m.settings = { sfxLevel: "high", musicLevel: "low", screenShake: true };
+  if (!m.settings) m.settings = { sfxLevel: "high", musicLevel: "low", screenShake: true, showPerf: true };
   if (!m.settings.sfxLevel) m.settings.sfxLevel = m.settings.sfx === false ? "off" : "high";
   if (!m.settings.musicLevel) m.settings.musicLevel = "low";
 
@@ -483,6 +519,9 @@ export function syncSettingsUI() {
   if (sfxSettingBtn) sfxSettingBtn.textContent = VOLUME_LABELS[m.settings.sfxLevel] || "High";
   const shakeSettingBtn = document.getElementById("setting-shake-btn");
   if (shakeSettingBtn) shakeSettingBtn.textContent = m.settings.screenShake !== false ? "On" : "Off";
+  const perfSettingBtn = document.getElementById("setting-perf-btn");
+  if (perfSettingBtn) perfSettingBtn.textContent = m.settings.showPerf !== false ? "On" : "Off";
+  updatePerfHUD();
 }
 
 export function showMainMenu() {
@@ -515,3 +554,4 @@ worldHooks.buildSpellButtons = buildSpellButtons;
 worldHooks.updateRoomAndBossHUD = updateRoomAndBossHUD;
 renderHooks.updateCooldownUI = updateCooldownUI;
 renderHooks.updateUI = updateUI;
+renderHooks.updatePerfHUD = updatePerfHUD;

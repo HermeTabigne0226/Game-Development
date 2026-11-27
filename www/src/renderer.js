@@ -33,6 +33,9 @@ export function render(ts) {
   }
 }
 
+let perfFrames = 0;
+let perfAccum = 0;
+
 export function renderFrame(ts) {
   const s = runtime.state;
   const assets = runtime.assets;
@@ -40,6 +43,17 @@ export function renderFrame(ts) {
   const rawDt = (ts - runtime.lastFrameTime) / 1000;
   runtime.lastFrameTime = ts;
   const dt = Math.min(0.05, Math.max(0, rawDt));
+
+  if (rawDt > 0 && rawDt < 0.5) {
+    perfFrames += 1;
+    perfAccum += rawDt;
+    if (perfAccum >= 0.45) {
+      runtime.perfFps = Math.round(perfFrames / perfAccum);
+      perfFrames = 0;
+      perfAccum = 0;
+      if (renderHooks.updatePerfHUD) renderHooks.updatePerfHUD();
+    }
+  }
 
   const menuOpen = !document.getElementById("main-menu").hidden || !document.getElementById("loading-screen").hidden;
   const modalOpen = Boolean(document.querySelector("dialog[open]")) || menuOpen;
