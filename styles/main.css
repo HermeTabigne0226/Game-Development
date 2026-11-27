@@ -1116,6 +1116,10 @@ body {
   contain-intrinsic-size: auto none auto 528px;
 }
 
+body.pvp-active .canvas-frame {
+  content-visibility: visible;
+}
+
 #game-canvas {
   display: block;
   width: 100%;

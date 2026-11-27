@@ -984,11 +984,13 @@ public final class LocalPvpServer {
             }
 
             if ("round_lost".equals(type)) {
+                if (msg.has("round") && msg.optInt("round", r.round) != r.round) return;
                 finishRound(r, pIdx == 0 ? 1 : 0, "ko");
                 return;
             }
 
             if ("round_timeout".equals(type)) {
+                if (msg.has("round") && msg.optInt("round", r.round) != r.round) return;
                 if (!"playing".equals(r.status) || r.roundEnded || r.players.size() < 2) return;
                 int hp0 = r.players.get(0).lastHp;
                 int hp1 = r.players.get(1).lastHp;
@@ -998,6 +1000,7 @@ public final class LocalPvpServer {
             }
 
             if ("pvp_sync".equals(type) && msg.has("hp")) {
+                if (msg.has("round") && msg.optInt("round", r.round) != r.round) return;
                 PlayerSlot cur = r.players.get(pIdx);
                 cur.lastHp = Math.max(0, msg.optInt("hp", cur.lastHp));
                 if ("playing".equals(r.status) && !r.roundEnded && cur.lastHp <= 0) {

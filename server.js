@@ -418,11 +418,13 @@ function handleClientMessage(client, msg) {
   }
 
   if (msg.type === "round_lost") {
+    if (typeof msg.round === "number" && msg.round !== room.round) return;
     finishPvpRound(room, pIdx === 0 ? 1 : 0, "ko");
     return;
   }
 
   if (msg.type === "round_timeout") {
+    if (typeof msg.round === "number" && msg.round !== room.round) return;
     if (room.status !== "playing" || room.roundEnded || room.players.length < 2) return;
     const hp0 = Number.isFinite(room.players[0].lastHp) ? room.players[0].lastHp : 5000;
     const hp1 = Number.isFinite(room.players[1].lastHp) ? room.players[1].lastHp : 5000;
@@ -432,6 +434,7 @@ function handleClientMessage(client, msg) {
   }
 
   if (msg.type === "pvp_sync" && typeof msg.hp === "number") {
+    if (typeof msg.round === "number" && msg.round !== room.round) return;
     room.players[pIdx].lastHp = Math.max(0, msg.hp);
     if (room.status === "playing" && !room.roundEnded && room.players[pIdx].lastHp <= 0) {
       finishPvpRound(room, pIdx === 0 ? 1 : 0, "ko");

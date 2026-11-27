@@ -3,7 +3,7 @@ import { combatHooks, damageEnemy, hurtPlayer, performMeleeAttack, unlockCodex }
 import { DEFAULT_LOADOUT, ELITE_AFFIXES, HERO_CLASSES, ITEMS, NPC_ENCOUNTERS, RELICS, SHRINE_ENCOUNTERS, SPELLS } from "./data.js";
 import { MAP_H, MAP_W, TILE, computeFOV, createScaledEnemy, generateFloor } from "./dungeon.js";
 import { checkBossSpotted, revealBossRoom, startBossMatch, updateEnemiesAndBosses } from "./enemyAI.js";
-import { broadcastPvpAction, notifyLocalPvpTimeout, updatePvpFrame } from "./pvp.js";
+import { broadcastPvpAction, notifyLocalPvpTimeout, syncPvpIntroTimer, updatePvpFrame } from "./pvp.js";
 import {
   addFloat,
   addLog,
@@ -47,6 +47,7 @@ export const worldHooks = {
 
 export function updateFOVIfNeeded(force = false) {
   const s = runtime.state;
+  if (!s || s.isPvp || s.level?.isPvp) return;
   const tx = Math.floor(s.player.x);
   const ty = Math.floor(s.player.y);
   if (force || tx !== s.lastFovTile.x || ty !== s.lastFovTile.y) {
@@ -723,13 +724,8 @@ export function updateSimulation(dt) {
     return;
   }
 
-  if ((s.pvpIntroTimer || 0) > 0) {
-    s.pvpIntroTimer = Math.max(0, s.pvpIntroTimer - dt);
-    if (s.pvpIntroTimer <= 0) {
-      sfx.nova();
-      addFloat(s.player.x, s.player.y - 0.55, "FIGHT!", "#fde047");
-    }
-    return;
+  if (s.isPvp && (s.pvpIntroTimer || 0) > 0) {
+    if (syncPvpIntroTimer(s) > 0) return;
   }
 
   const p = s.player;
@@ -808,6 +804,10 @@ export function updateSimulation(dt) {
       spawnBurst(p.x, p.y, "#38bdf8", 22, 1.35);
       spawnRing(p.x, p.y, ab.radius * TILE_SIZE, "#facc15", 0.38);
       spawnGroundDecal(p.x, p.y, "vfx_aegis_guard", ab.radius * TILE_SIZE * 2.0, 0.38, { scaleStart: 0.55, scaleEnd: 1.15, spin: 1.0 });
+      if (s.isPvp) {
+        broadcastPvpAction({ kind: "ring", x: p.x, y: p.y, radPx: ab.radius * TILE_SIZE, color: "#facc15", dur: 0.38 });
+        broadcastPvpAction({ kind: "decal", x: p.x, y: p.y, sheetKey: "vfx_aegis_guard", sizePx: ab.radius * TILE_SIZE * 2.0, duration: 0.38, opts: { scaleStart: 0.55, scaleEnd: 1.15, spin: 1.0 } });
+      }
       for (const e of [...s.level.enemies]) {
         const dx = e.x - p.x;
         const dy = e.y - p.y;
@@ -876,6 +876,20 @@ export function updateSimulation(dt) {
           label: sp.name,
         });
         spawnBurst(p.x + Math.cos(shotAng) * 0.4, p.y + Math.sin(shotAng) * 0.4, color, 4, 0.55);
+        if (s.isPvp) {
+          broadcastPvpAction({
+            kind: "projectile",
+            x: p.x + Math.cos(shotAng) * 0.42,
+            y: p.y + Math.sin(shotAng) * 0.42,
+            vx: Math.cos(shotAng) * speed,
+            vy: Math.sin(shotAng) * speed,
+            radius: isBow ? 0.22 : 0.25,
+            color,
+            isArrow: isBow,
+            isMagicOrb: !isBow,
+            life: 0.9,
+          });
+        }
       } else {
         const flipY = rs.remaining % 2 === 0;
         const ang = rs.angle + (flipY ? -0.22 : 0.22);
@@ -968,6 +982,7 @@ export function updateSimulation(dt) {
       spawnGroundDecal(p.x, p.y, "vfx_holy_ground_impact", radius * TILE_SIZE * 2.15, 0.9, { scaleStart: 0.72, scaleEnd: 1.08, spin: 0.35 });
       spawnGroundDecal(p.x, p.y, "vfx_ground_slam_shockwave", radius * TILE_SIZE * 1.45, 0.24, { scaleStart: 0.15, scaleEnd: 1.85 });
       s.beams.push({ x: p.x * TILE_SIZE, y: p.y * TILE_SIZE, color: "#fde047", life: 0.42, maxLife: 0.42 });
+      if (s.isPvp) broadcastPvpAction({ kind: "ult_slam", x: p.x, y: p.y, radius });
 
       for (const e of [...s.level.enemies]) {
         const dx = e.x - p.x;
@@ -1037,6 +1052,21 @@ export function updateSimulation(dt) {
         dmg: rc.dmg, color: rc.spell.color || "#fb923c", radius: 0.95, life: waveRange / waveSpeed, maxLife: waveRange / waveSpeed,
         isEnemy: false, isSlashWave: true, isSkill: true, pierce: true, hitIds: new Set(), sunderDur: rc.spell.sunderDur || 5.0, label: rc.spell.name,
       });
+      if (s.isPvp) {
+        broadcastPvpAction({ kind: "radiant_release", x: p.x, y: p.y, slashX: p.x + dirX * 0.45, slashY: p.y + dirY * 0.45, angle: rc.angle, color: rc.spell.color || "#fb923c" });
+        broadcastPvpAction({
+          kind: "projectile",
+          x: p.x + dirX * 0.65,
+          y: p.y + dirY * 0.65,
+          vx: dirX * waveSpeed,
+          vy: dirY * waveSpeed,
+          radius: 0.95,
+          color: rc.spell.color || "#fb923c",
+          isSlashWave: true,
+          pierce: true,
+          life: waveRange / waveSpeed,
+        });
+      }
     }
   } else if (p.valiantCharge) {
     const vc = p.valiantCharge;
@@ -1064,6 +1094,7 @@ export function updateSimulation(dt) {
         s.shake = Math.max(s.shake, 7);
         spawnBurst(p.x, p.y, "#38bdf8", 14, 1.25);
         spawnRing(p.x, p.y, 34, "#facc15", 0.25);
+        if (s.isPvp) broadcastPvpAction({ kind: "valiant_dash", x: p.x, y: p.y, dashDur: vc.dashDur });
       }
     } else {
       const prevHeroX = p.x;
@@ -1127,6 +1158,7 @@ export function updateSimulation(dt) {
         spawnRing(impactX, impactY, 2.05 * TILE_SIZE, "#fde047", 0.38, { delay: 0.06, lineWidth: 2.5 });
         spawnGroundDecal(impactX, impactY, "vfx_spear_impact_crater", 104, 0.95, { scaleStart: 0.55, scaleEnd: 1.05 });
         spawnGroundDecal(impactX, impactY, "vfx_ground_slam_shockwave", 92, 0.25, { angle: ang - Math.PI / 2, scaleStart: 0.45, scaleEnd: 1.55 });
+        if (s.isPvp) broadcastPvpAction({ kind: "valiant_slam", x: impactX, y: impactY, angle: ang });
         for (const e of [...s.level.enemies]) {
           if (Math.hypot(e.x - impactX, e.y - impactY) <= 1.75 || Math.hypot(e.x - p.x, e.y - p.y) <= 1.35) {
             damageEnemy(e, finDmg, false, `${vc.spell.name} Burst`, vc.dirX * 3.5, vc.dirY * 3.5, { isSkill: true, isAoe: true });
@@ -1197,6 +1229,7 @@ export function updateSimulation(dt) {
       s.beams.push({ x: p.x * TILE_SIZE, y: p.y * TILE_SIZE, color: "#fde047", life: 0.44, maxLife: 0.44 });
       spawnBurst(p.x, p.y, "#f97316", 32, 1.7);
       spawnBurst(p.x, p.y, "#fde047", 20, 1.35);
+      if (s.isPvp) broadcastPvpAction({ kind: "leap_land", x: p.x, y: p.y, radius });
 
       for (const e of [...s.level.enemies]) {
         const dx = e.x - p.x;
@@ -1491,13 +1524,17 @@ export function updateSimulation(dt) {
       if (!s.frostZones) s.frostZones = [];
       sfx.frost();
       const rad = pr.frostRadius || 2.0;
+      const dur = pr.frostDuration || 4.0;
       spawnRing(zx, zy, rad * TILE_SIZE, "#38bdf8", 0.38);
       spawnBurst(zx, zy, "#bae6fd", 16, 1.15);
       s.frostZones.push({
-        x: zx, y: zy, radius: rad, timer: pr.frostDuration || 4.0, maxTimer: pr.frostDuration || 4.0,
+        x: zx, y: zy, radius: rad, timer: dur, maxTimer: dur,
         chillDur: typeof pr.chill === "number" ? pr.chill : 2.5, freezeDur: pr.frostFreezeDur || 1.5,
-        shatterDmg: pr.frostShatterDmg || 3, dwell: new Map(), frozenIds: new Set(), particleCd: 0,
+        shatterDmg: pr.frostShatterDmg || 3, isVisualOnly: Boolean(pr.isPvpVisual), dwell: new Map(), frozenIds: new Set(), particleCd: 0,
       });
+      if (s.isPvp && !pr.isPvpVisual) {
+        broadcastPvpAction({ kind: "frost_zone", x: zx, y: zy, radius: rad, duration: dur });
+      }
     };
 
     const blocked = isBlockedAt(tx, ty);
@@ -1639,25 +1676,27 @@ export function updateSimulation(dt) {
           color: Math.random() < 0.5 ? "#bae6fd" : "#38bdf8", size: 2.8, life: 0.38, maxLife: 0.38,
         });
       }
-      for (const e of [...s.level.enemies]) {
-        const inside = Math.hypot(e.x - z.x, e.y - z.y) <= z.radius + (e.isBoss ? 0.35 : 0.25);
-        if (inside) {
-          e.chilled = Math.max(e.chilled || 0, Math.min(z.chillDur, 1.2));
-          const dwell = (z.dwell.get(e.uid) || 0) + dt;
-          z.dwell.set(e.uid, dwell);
-          if (dwell > 1.0 && !z.frozenIds.has(e.uid)) {
-            z.frozenIds.add(e.uid);
-            e.frozenTimer = Math.max(e.frozenTimer || 0, z.freezeDur);
-            e.chilled = Math.max(e.chilled || 0, z.chillDur);
-            e.windupTimer = 0;
-            sfx.frost();
-            spawnBurst(e.x, e.y, "#e0f2fe", 14, 1.15);
-            spawnRing(e.x, e.y, 28, "#7dd3fc", 0.3);
-            addFloat(e.x, e.y - 0.5, "FROZEN!", "#bae6fd");
-            damageEnemy(e, z.shatterDmg, false, "Frost Lance (Freeze)", 0, 0, { isSkill: true, isAoe: true, freezeDur: z.freezeDur });
+      if (!z.isVisualOnly) {
+        for (const e of [...s.level.enemies]) {
+          const inside = Math.hypot(e.x - z.x, e.y - z.y) <= z.radius + (e.isBoss ? 0.35 : 0.25);
+          if (inside) {
+            e.chilled = Math.max(e.chilled || 0, Math.min(z.chillDur, 1.2));
+            const dwell = (z.dwell.get(e.uid) || 0) + dt;
+            z.dwell.set(e.uid, dwell);
+            if (dwell > 1.0 && !z.frozenIds.has(e.uid)) {
+              z.frozenIds.add(e.uid);
+              e.frozenTimer = Math.max(e.frozenTimer || 0, z.freezeDur);
+              e.chilled = Math.max(e.chilled || 0, z.chillDur);
+              e.windupTimer = 0;
+              sfx.frost();
+              spawnBurst(e.x, e.y, "#e0f2fe", 14, 1.15);
+              spawnRing(e.x, e.y, 28, "#7dd3fc", 0.3);
+              addFloat(e.x, e.y - 0.5, "FROZEN!", "#bae6fd");
+              damageEnemy(e, z.shatterDmg, false, "Frost Lance (Freeze)", 0, 0, { isSkill: true, isAoe: true, freezeDur: z.freezeDur });
+            }
+          } else {
+            z.dwell.delete(e.uid);
           }
-        } else {
-          z.dwell.delete(e.uid);
         }
       }
       if (z.timer <= 0) s.frostZones.splice(i, 1);
@@ -1698,10 +1737,12 @@ export function updateSimulation(dt) {
           scaleStart: 0.85,
           scaleEnd: 1.05,
         });
-        for (const e of [...s.level.enemies]) {
-          if (Math.hypot(e.x - st.x, e.y - st.y) <= st.radius + 0.35) {
-            e.chilled = Math.max(e.chilled || 0, st.chillDur);
-            damageEnemy(e, st.dmg, false, st.spell.name, 0, 0, { isSkill: true, isAoe: true });
+        if (!st.isVisualOnly) {
+          for (const e of [...s.level.enemies]) {
+            if (Math.hypot(e.x - st.x, e.y - st.y) <= st.radius + 0.35) {
+              e.chilled = Math.max(e.chilled || 0, st.chillDur);
+              damageEnemy(e, st.dmg, false, st.spell.name, 0, 0, { isSkill: true, isAoe: true });
+            }
           }
         }
       }

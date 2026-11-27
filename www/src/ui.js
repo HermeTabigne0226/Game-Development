@@ -38,12 +38,13 @@ export function buildSpellButtons() {
     btn.className = "spell-btn";
     btn.dataset.spellId = sp.id;
     btn.title = `${sp.desc} (Hotkey: ${sp.hotkey})`;
+    const isPvpMode = Boolean(runtime.state?.isPvp);
     btn.innerHTML = `
       <div class="spell-cd-overlay" style="transform: scaleY(0)"></div>
       <img src="${sp.icon}" alt="" />
       <div class="spell-meta">
         <strong>[${sp.hotkey}] ${sp.name}</strong>
-        <span>${sp.mpCost} MP</span>
+        <span>${isPvpMode ? "Free (PvP)" : `${sp.mpCost} MP`}</span>
       </div>
     `;
     btn.addEventListener("click", () => castSpell(sp.id));
@@ -97,6 +98,7 @@ export function updateCooldownUI() {
   const s = runtime.state;
   if (!s) return;
   const p = s.player;
+  const isPvp = Boolean(s.isPvp);
   const stats = getPlayerStats();
   const mpDiscount = stats.setPassives.has("astral_efficiency") ? 0.75 : 1.0;
 
@@ -115,8 +117,8 @@ export function updateCooldownUI() {
     const overlay = btn.querySelector(".spell-cd-overlay");
     if (overlay) overlay.style.transform = `scaleY(${ratio})`;
     const costLabel = btn.querySelector(".spell-meta span");
-    const effectiveCost = Math.max(1, Math.round(sp.mpCost * mpDiscount));
-    const outOfMana = !locked && p.mp < effectiveCost;
+    const effectiveCost = isPvp ? 0 : Math.max(1, Math.round(sp.mpCost * mpDiscount));
+    const outOfMana = !isPvp && !locked && p.mp < effectiveCost;
     if (costLabel) {
       costLabel.textContent = locked
         ? canUpgrade
@@ -126,7 +128,9 @@ export function updateCooldownUI() {
             : "Locked (Lv Up)"
         : outOfMana && cd <= 0
           ? "Out of Mana"
-          : `Lv${rank}/${sp.maxRank} · ${effectiveCost} MP`;
+          : isPvp
+            ? `Lv${rank}/${sp.maxRank} · Free`
+            : `Lv${rank}/${sp.maxRank} · ${effectiveCost} MP`;
     }
     btn.classList.toggle("locked", locked);
     btn.classList.toggle("out-of-mana", outOfMana && cd <= 0);
@@ -153,8 +157,8 @@ export function updateCooldownUI() {
     const rank = p.skillRanks[sp.id] || 0;
     const locked = rank <= 0;
     const cd = s.spellCooldowns[sp.id] || 0;
-    const effectiveCost = Math.max(1, Math.round(sp.mpCost * mpDiscount));
-    const outOfMana = !locked && p.mp < effectiveCost;
+    const effectiveCost = isPvp ? 0 : Math.max(1, Math.round(sp.mpCost * mpDiscount));
+    const outOfMana = !isPvp && !locked && p.mp < effectiveCost;
     const maxed = rank >= sp.maxRank;
     const reqHeroLv = !maxed && sp.reqLevels ? sp.reqLevels[rank] : null;
     const canUpgrade = !maxed && (p.skillPoints || 0) > 0 && (reqHeroLv === null || p.level >= reqHeroLv);
@@ -192,18 +196,23 @@ export function updateCooldownUI() {
         : subType === "book"
           ? "Blink Dash"
           : "Dash";
+  const dashOutOfMana = !isPvp && p.mp < 10;
   const dashBtn = document.getElementById("btn-dash");
   if (dashBtn) {
-    dashBtn.disabled = p.dashCd > 0 || p.mp < 10;
-    dashBtn.classList.toggle("on-cooldown", p.dashCd > 0 || p.mp < 10);
-    dashBtn.textContent = p.dashCd > 0 ? `${dashBaseLabel} (${p.dashCd.toFixed(1)}s)` : `${dashBaseLabel} (10 MP)`;
+    dashBtn.disabled = p.dashCd > 0 || dashOutOfMana;
+    dashBtn.classList.toggle("on-cooldown", p.dashCd > 0 || dashOutOfMana);
+    dashBtn.textContent = p.dashCd > 0
+      ? `${dashBaseLabel} (${p.dashCd.toFixed(1)}s)`
+      : isPvp
+        ? `${dashBaseLabel} (6s CD)`
+        : `${dashBaseLabel} (10 MP)`;
     dashBtn.title = "Dash skill adapts to Sub-Weapon: Shield = Shield Bash · Arrows = 3 Ricochet Arrows · Tome/Book = Blink Teleport";
   }
   const tDash = document.getElementById("touch-btn-dash");
   const tDashCd = document.getElementById("touch-dash-cd");
   if (tDash && tDashCd) {
-    tDash.disabled = p.dashCd > 0 || p.mp < 10;
-    tDash.classList.toggle("on-cooldown", p.dashCd > 0 || p.mp < 10);
+    tDash.disabled = p.dashCd > 0 || dashOutOfMana;
+    tDash.classList.toggle("on-cooldown", p.dashCd > 0 || dashOutOfMana);
     if (p.dashCd > 0) {
       tDashCd.hidden = false;
       tDashCd.textContent = String(Math.ceil(p.dashCd));
@@ -453,6 +462,10 @@ export function updateRoomAndBossHUD() {
     if (badge) badge.hidden = true;
     const bossBar = document.getElementById("boss-hud-bar");
     if (bossBar) bossBar.hidden = true;
+    const mMenuBtn = document.getElementById("mhud-btn-menu");
+    if (mMenuBtn && mMenuBtn.textContent !== "Lobby") mMenuBtn.textContent = "Lobby";
+    const dMenuBtn = document.getElementById("btn-menu");
+    if (dMenuBtn && dMenuBtn.textContent !== "Lobby") dMenuBtn.textContent = "Lobby";
 
     if (sfHud) {
       sfHud.hidden = false;
@@ -563,6 +576,10 @@ export function updateRoomAndBossHUD() {
   if (sfHud) sfHud.hidden = true;
   const badgeRestore = document.getElementById("room-enemy-badge");
   if (badgeRestore) badgeRestore.hidden = false;
+  const mMenuBtn = document.getElementById("mhud-btn-menu");
+  if (mMenuBtn && mMenuBtn.textContent !== "Menu") mMenuBtn.textContent = "Menu";
+  const dMenuBtn = document.getElementById("btn-menu");
+  if (dMenuBtn && dMenuBtn.textContent !== "Menu") dMenuBtn.textContent = "Menu";
 
   const nonBossLeft = s.level.enemies.filter((e) => !e.isBoss && !e.isClone).length;
   const boss = s.level.enemies.find((e) => e.isBoss);
@@ -717,5 +734,6 @@ renderHooks.updateUI = updateUI;
 renderHooks.updatePerfHUD = updatePerfHUD;
 pvpHooks.buildSpellButtons = buildSpellButtons;
 pvpHooks.updateUI = updateUI;
+pvpHooks.updateRoomAndBossHUD = updateRoomAndBossHUD;
 pvpHooks.hideMainMenu = hideMainMenu;
 pvpHooks.showMainMenu = showMainMenu;

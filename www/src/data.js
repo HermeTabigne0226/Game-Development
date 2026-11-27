@@ -1,8 +1,18 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.3.13";
+export const GAME_VERSION = "v.1.3.14 Beta Test";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.3.14 Beta Test",
+    title: "PvP Countdown Fix, Full Skill VFX Sync, No MP Limits & Lobby Flow",
+    notes: [
+      "PvP Round Countdown & Sync Fix: Switched PvP 3-2-1 round countdowns to wall-clock timing, disabled content-visibility skipping in PvP, forced instant HUD round/score sync, and guarded against stale round-end packets.",
+      "No PvP Mana Restrictions & 6s Dodge Cooldown: Skills and Dash cost 0 MP in 1v1 PvP Arena (no Out of Mana locks), while Dodge/Dash has a balanced 6-second cooldown in PvP only (1.05s in Dungeon runs).",
+      "PvP Full Arena Visibility & Skill VFX Sync: Fixed PvP fog-of-war regression after moving and synced all Gilded Knight & Sylvan Ranger skill visuals (Divine Cataclysm, Valiant Charge, Radiant Cleave, Skyfall Judgment, Aegis Bulwark, Arrow Storm, Frost Zones, and buff auras) to your rival's screen.",
+      "Auto-Return Lobby Countdown & Lobby Confirmation: Added a 5-second auto-return countdown to the PvP Lobby after match victory/defeat, renamed the PvP Menu button to Lobby, and added a confirmation dialog to Go to PvP Lobby or Exit Match.",
+    ],
+  },
   {
     version: "v.1.3.13",
     title: "Street Fighter PvP HUD, Lobby-First Flow, Round KO & Zero-HP Fix",

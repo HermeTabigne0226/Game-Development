@@ -640,7 +640,7 @@ export function openShopDialog(shop) {
   }
 }
 
-function openConfirmDialog({ eyebrow = "Confirm", title = "Are you sure?", message = "", confirmLabel = "Confirm", cancelLabel = "Stay" }) {
+export function openConfirmDialog({ eyebrow = "Confirm", title = "Are you sure?", message = "", confirmLabel = "Confirm", altLabel = null, cancelLabel = "Stay" }) {
   return new Promise((resolve) => {
     const dlg = document.getElementById("confirm-dialog");
     if (!dlg) {
@@ -651,11 +651,16 @@ function openConfirmDialog({ eyebrow = "Confirm", title = "Are you sure?", messa
     const titleEl = document.getElementById("confirm-dialog-title");
     const textEl = document.getElementById("confirm-dialog-text");
     const okBtn = document.getElementById("btn-confirm-ok");
+    const altBtn = document.getElementById("btn-confirm-alt");
     const cancelBtn = document.getElementById("btn-confirm-cancel");
     if (eyebrowEl) eyebrowEl.textContent = eyebrow;
     if (titleEl) titleEl.textContent = title;
     if (textEl) textEl.textContent = message;
     if (okBtn) okBtn.textContent = confirmLabel;
+    if (altBtn) {
+      altBtn.hidden = !altLabel;
+      if (altLabel) altBtn.textContent = altLabel;
+    }
     if (cancelBtn) cancelBtn.textContent = cancelLabel;
 
     let done = false;
@@ -663,11 +668,12 @@ function openConfirmDialog({ eyebrow = "Confirm", title = "Are you sure?", messa
       if (done) return;
       done = true;
       ac.abort();
-      if (dlg.open) dlg.close(result ? "confirm" : "cancel");
+      if (dlg.open) dlg.close(result ? String(result) : "cancel");
       resolve(result);
     };
     const ac = new AbortController();
-    okBtn?.addEventListener("click", () => finish(true), { signal: ac.signal });
+    okBtn?.addEventListener("click", () => finish(altLabel ? "ok" : true), { signal: ac.signal });
+    altBtn?.addEventListener("click", () => finish("alt"), { signal: ac.signal });
     cancelBtn?.addEventListener("click", () => finish(false), { signal: ac.signal });
     dlg.addEventListener("cancel", (e) => { e.preventDefault(); finish(false); }, { signal: ac.signal });
     dlg.addEventListener("close", () => finish(false), { signal: ac.signal });
@@ -2165,6 +2171,7 @@ export function openPvpDialog() {
 }
 
 // Wire hooks
+pvpHooks.openPvpDialog = openPvpDialog;
 combatHooks.openSkillDialog = openSkillDialog;
 uiHooks.useShortcut = useShortcut;
 uiHooks.openItemActionDialog = openItemActionDialog;

@@ -605,11 +605,13 @@ export function performDash() {
   if (!s || s.runEnded || s.dyingTimer > 0 || (s.pvpIntroTimer || 0) > 0) return;
   const p = s.player;
   if ((p.stunTimer || 0) > 0 || p.dashCd > 0 || p.dashTimer > 0) return;
-  if (p.mp < 10) {
-    addLog("Not enough MP to Dash! (10 MP required)", "info");
-    return;
+  if (!s.isPvp) {
+    if (p.mp < 10) {
+      addLog("Not enough MP to Dash! (10 MP required)", "info");
+      return;
+    }
+    p.mp -= 10;
   }
-  p.mp -= 10;
   runtime.uiDirty = true;
 
   let dx = 0;
@@ -636,7 +638,7 @@ export function performDash() {
   p.dashDirX = dx;
   p.dashDirY = dy;
   p.dashTimer = 0.16;
-  p.dashCd = 1.05;
+  p.dashCd = s.isPvp ? 6.0 : 1.05;
   p.iFrames = Math.max(p.iFrames, 0.24);
   p.facingLeft = dx < 0;
   sfx.dash();
@@ -767,14 +769,18 @@ export function castSpell(spellId) {
   }
   if (s.spellCooldowns[spell.id] > 0) return;
 
-  const mpCost = stats.setPassives.has("astral_efficiency") ? Math.max(1, Math.round(spell.mpCost * 0.75)) : spell.mpCost;
-  if (p.mp < mpCost) {
+  const mpCost = s.isPvp
+    ? 0
+    : stats.setPassives.has("astral_efficiency")
+      ? Math.max(1, Math.round(spell.mpCost * 0.75))
+      : spell.mpCost;
+  if (mpCost > 0 && p.mp < mpCost) {
     addLog("Not enough MP!", "info");
     return;
   }
 
   const rIdx = Math.min(rank - 1, spell.cooldowns.length - 1);
-  p.mp -= mpCost;
+  if (mpCost > 0) p.mp -= mpCost;
   s.spellCooldowns[spell.id] = spell.cooldowns[rIdx];
   if (p.heroClass === "mage") {
     p.basicShotCount = (p.basicShotCount || 0) + 1;
@@ -865,6 +871,7 @@ export function castSpell(spellId) {
       const tx = p.x + Math.cos(angle) * 4.0;
       const ty = p.y + Math.sin(angle) * 4.0;
       spawnVfxAnim(p.x, p.y, "vfx_chain_lightning", 128, 0.38, { angle, anchorX: 0, anchorY: 0.5 });
+      if (s.isPvp) broadcastPvpAction({ kind: "vfx", x: p.x, y: p.y, sheetKey: "vfx_chain_lightning", sizePx: 128, duration: 0.38, angle, anchorX: 0, anchorY: 0.5 });
       spawnBurst(tx, ty, "#7dd3fc", 8, 0.8);
       addLog(`${spell.name} fizzled with no nearby targets.`, "info");
     }
@@ -980,7 +987,10 @@ export function castSpell(spellId) {
     spawnRing(p.x, p.y, radius * TILE_SIZE, spell.color, 0.35);
     spawnRing(p.x, p.y, radius * TILE_SIZE * 0.65, "#fde047", 0.25);
     spawnGroundDecal(p.x, p.y, "vfx_holy_ground_impact", radius * TILE_SIZE * 2.05, 0.55, { scaleStart: 0.45, scaleEnd: 1.12, spin: 0.7 });
-    if (s.isPvp) broadcastPvpAction({ kind: "ring", x: p.x, y: p.y, radPx: radius * TILE_SIZE, color: spell.color, dur: 0.38 });
+    if (s.isPvp) {
+      broadcastPvpAction({ kind: "ring", x: p.x, y: p.y, radPx: radius * TILE_SIZE, color: spell.color, dur: 0.38 });
+      broadcastPvpAction({ kind: "decal", x: p.x, y: p.y, sheetKey: "vfx_holy_ground_impact", sizePx: radius * TILE_SIZE * 2.05, duration: 0.55, opts: { scaleStart: 0.45, scaleEnd: 1.12, spin: 0.7 } });
+    }
 
     const hits = s.level.enemies.filter((e) => Math.hypot(e.x - p.x, e.y - p.y) <= radius + 0.35);
     for (const e of hits) {
@@ -1059,7 +1069,11 @@ export function castSpell(spellId) {
     spawnRing(targetX, targetY, 38, spell.color, 0.35);
     spawnGroundDecal(targetX, targetY, "vfx_holy_ground_impact", 84, 0.65, { scaleStart: 0.72, scaleEnd: 1.08, spin: 0.5 });
     s.beams.push({ x: targetX * TILE_SIZE, y: targetY * TILE_SIZE, color: spell.color, life: 0.36, maxLife: 0.36 });
-    if (s.isPvp) broadcastPvpAction({ kind: "beam", x: targetX, y: targetY, color: spell.color });
+    if (s.isPvp) {
+      broadcastPvpAction({ kind: "beam", x: targetX, y: targetY, color: spell.color });
+      broadcastPvpAction({ kind: "ring", x: targetX, y: targetY, radPx: 38, color: spell.color, dur: 0.35 });
+      broadcastPvpAction({ kind: "decal", x: targetX, y: targetY, sheetKey: "vfx_holy_ground_impact", sizePx: 84, duration: 0.65, opts: { scaleStart: 0.72, scaleEnd: 1.08, spin: 0.5 } });
+    }
     s.shake = Math.max(s.shake, 4);
 
     const dmg = Math.round(stats.atk * spell.mults[rIdx]) + spell.flats[rIdx];
@@ -1087,6 +1101,7 @@ export function castSpell(spellId) {
     };
     spawnBurst(p.x, p.y, "#fde047", 14, 1.1);
     addFloat(p.x, p.y - 0.5, "SKYFALL!", "#f97316");
+    if (s.isPvp) broadcastPvpAction({ kind: "leap_start", x: p.x, y: p.y, duration: 1.25, radius: spell.radii[rIdx] });
     return;
   }
 
@@ -1098,6 +1113,7 @@ export function castSpell(spellId) {
     sfx.heal();
     spawnBurst(p.x, p.y, "#38bdf8", 14, 1.1);
     spawnRing(p.x, p.y, 32, "#facc15", 0.35);
+    if (s.isPvp) broadcastPvpAction({ kind: "ring", x: p.x, y: p.y, radPx: 32, color: "#facc15", dur: 0.35 });
     addFloat(p.x, p.y - 0.35, `AEGIS +${bonus} DEF`, "#38bdf8");
     return;
   }
@@ -1116,6 +1132,7 @@ export function castSpell(spellId) {
     };
     spawnRing(p.x, p.y, 34, "#fb923c", 0.35);
     spawnBurst(p.x, p.y, "#fde047", 10, 0.9);
+    if (s.isPvp) broadcastPvpAction({ kind: "radiant_charge", duration: 0.65, angle });
     return;
   }
 
@@ -1127,6 +1144,10 @@ export function castSpell(spellId) {
     spawnBurst(p.x, p.y, "#34d399", 18, 1.2);
     spawnRing(p.x, p.y, 38, "#34d399", 0.4);
     spawnGroundDecal(p.x, p.y, "vfx_heal_haste_aura", 92, 0.48, { scaleStart: 0.65, scaleEnd: 1.25, spin: 1.2 });
+    if (s.isPvp) {
+      broadcastPvpAction({ kind: "ring", x: p.x, y: p.y, radPx: 38, color: "#34d399", dur: 0.4 });
+      broadcastPvpAction({ kind: "decal", x: p.x, y: p.y, sheetKey: "vfx_heal_haste_aura", sizePx: 92, duration: 0.48, opts: { scaleStart: 0.65, scaleEnd: 1.25, spin: 1.2 } });
+    }
     addFloat(p.x, p.y - 0.35, `+${gained} HP · HASTE`, "#34d399");
     addLog(`${spell.name}: Restored ${gained} HP and gained +15% Speed!`, "heal");
     return;
@@ -1179,6 +1200,21 @@ export function castSpell(spellId) {
       spell,
     };
     spawnRing(p.x, p.y, 26, "#38bdf8", 0.35);
+    if (s.isPvp) {
+      broadcastPvpAction({
+        kind: "valiant_windup",
+        windupDur: 0.62,
+        dashDur: 0.38,
+        startX: p.x,
+        startY: p.y,
+        targetX: endX,
+        targetY: endY,
+        travelDist,
+        spearDistMax,
+        dirX,
+        dirY,
+      });
+    }
     return;
   }
 
@@ -1191,6 +1227,7 @@ export function castSpell(spellId) {
     p.retributionRadius = spell.radius;
     spawnBurst(p.x, p.y, "#ef4444", 18, 1.2);
     spawnRing(p.x, p.y, spell.radius * TILE_SIZE, "#ef4444", 0.4);
+    if (s.isPvp) broadcastPvpAction({ kind: "ring", x: p.x, y: p.y, radPx: spell.radius * TILE_SIZE, color: "#ef4444", dur: 0.4 });
     addFloat(p.x, p.y - 0.35, "RETRIBUTION", "#ef4444");
     addLog(`${spell.name}: Consecrated thorns active for ${spell.duration}s!`, "story");
     return;
@@ -1213,8 +1250,11 @@ export function castSpell(spellId) {
     p.anim = "attack";
     p.animTimer = 0.25;
     s.slashes.push({ x: p.x * TILE_SIZE, y: p.y * TILE_SIZE, angle, radius: 44, variant: "gold", color: spell.color, life: 0.24, maxLife: 0.24 });
-    if (s.isPvp) broadcastPvpAction({ kind: "slash", x: p.x, y: p.y, angle, radius: 44, variant: "gold", color: spell.color, life: 0.24 });
     spawnGroundDecal(p.x, p.y, "vfx_damage_aoe_field", spell.range * TILE_SIZE * 1.45, 0.3, { scaleStart: 0.55, scaleEnd: 1.05, spin: 1.4 });
+    if (s.isPvp) {
+      broadcastPvpAction({ kind: "slash", x: p.x, y: p.y, angle, radius: 44, variant: "gold", color: spell.color, life: 0.24 });
+      broadcastPvpAction({ kind: "decal", x: p.x, y: p.y, sheetKey: "vfx_damage_aoe_field", sizePx: spell.range * TILE_SIZE * 1.45, duration: 0.3, opts: { scaleStart: 0.55, scaleEnd: 1.05, spin: 1.4 } });
+    }
     const dmg = Math.round(stats.atk * spell.mults[rIdx]);
     const dirX = Math.cos(angle);
     const dirY = Math.sin(angle);
@@ -1249,6 +1289,7 @@ export function castSpell(spellId) {
     p.ultCharge = { timer: spell.chargeTime, duration: spell.chargeTime, rankIdx: rIdx, spell };
     addFloat(p.x, p.y - 0.5, "CHARGING...", "#fde047");
     addLog(`${spell.name}: Raising sword (${spell.chargeTime.toFixed(1)}s charge)...`, "story");
+    if (s.isPvp) broadcastPvpAction({ kind: "ult_charge", duration: spell.chargeTime, radius: spell.radii[rIdx] });
     return;
   }
 
@@ -1338,6 +1379,10 @@ export function castSpell(spellId) {
     spawnBurst(p.x, p.y, "#fb923c", 16, 1.2);
     spawnRing(p.x, p.y, 38, "#facc15", 0.35);
     spawnGroundDecal(p.x, p.y, "vfx_skyfall_reticle", 96, 0.45, { scaleStart: 0.5, scaleEnd: 1.15, spin: 1.1 });
+    if (s.isPvp) {
+      broadcastPvpAction({ kind: "ring", x: p.x, y: p.y, radPx: 38, color: "#facc15", dur: 0.35 });
+      broadcastPvpAction({ kind: "decal", x: p.x, y: p.y, sheetKey: "vfx_skyfall_reticle", sizePx: 96, duration: 0.45, opts: { scaleStart: 0.5, scaleEnd: 1.15, spin: 1.1 } });
+    }
     addFloat(p.x, p.y - 0.35, `+${gained} HP · +${atkBonus} ATK`, "#fde047");
     addLog(`${spell.name}: +${gained} HP and +${atkBonus} ATK for ${spell.duration}s!`, "heal");
     return;
@@ -1381,6 +1426,7 @@ export function castSpell(spellId) {
       spell,
     });
     spawnRing(tx, ty, radius * TILE_SIZE, "#facc15", 0.4);
+    if (s.isPvp) broadcastPvpAction({ kind: "arrow_storm", x: tx, y: ty, radius, duration: dur, tickInterval: spell.tickInterval || 0.35 });
     addFloat(tx, ty - 0.5, "ARROW STORM!", "#fde047");
     addLog(`${spell.name}: Raining arrows for ${dur.toFixed(1)}s!`, "story");
   }
@@ -1395,6 +1441,7 @@ export function stunPlayer(duration, sourceName = "Boss", color = "#facc15") {
   p.rapidSlash = null;
   p.valiantCharge = null;
   p.radiantCharge = null;
+  if (s.isPvp) broadcastPvpAction({ kind: "clear_charges" });
   p.vx = 0;
   p.vy = 0;
   addFloat(p.x, p.y - 0.5, "STUNNED!", color);

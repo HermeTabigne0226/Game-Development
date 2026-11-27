@@ -16,6 +16,7 @@ import {
   TILE_SIZE,
   touchAim,
 } from "./state.js";
+import { syncPvpIntroTimer } from "./pvp.js";
 import { updateSimulation } from "./world.js";
 
 export const renderHooks = {
@@ -93,9 +94,13 @@ export function renderFrame(ts) {
     }
   }
 
+  if (s.isPvp && (s.pvpIntroTimer || 0) > 0) {
+    syncPvpIntroTimer(s);
+  }
   const menuOpen = !document.getElementById("main-menu").hidden || !document.getElementById("loading-screen").hidden;
   const modalOpen = Boolean(document.querySelector("dialog[open]")) || menuOpen;
-  if (!modalOpen && runtime.isCanvasVisible && !document.hidden) {
+  const canSimulate = s.isPvp ? !modalOpen : (!modalOpen && runtime.isCanvasVisible && !document.hidden);
+  if (canSimulate) {
     runtime.animTimer += dt;
     if (runtime.animTimer >= 0.095) {
       runtime.animFrame = (runtime.animFrame + 1) % 24;
@@ -639,6 +644,9 @@ export function renderFrame(ts) {
       drawGridVfxFrame(ctx, assets.vfx_mana_shield, meta, mFrame, cx - 28, cy - 28 - ez, 56, 54);
       ctx.restore();
     }
+    if (e.isPvpPlayer) {
+      drawEntityChargesAndAuras(ctx, assets, ts, e);
+    }
 
     if ((e.frozenTimer || 0) > 0) {
       ctx.save();
@@ -726,11 +734,14 @@ export function renderFrame(ts) {
   const heroDrawSize = 40;
 
   for (const aft of s.afterimages) {
+    const aftPrefix = aft.heroClass
+      ? (aft.heroClass === "mage" ? "mage" : aft.heroClass === "ranger" || aft.heroClass === "soldier" ? "ranger" : "gilded")
+      : heroPrefix;
     ctx.save();
     ctx.globalAlpha = (aft.life / aft.maxLife) * 0.45;
     drawSheetFrame(
       ctx,
-      assets[`${heroPrefix}_walk`] || assets[`${heroPrefix}_idle`] || assets.gilded_idle,
+      assets[`${aftPrefix}_walk`] || assets[`${aftPrefix}_idle`] || assets.gilded_idle,
       aft.frame,
       aft.x * TILE_SIZE - heroDrawSize / 2,
       aft.y * TILE_SIZE - heroDrawSize / 2 - 2,
@@ -1154,315 +1165,7 @@ export function renderFrame(ts) {
     }
   }
 
-  if (p.radiantCharge) {
-    const rc = p.radiantCharge;
-    const prog = Math.min(1, 1 - rc.timer / rc.duration);
-    const pxCenter = p.x * TILE_SIZE;
-    const pyCenter = p.y * TILE_SIZE;
-    ctx.save();
-    ctx.strokeStyle = `rgba(251, 146, 60, ${0.4 + prog * 0.45})`;
-    ctx.fillStyle = `rgba(250, 204, 21, ${0.08 + prog * 0.14})`;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(pxCenter, pyCenter, 28 - prog * 8, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.translate(pxCenter, pyCenter);
-    if (assets.vfx_ground_slam_shockwave) {
-      ctx.imageSmoothingEnabled = false;
-      ctx.rotate(rc.angle - Math.PI / 2);
-      const sz = 44 + prog * 36;
-      ctx.globalAlpha = 0.55 + prog * 0.45;
-      ctx.drawImage(assets.vfx_ground_slam_shockwave, -sz / 2, -sz * 0.15, sz, sz);
-    } else {
-      const arcRad = 22 + prog * 14;
-      ctx.rotate(rc.angle);
-      ctx.strokeStyle = `rgba(249, 115, 22, ${0.5 + prog * 0.5})`;
-      ctx.lineWidth = 5 + prog * 5;
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.arc(6, 0, arcRad, -1.05, 1.05);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  if (p.ultCharge) {
-    const uc = p.ultCharge;
-    const prog = Math.min(1, 1 - uc.timer / uc.duration);
-    const radPx = uc.spell.radii[uc.rankIdx] * TILE_SIZE;
-    const pxCenter = p.x * TILE_SIZE;
-    const pyCenter = p.y * TILE_SIZE;
-    ctx.save();
-    ctx.strokeStyle = `rgba(251, 191, 36, ${0.45 + Math.sin(ts * 0.015) * 0.25})`;
-    ctx.fillStyle = `rgba(251, 191, 36, ${0.08 + prog * 0.14})`;
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.arc(pxCenter, pyCenter, radPx, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    const gatherImg = assets.charging_ground_sigil || assets.vfx_holy_ground_impact;
-    if (gatherImg) {
-      ctx.save();
-      ctx.imageSmoothingEnabled = false;
-      ctx.globalAlpha = 0.6 + prog * 0.35;
-      ctx.translate(pxCenter, pyCenter);
-      ctx.rotate(ts * 0.0006);
-      const fullSz = radPx * 2.08;
-      ctx.drawImage(gatherImg, -fullSz / 2, -fullSz / 2, fullSz, fullSz);
-      ctx.restore();
-    }
-    ctx.strokeStyle = "#fef08a";
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.arc(pxCenter, pyCenter, radPx * prog, 0, Math.PI * 2);
-    ctx.stroke();
-
-    const lift = 28 + Math.sin(prog * Math.PI * 0.5) * 10;
-    const sy = pyCenter - lift - pz;
-    const swordKey = prog < 0.4 ? "charging_sword_stage1" : prog < 0.8 ? "charging_sword_stage2" : "charging_sword_max";
-    const swordImg = assets[swordKey];
-    if (swordImg) {
-      ctx.imageSmoothingEnabled = false;
-      const pulse = prog >= 0.8 ? 1 + Math.sin(ts * 0.025) * 0.08 : 1;
-      const sz = 52 * pulse;
-      ctx.drawImage(swordImg, pxCenter + (p.facingLeft ? -4 : 4) - sz / 2, sy - sz * 0.62, sz, sz);
-    } else {
-      ctx.translate(pxCenter + (p.facingLeft ? -4 : 4), sy);
-      ctx.fillStyle = "#fef9c3";
-      ctx.strokeStyle = "#f59e0b";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(0, -28);
-      ctx.lineTo(4, -6);
-      ctx.lineTo(-4, -6);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  // Valiant Charge extending spear thrust (windup) & dynamic war-lance surge (dash)
-  if (p.valiantCharge) {
-    const vc = p.valiantCharge;
-    const ang = Math.atan2(vc.dirY, vc.dirX);
-    const sx = vc.startX * TILE_SIZE;
-    const sy = vc.startY * TILE_SIZE;
-    const spearMaxPx = (vc.spearDistMax || 1.65) * TILE_SIZE;
-    const spearEx = sx + Math.cos(ang) * spearMaxPx;
-    const spearEy = sy + Math.sin(ang) * spearMaxPx;
-    const markX = vc.travelDist > 0.5 ? vc.targetX * TILE_SIZE : spearEx;
-    const markY = vc.travelDist > 0.5 ? vc.targetY * TILE_SIZE : spearEy;
-
-    if (vc.phase === "windup") {
-      const prog = Math.min(1, 1 - vc.timer / vc.windupDur);
-      const eased = 1 - Math.pow(1 - prog, 2.2);
-      const spearLen = (0.65 + ((vc.spearDistMax || 1.65) - 0.65) * eased) * TILE_SIZE;
-      const tipX = sx + Math.cos(ang) * spearLen;
-      const tipY = sy + Math.sin(ang) * spearLen;
-
-      ctx.save();
-      ctx.strokeStyle = `rgba(56, 189, 248, ${0.35 + prog * 0.3})`;
-      ctx.lineWidth = 2;
-      ctx.setLineDash([6, 6]);
-      ctx.beginPath();
-      ctx.moveTo(sx, sy);
-      ctx.lineTo(markX, markY);
-      ctx.stroke();
-
-      ctx.setLineDash([]);
-      if (assets.vfx_spear_impact_crater) {
-        ctx.save();
-        ctx.imageSmoothingEnabled = false;
-        ctx.globalAlpha = 0.55 + prog * 0.45;
-        ctx.translate(markX, markY);
-        ctx.rotate(ts * 0.003);
-        const reticleSz = 42 + (1 - eased) * 16;
-        ctx.drawImage(assets.vfx_spear_impact_crater, -reticleSz / 2, -reticleSz / 2, reticleSz, reticleSz);
-        ctx.restore();
-      } else {
-        ctx.strokeStyle = `rgba(250, 204, 21, ${0.5 + prog * 0.45})`;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(markX, markY, 11 + (1 - eased) * 10, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-
-      if (assets.vfx_spear_charge_lunge) {
-        ctx.imageSmoothingEnabled = false;
-        ctx.translate(sx, sy);
-        ctx.rotate(ang - Math.PI / 2);
-        const wPx = 42;
-        ctx.drawImage(assets.vfx_spear_charge_lunge, 0, 0, 128, 316, -wPx / 2, 0, wPx, spearLen + 4);
-      } else {
-        const grad = ctx.createLinearGradient(sx, sy, tipX, tipY);
-        grad.addColorStop(0, "rgba(56, 189, 248, 0.25)");
-        grad.addColorStop(0.55, "rgba(250, 204, 21, 0.85)");
-        grad.addColorStop(1, "#ffffff");
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 7;
-        ctx.lineCap = "round";
-        ctx.beginPath();
-        ctx.moveTo(sx, sy);
-        ctx.lineTo(tipX, tipY);
-        ctx.stroke();
-      }
-      ctx.restore();
-    } else {
-      const hx = p.x * TILE_SIZE;
-      const hy = p.y * TILE_SIZE;
-      const wakeGrad = ctx.createLinearGradient(sx, sy, hx, hy);
-      wakeGrad.addColorStop(0, "rgba(56, 189, 248, 0.15)");
-      wakeGrad.addColorStop(0.5, "rgba(56, 189, 248, 0.65)");
-      wakeGrad.addColorStop(1, "rgba(250, 204, 21, 0.95)");
-
-      ctx.save();
-      if (assets.vfx_spear_impact_crater) {
-        ctx.save();
-        ctx.imageSmoothingEnabled = false;
-        ctx.globalAlpha = 0.85;
-        ctx.translate(markX, markY);
-        ctx.rotate(ts * 0.004);
-        ctx.drawImage(assets.vfx_spear_impact_crater, -22, -22, 44, 44);
-        ctx.restore();
-      }
-
-      ctx.strokeStyle = wakeGrad;
-      ctx.lineWidth = 12;
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.moveTo(sx, sy);
-      ctx.lineTo(hx, hy);
-      ctx.stroke();
-
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(sx, sy);
-      ctx.lineTo(hx, hy);
-      ctx.stroke();
-
-      if (assets.vfx_spear_charge_lunge) {
-        ctx.imageSmoothingEnabled = false;
-        const remPx = Math.max(16, Math.hypot(markX - hx, markY - hy));
-        const lenPx = Math.min(54, remPx + 14);
-        const wPx = 30;
-        ctx.translate(hx, hy - pz * 0.5);
-        ctx.rotate(ang - Math.PI / 2);
-        ctx.drawImage(assets.vfx_spear_charge_lunge, 0, 0, 128, 316, -wPx / 2, -6, wPx, lenPx);
-      } else {
-        ctx.translate(hx, hy - pz * 0.5);
-        ctx.rotate(ang);
-        ctx.fillStyle = "#fde047";
-        ctx.beginPath();
-        ctx.moveTo(28, 0);
-        ctx.lineTo(4, -9);
-        ctx.lineTo(4, 9);
-        ctx.closePath();
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-  }
-
-  // Skyfall Judgment airborne landing AOE reticle & smooth continuous expansion
-  if (p.leap) {
-    const radPx = p.leap.spell.radii[p.leap.rankIdx] * TILE_SIZE;
-    const lx = p.x * TILE_SIZE;
-    const ly = p.y * TILE_SIZE;
-    const prog = Math.min(1, p.leap.progress || 0);
-    const eased = 1 - Math.pow(1 - prog, 1.75);
-    const curRadPx = Math.max(10, radPx * eased);
-    ctx.save();
-    ctx.fillStyle = `rgba(249, 115, 22, ${0.08 + eased * 0.14})`;
-    ctx.beginPath();
-    ctx.arc(lx, ly, curRadPx, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Outer dashed landing range guide
-    ctx.strokeStyle = "rgba(249, 115, 22, 0.55)";
-    ctx.lineWidth = 1.6;
-    ctx.setLineDash([6, 5]);
-    ctx.beginPath();
-    ctx.arc(lx, ly, radPx, 0, Math.PI * 2);
-    ctx.stroke();
-
-    const reticleImg = assets.vfx_skyfall_stage3 || assets.vfx_skyfall_reticle;
-    if (reticleImg) {
-      ctx.save();
-      ctx.imageSmoothingEnabled = false;
-      ctx.globalAlpha = 0.72 + eased * 0.28;
-      ctx.translate(lx, ly);
-      ctx.rotate(ts * 0.0014);
-      const sz = Math.max(24, radPx * 2.24 * (0.28 + 0.72 * eased));
-      ctx.drawImage(reticleImg, -sz / 2, -sz / 2, sz, sz);
-      ctx.restore();
-    }
-
-    ctx.setLineDash([]);
-    ctx.strokeStyle = "rgba(253, 224, 71, 0.9)";
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.arc(lx, ly, curRadPx, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  if (p.retributionTimer > 0) {
-    const radPx = (p.retributionRadius || 2.1) * TILE_SIZE;
-    ctx.save();
-    if (assets.vfx_damage_aoe_field) {
-      ctx.imageSmoothingEnabled = false;
-      ctx.globalAlpha = 0.72 + Math.sin(ts * 0.01) * 0.15;
-      ctx.translate(p.x * TILE_SIZE, p.y * TILE_SIZE);
-      ctx.rotate(ts * 0.001);
-      const sz = radPx * 2.12;
-      ctx.drawImage(assets.vfx_damage_aoe_field, -sz / 2, -sz / 2, sz, sz);
-    } else {
-      ctx.strokeStyle = `rgba(239, 68, 68, ${0.55 + Math.sin(ts * 0.012) * 0.25})`;
-      ctx.lineWidth = 2.2;
-      ctx.setLineDash([6, 4]);
-      ctx.beginPath();
-      ctx.arc(p.x * TILE_SIZE, p.y * TILE_SIZE, radPx, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-  if (p.hasteTimer > 0) {
-    ctx.save();
-    if (assets.vfx_heal_haste_aura) {
-      ctx.imageSmoothingEnabled = false;
-      ctx.globalAlpha = 0.8 + Math.sin(ts * 0.014) * 0.15;
-      ctx.translate(p.x * TILE_SIZE, p.y * TILE_SIZE - pz * 0.5);
-      ctx.rotate(-ts * 0.0018);
-      ctx.drawImage(assets.vfx_heal_haste_aura, -34, -34, 68, 68);
-    } else {
-      ctx.strokeStyle = `rgba(52, 211, 153, ${0.55 + Math.sin(ts * 0.014) * 0.25})`;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(p.x * TILE_SIZE, p.y * TILE_SIZE - pz * 0.5, 22, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-  if (p.tempDefTimer > 0) {
-    ctx.save();
-    if (assets.vfx_aegis_guard) {
-      ctx.imageSmoothingEnabled = false;
-      ctx.globalAlpha = 0.85 + Math.sin(ts * 0.01) * 0.12;
-      ctx.translate(p.x * TILE_SIZE, p.y * TILE_SIZE - pz * 0.5);
-      ctx.rotate(ts * 0.0022);
-      ctx.drawImage(assets.vfx_aegis_guard, -32, -32, 64, 64);
-    } else {
-      ctx.strokeStyle = `rgba(250, 204, 21, ${0.55 + Math.sin(ts * 0.01) * 0.25})`;
-      ctx.lineWidth = 2.2;
-      ctx.beginPath();
-      ctx.arc(p.x * TILE_SIZE, p.y * TILE_SIZE - pz * 0.5, 19, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
+  drawEntityChargesAndAuras(ctx, assets, ts, p);
 
   for (const pt of s.particles) {
     ctx.fillStyle = pt.color;
@@ -1593,6 +1296,321 @@ export function renderFrame(ts) {
   if (!renderMinimap._lastTs || ts - renderMinimap._lastTs >= 150) {
     renderMinimap._lastTs = ts;
     renderMinimap();
+  }
+}
+
+/** Render active skill charges, telegraphs, and buffs for either the local hero or a PvP rival. */
+function drawEntityChargesAndAuras(ctx, assets, ts, entity) {
+  const ez = entity.z || 0;
+  if (entity.radiantCharge) {
+    const rc = entity.radiantCharge;
+    const prog = Math.min(1, 1 - rc.timer / rc.duration);
+    const pxCenter = entity.x * TILE_SIZE;
+    const pyCenter = entity.y * TILE_SIZE;
+    ctx.save();
+    ctx.strokeStyle = `rgba(251, 146, 60, ${0.4 + prog * 0.45})`;
+    ctx.fillStyle = `rgba(250, 204, 21, ${0.08 + prog * 0.14})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(pxCenter, pyCenter, 28 - prog * 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.translate(pxCenter, pyCenter);
+    if (assets.vfx_ground_slam_shockwave) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.rotate(rc.angle - Math.PI / 2);
+      const sz = 44 + prog * 36;
+      ctx.globalAlpha = 0.55 + prog * 0.45;
+      ctx.drawImage(assets.vfx_ground_slam_shockwave, -sz / 2, -sz * 0.15, sz, sz);
+    } else {
+      const arcRad = 22 + prog * 14;
+      ctx.rotate(rc.angle);
+      ctx.strokeStyle = `rgba(249, 115, 22, ${0.5 + prog * 0.5})`;
+      ctx.lineWidth = 5 + prog * 5;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.arc(6, 0, arcRad, -1.05, 1.05);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  if (entity.ultCharge) {
+    const uc = entity.ultCharge;
+    const prog = Math.min(1, 1 - uc.timer / uc.duration);
+    const radTiles = uc.radius ?? uc.spell?.radii?.[uc.rankIdx] ?? 2.8;
+    const radPx = radTiles * TILE_SIZE;
+    const pxCenter = entity.x * TILE_SIZE;
+    const pyCenter = entity.y * TILE_SIZE;
+    ctx.save();
+    ctx.strokeStyle = `rgba(251, 191, 36, ${0.45 + Math.sin(ts * 0.015) * 0.25})`;
+    ctx.fillStyle = `rgba(251, 191, 36, ${0.08 + prog * 0.14})`;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(pxCenter, pyCenter, radPx, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    const gatherImg = assets.charging_ground_sigil || assets.vfx_holy_ground_impact;
+    if (gatherImg) {
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalAlpha = 0.6 + prog * 0.35;
+      ctx.translate(pxCenter, pyCenter);
+      ctx.rotate(ts * 0.0006);
+      const fullSz = radPx * 2.08;
+      ctx.drawImage(gatherImg, -fullSz / 2, -fullSz / 2, fullSz, fullSz);
+      ctx.restore();
+    }
+    ctx.strokeStyle = "#fef08a";
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.arc(pxCenter, pyCenter, radPx * prog, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const lift = 28 + Math.sin(prog * Math.PI * 0.5) * 10;
+    const sy = pyCenter - lift - ez;
+    const swordKey = prog < 0.4 ? "charging_sword_stage1" : prog < 0.8 ? "charging_sword_stage2" : "charging_sword_max";
+    const swordImg = assets[swordKey];
+    if (swordImg) {
+      ctx.imageSmoothingEnabled = false;
+      const pulse = prog >= 0.8 ? 1 + Math.sin(ts * 0.025) * 0.08 : 1;
+      const sz = 52 * pulse;
+      ctx.drawImage(swordImg, pxCenter + (entity.facingLeft ? -4 : 4) - sz / 2, sy - sz * 0.62, sz, sz);
+    } else {
+      ctx.translate(pxCenter + (entity.facingLeft ? -4 : 4), sy);
+      ctx.fillStyle = "#fef9c3";
+      ctx.strokeStyle = "#f59e0b";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0, -28);
+      ctx.lineTo(4, -6);
+      ctx.lineTo(-4, -6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  if (entity.valiantCharge) {
+    const vc = entity.valiantCharge;
+    const ang = Math.atan2(vc.dirY, vc.dirX);
+    const sx = vc.startX * TILE_SIZE;
+    const sy = vc.startY * TILE_SIZE;
+    const spearMaxPx = (vc.spearDistMax || 1.65) * TILE_SIZE;
+    const spearEx = sx + Math.cos(ang) * spearMaxPx;
+    const spearEy = sy + Math.sin(ang) * spearMaxPx;
+    const markX = vc.travelDist > 0.5 ? vc.targetX * TILE_SIZE : spearEx;
+    const markY = vc.travelDist > 0.5 ? vc.targetY * TILE_SIZE : spearEy;
+
+    if (vc.phase === "windup") {
+      const prog = Math.min(1, 1 - vc.timer / vc.windupDur);
+      const eased = 1 - Math.pow(1 - prog, 2.2);
+      const spearLen = (0.65 + ((vc.spearDistMax || 1.65) - 0.65) * eased) * TILE_SIZE;
+      const tipX = sx + Math.cos(ang) * spearLen;
+      const tipY = sy + Math.sin(ang) * spearLen;
+
+      ctx.save();
+      ctx.strokeStyle = `rgba(56, 189, 248, ${0.35 + prog * 0.3})`;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(markX, markY);
+      ctx.stroke();
+
+      ctx.setLineDash([]);
+      if (assets.vfx_spear_impact_crater) {
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.globalAlpha = 0.55 + prog * 0.45;
+        ctx.translate(markX, markY);
+        ctx.rotate(ts * 0.003);
+        const reticleSz = 42 + (1 - eased) * 16;
+        ctx.drawImage(assets.vfx_spear_impact_crater, -reticleSz / 2, -reticleSz / 2, reticleSz, reticleSz);
+        ctx.restore();
+      } else {
+        ctx.strokeStyle = `rgba(250, 204, 21, ${0.5 + prog * 0.45})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(markX, markY, 11 + (1 - eased) * 10, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      if (assets.vfx_spear_charge_lunge) {
+        ctx.imageSmoothingEnabled = false;
+        ctx.translate(sx, sy);
+        ctx.rotate(ang - Math.PI / 2);
+        const wPx = 42;
+        ctx.drawImage(assets.vfx_spear_charge_lunge, 0, 0, 128, 316, -wPx / 2, 0, wPx, spearLen + 4);
+      } else {
+        const grad = ctx.createLinearGradient(sx, sy, tipX, tipY);
+        grad.addColorStop(0, "rgba(56, 189, 248, 0.25)");
+        grad.addColorStop(0.55, "rgba(250, 204, 21, 0.85)");
+        grad.addColorStop(1, "#ffffff");
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 7;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(tipX, tipY);
+        ctx.stroke();
+      }
+      ctx.restore();
+    } else {
+      const hx = entity.x * TILE_SIZE;
+      const hy = entity.y * TILE_SIZE;
+      const wakeGrad = ctx.createLinearGradient(sx, sy, hx, hy);
+      wakeGrad.addColorStop(0, "rgba(56, 189, 248, 0.15)");
+      wakeGrad.addColorStop(0.5, "rgba(56, 189, 248, 0.65)");
+      wakeGrad.addColorStop(1, "rgba(250, 204, 21, 0.95)");
+
+      ctx.save();
+      if (assets.vfx_spear_impact_crater) {
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.globalAlpha = 0.85;
+        ctx.translate(markX, markY);
+        ctx.rotate(ts * 0.004);
+        ctx.drawImage(assets.vfx_spear_impact_crater, -22, -22, 44, 44);
+        ctx.restore();
+      }
+
+      ctx.strokeStyle = wakeGrad;
+      ctx.lineWidth = 12;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(hx, hy);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(hx, hy);
+      ctx.stroke();
+
+      if (assets.vfx_spear_charge_lunge) {
+        ctx.imageSmoothingEnabled = false;
+        const remPx = Math.max(16, Math.hypot(markX - hx, markY - hy));
+        const lenPx = Math.min(54, remPx + 14);
+        const wPx = 30;
+        ctx.translate(hx, hy - ez * 0.5);
+        ctx.rotate(ang - Math.PI / 2);
+        ctx.drawImage(assets.vfx_spear_charge_lunge, 0, 0, 128, 316, -wPx / 2, -6, wPx, lenPx);
+      } else {
+        ctx.translate(hx, hy - ez * 0.5);
+        ctx.rotate(ang);
+        ctx.fillStyle = "#fde047";
+        ctx.beginPath();
+        ctx.moveTo(28, 0);
+        ctx.lineTo(4, -9);
+        ctx.lineTo(4, 9);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+
+  if (entity.leap) {
+    const radTiles = entity.leap.radius ?? entity.leap.spell?.radii?.[entity.leap.rankIdx] ?? 2.8;
+    const radPx = radTiles * TILE_SIZE;
+    const lx = entity.x * TILE_SIZE;
+    const ly = entity.y * TILE_SIZE;
+    const prog = Math.min(1, entity.leap.progress || 0);
+    const eased = 1 - Math.pow(1 - prog, 1.75);
+    const curRadPx = Math.max(10, radPx * eased);
+    ctx.save();
+    ctx.fillStyle = `rgba(249, 115, 22, ${0.08 + eased * 0.14})`;
+    ctx.beginPath();
+    ctx.arc(lx, ly, curRadPx, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(249, 115, 22, 0.55)";
+    ctx.lineWidth = 1.6;
+    ctx.setLineDash([6, 5]);
+    ctx.beginPath();
+    ctx.arc(lx, ly, radPx, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const reticleImg = assets.vfx_skyfall_stage3 || assets.vfx_skyfall_reticle;
+    if (reticleImg) {
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalAlpha = 0.72 + eased * 0.28;
+      ctx.translate(lx, ly);
+      ctx.rotate(ts * 0.0014);
+      const sz = Math.max(24, radPx * 2.24 * (0.28 + 0.72 * eased));
+      ctx.drawImage(reticleImg, -sz / 2, -sz / 2, sz, sz);
+      ctx.restore();
+    }
+
+    ctx.setLineDash([]);
+    ctx.strokeStyle = "rgba(253, 224, 71, 0.9)";
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.arc(lx, ly, curRadPx, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  if (entity.retributionTimer > 0) {
+    const radPx = (entity.retributionRadius || 2.1) * TILE_SIZE;
+    ctx.save();
+    if (assets.vfx_damage_aoe_field) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalAlpha = 0.72 + Math.sin(ts * 0.01) * 0.15;
+      ctx.translate(entity.x * TILE_SIZE, entity.y * TILE_SIZE);
+      ctx.rotate(ts * 0.001);
+      const sz = radPx * 2.12;
+      ctx.drawImage(assets.vfx_damage_aoe_field, -sz / 2, -sz / 2, sz, sz);
+    } else {
+      ctx.strokeStyle = `rgba(239, 68, 68, ${0.55 + Math.sin(ts * 0.012) * 0.25})`;
+      ctx.lineWidth = 2.2;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.arc(entity.x * TILE_SIZE, entity.y * TILE_SIZE, radPx, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  if (entity.hasteTimer > 0) {
+    ctx.save();
+    if (assets.vfx_heal_haste_aura) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalAlpha = 0.8 + Math.sin(ts * 0.014) * 0.15;
+      ctx.translate(entity.x * TILE_SIZE, entity.y * TILE_SIZE - ez * 0.5);
+      ctx.rotate(-ts * 0.0018);
+      ctx.drawImage(assets.vfx_heal_haste_aura, -34, -34, 68, 68);
+    } else {
+      ctx.strokeStyle = `rgba(52, 211, 153, ${0.55 + Math.sin(ts * 0.014) * 0.25})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(entity.x * TILE_SIZE, entity.y * TILE_SIZE - ez * 0.5, 22, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  if (entity.tempDefTimer > 0) {
+    ctx.save();
+    if (assets.vfx_aegis_guard) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalAlpha = 0.85 + Math.sin(ts * 0.01) * 0.12;
+      ctx.translate(entity.x * TILE_SIZE, entity.y * TILE_SIZE - ez * 0.5);
+      ctx.rotate(ts * 0.0022);
+      ctx.drawImage(assets.vfx_aegis_guard, -32, -32, 64, 64);
+    } else {
+      ctx.strokeStyle = `rgba(250, 204, 21, ${0.55 + Math.sin(ts * 0.01) * 0.25})`;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.arc(entity.x * TILE_SIZE, entity.y * TILE_SIZE - ez * 0.5, 19, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 }
 

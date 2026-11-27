@@ -4,6 +4,7 @@ import { castSpell, performDash, performMeleeAttack } from "./combat.js";
 import { DEFAULT_LOADOUT, GAME_VERSION } from "./data.js";
 import {
   markPatchNotesSeen,
+  openConfirmDialog,
   openHeroDialog,
   openLoadoutDialog,
   openPvpDialog,
@@ -13,7 +14,7 @@ import {
   renderPatchNotes,
   renderTitleSanctum,
 } from "./dialogs.js";
-import { pvpNet } from "./pvp.js";
+import { clearPvpEndCountdown, pvpNet, returnToPvpLobbyFromMatch } from "./pvp.js";
 import { render } from "./renderer.js";
 import {
   canvas,
@@ -251,8 +252,31 @@ function setupControls() {
     });
   }
 
+  const handleMenuButtonClick = async () => {
+    if (runtime.state?.isPvp) {
+      const choice = await openConfirmDialog({
+        eyebrow: "PvP Arena Menu",
+        title: "Return to Lobby or Exit Match?",
+        message: runtime.state.runEnded
+          ? "Go back to the PvP Lobby or exit to the Main Menu."
+          : "Return to the PvP Lobby or exit the match completely? Leaving mid-match forfeits the duel.",
+        confirmLabel: "Go to PvP Lobby",
+        altLabel: "Exit Match",
+        cancelLabel: "Stay",
+      });
+      if (choice === "ok") {
+        returnToPvpLobbyFromMatch({ leaveRoom: !runtime.state?.runEnded, openLobby: true });
+      } else if (choice === "alt") {
+        returnToPvpLobbyFromMatch({ leaveRoom: true, openLobby: false });
+      }
+      return;
+    }
+    saveRun();
+    showMainMenu();
+  };
+
   document.getElementById("mhud-btn-skills").addEventListener("click", openSkillDialog);
-  document.getElementById("mhud-btn-menu").addEventListener("click", () => { saveRun(); showMainMenu(); });
+  document.getElementById("mhud-btn-menu").addEventListener("click", handleMenuButtonClick);
   document.getElementById("btn-potion-hp").addEventListener("click", () => quickPotion("health_potion"));
   document.getElementById("btn-potion-mp").addEventListener("click", () => quickPotion("mana_potion"));
 
@@ -314,7 +338,14 @@ function setupControls() {
     document.getElementById("help-dialog").showModal();
   });
 
-  document.getElementById("btn-menu").addEventListener("click", () => { saveRun(); showMainMenu(); });
+  document.getElementById("btn-menu").addEventListener("click", () => {
+    if (runtime.state?.isPvp) {
+      document.getElementById("mhud-btn-menu")?.click();
+      return;
+    }
+    saveRun();
+    showMainMenu();
+  });
 
   document.getElementById("menu-btn-play").addEventListener("click", () => {
     hideMainMenu();
@@ -573,14 +604,10 @@ function setupControls() {
   });
 
   document.getElementById("btn-end-sanctum").addEventListener("click", () => {
+    clearPvpEndCountdown();
     document.getElementById("end-dialog").close("sanctum");
     if (runtime.state?.isPvp) {
-      runtime.state.isPvp = false;
-      document.body.classList.remove("pvp-active");
-      const sfHud = document.getElementById("pvp-sf-hud");
-      if (sfHud) sfHud.hidden = true;
-      showMainMenu();
-      if (pvpNet.connected) openPvpDialog();
+      returnToPvpLobbyFromMatch({ leaveRoom: false, openLobby: true });
       return;
     }
     renderTitleSanctum();

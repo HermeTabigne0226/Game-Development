@@ -11,6 +11,7 @@ import {
   saveMeta,
   showFloorBanner,
   spawnBurst,
+  spawnGroundDecal,
   spawnRing,
   spawnVfxAnim,
   TILE_SIZE,
@@ -398,10 +399,42 @@ export function buildBalancedPvpPlayer(heroName, heroClassId, loadoutIds) {
 export const pvpHooks = {
   buildSpellButtons: null,
   updateUI: null,
+  updateRoomAndBossHUD: null,
   hideMainMenu: null,
   showMainMenu: null,
+  openPvpDialog: null,
   onLobbyStateChange: null,
 };
+
+let pvpEndCountdownTimer = null;
+
+export function clearPvpEndCountdown() {
+  if (pvpEndCountdownTimer) {
+    clearInterval(pvpEndCountdownTimer);
+    pvpEndCountdownTimer = null;
+  }
+}
+
+export function returnToPvpLobbyFromMatch({ leaveRoom = false, openLobby = true } = {}) {
+  clearPvpEndCountdown();
+  const dlg = document.getElementById("end-dialog");
+  if (dlg?.open) dlg.close("pvp_return");
+  const vsOverlay = document.getElementById("pvp-vs-screen");
+  if (vsOverlay) vsOverlay.hidden = true;
+  if (leaveRoom && pvpNet.connected && pvpNet.room) {
+    pvpNet.send({ type: "leave_lobby" });
+  }
+  if (runtime.state) {
+    runtime.state.isPvp = false;
+    runtime.state.runEnded = true;
+  }
+  document.body.classList.remove("pvp-active");
+  const sfHud = document.getElementById("pvp-sf-hud");
+  if (sfHud) sfHud.hidden = true;
+  if (pvpHooks.updateRoomAndBossHUD) pvpHooks.updateRoomAndBossHUD();
+  if (pvpHooks.showMainMenu) pvpHooks.showMainMenu();
+  if (openLobby && pvpHooks.openPvpDialog) pvpHooks.openPvpDialog();
+}
 
 class PvpNetworkClient {
   constructor() {
@@ -672,6 +705,7 @@ function setupPvpMatchEntities(room, mySlot, isNextRound = false) {
   const opp = createOpponentEntity(oppInfo, oppSpawn);
   level.enemies = [opp];
 
+  const introDur = isNextRound ? 3.0 : 4.5;
   runtime.state = {
     startedByUser: true,
     isPvp: true,
@@ -683,7 +717,8 @@ function setupPvpMatchEntities(room, mySlot, isNextRound = false) {
     pvpTimeoutSent: false,
     pvpRoundTimer: 99,
     pvpRoundBanner: null,
-    pvpIntroTimer: isNextRound ? 3.0 : 4.5,
+    pvpIntroTimer: introDur,
+    pvpIntroEndsAt: performance.now() + introDur * 1000,
     pvpOpponent: opp,
     pvpMyInfo: myInfo,
     pvpOppInfo: oppInfo,
@@ -810,14 +845,32 @@ function showPvpVsLoadingScreen(room, mySlot, durationMs = 3000) {
   requestAnimationFrame(tick);
 }
 
+export function syncPvpIntroTimer(s = runtime.state) {
+  if (!s?.isPvp || !s.pvpIntroEndsAt) return s?.pvpIntroTimer || 0;
+  const rem = Math.max(0, (s.pvpIntroEndsAt - performance.now()) / 1000);
+  const prev = s.pvpIntroTimer || 0;
+  s.pvpIntroTimer = rem;
+  if (prev > 0 && rem <= 0) {
+    s.pvpIntroEndsAt = 0;
+    sfx.nova();
+    addFloat(s.player.x, s.player.y - 0.55, "FIGHT!", "#fde047");
+  }
+  return rem;
+}
+
 export function startPvpMatchSession(room, mySlot) {
   setupPvpMatchEntities(room, mySlot, false);
+  const st = runtime.state;
+  setTimeout(() => { if (runtime.state === st) syncPvpIntroTimer(st); }, 4560);
+  runtime.isCanvasVisible = true;
+  runtime.lastFrameTime = performance.now();
   document.body.classList.add("pvp-active");
   const mpDlg = document.getElementById("pvp-dialog");
   if (mpDlg?.open) mpDlg.close("match_start");
   if (pvpHooks.hideMainMenu) pvpHooks.hideMainMenu();
   if (pvpHooks.buildSpellButtons) pvpHooks.buildSpellButtons();
   if (pvpHooks.updateUI) pvpHooks.updateUI();
+  if (pvpHooks.updateRoomAndBossHUD) pvpHooks.updateRoomAndBossHUD();
   runtime.uiDirty = true;
   showPvpVsLoadingScreen(room, mySlot, 3000);
   addLog(`PvP Duel started on ${runtime.state.level.pvpMap.name}! Best of 3 rounds (5,000 HP).`, "story");
@@ -825,12 +878,17 @@ export function startPvpMatchSession(room, mySlot) {
 
 export function startPvpRound(room, mySlot) {
   setupPvpMatchEntities(room, mySlot, true);
+  const st = runtime.state;
+  setTimeout(() => { if (runtime.state === st) syncPvpIntroTimer(st); }, 3060);
+  runtime.isCanvasVisible = true;
+  runtime.lastFrameTime = performance.now();
   document.body.classList.add("pvp-active");
   const vsOverlay = document.getElementById("pvp-vs-screen");
   if (vsOverlay) vsOverlay.hidden = true;
   if (pvpHooks.hideMainMenu) pvpHooks.hideMainMenu();
   if (pvpHooks.buildSpellButtons) pvpHooks.buildSpellButtons();
   if (pvpHooks.updateUI) pvpHooks.updateUI();
+  if (pvpHooks.updateRoomAndBossHUD) pvpHooks.updateRoomAndBossHUD();
   runtime.uiDirty = true;
   sfx.levelUp();
   addLog(`Round ${room.round || 1} — Get Ready!`, "story");
@@ -846,7 +904,7 @@ export function notifyLocalPvpDefeat() {
   p.animTimer = 1.2;
   addFloat(p.x, p.y - 0.5, "K.O.!", "#ef4444");
   runtime.uiDirty = true;
-  pvpNet.send({ type: "round_lost" });
+  pvpNet.send({ type: "round_lost", round: s.pvpRound || 1 });
 }
 
 export function notifyLocalPvpTimeout() {
@@ -854,6 +912,7 @@ export function notifyLocalPvpTimeout() {
   if (!s?.isPvp || s.pvpRoundEnded || s.runEnded) return;
   pvpNet.send({
     type: "round_timeout",
+    round: s.pvpRound || 1,
     myHp: Math.max(0, Math.round(s.player?.hp || 0)),
     oppHp: Math.max(0, Math.round(s.pvpOpponent?.hp || 0)),
   });
@@ -867,7 +926,7 @@ export function updatePvpFrame(dt) {
     notifyLocalPvpDefeat();
   }
 
-  // Interpolate opponent hero smoothly
+  // Interpolate opponent hero smoothly & advance remote skill charge timers
   const opp = s.pvpOpponent;
   if (opp) {
     opp.x += (opp.targetX - opp.x) * Math.min(1, dt * 16);
@@ -875,16 +934,52 @@ export function updatePvpFrame(dt) {
     if (opp.hurtTimer > 0) opp.hurtTimer = Math.max(0, opp.hurtTimer - dt);
     if (opp.frozenTimer > 0) opp.frozenTimer = Math.max(0, opp.frozenTimer - dt);
     if (opp.stunTimer > 0) opp.stunTimer = Math.max(0, opp.stunTimer - dt);
+    if (opp.ultCharge) {
+      opp.ultCharge.timer = Math.max(0, opp.ultCharge.timer - dt);
+      if (opp.ultCharge.timer <= 0) opp.ultCharge = null;
+    }
+    if (opp.radiantCharge) {
+      opp.radiantCharge.timer = Math.max(0, opp.radiantCharge.timer - dt);
+      if (opp.radiantCharge.timer <= 0) opp.radiantCharge = null;
+    }
+    if (opp.valiantCharge) {
+      opp.valiantCharge.timer = Math.max(0, opp.valiantCharge.timer - dt);
+      if (opp.valiantCharge.phase === "dash") {
+        s.afterimages.push({
+          x: opp.x,
+          y: opp.y,
+          facingLeft: opp.facingLeft,
+          frame: runtime.animFrame,
+          heroClass: opp.heroClass,
+          life: 0.2,
+          maxLife: 0.2,
+        });
+        if (s.afterimages.length > 14) s.afterimages.shift();
+      }
+      if (opp.valiantCharge.timer <= 0) {
+        if (opp.valiantCharge.phase === "windup") {
+          opp.valiantCharge.phase = "dash";
+          opp.valiantCharge.timer = opp.valiantCharge.dashDur || 0.38;
+        } else {
+          opp.valiantCharge = null;
+        }
+      }
+    }
+    if (opp.leap) {
+      opp.leap.progress += dt / Math.max(0.2, opp.leap.duration || 1.25);
+      if (opp.leap.progress >= 1.15) opp.leap = null;
+    }
   }
 
-  // Broadcast local player snapshot ~22Hz
+  // Broadcast local player snapshot ~22Hz (skip once round has ended so stale hp:0 cannot leak into next round)
   pvpNet.syncAccum += dt;
-  if (pvpNet.syncAccum >= 0.045 && pvpNet.connected && s.player) {
+  if (!s.pvpRoundEnded && !s.runEnded && pvpNet.syncAccum >= 0.045 && pvpNet.connected && s.player) {
     pvpNet.syncAccum = 0;
     const p = s.player;
     const stats = getPlayerStats(p);
     pvpNet.send({
       type: "pvp_sync",
+      round: s.pvpRound || 1,
       x: Math.round(p.x * 100) / 100,
       y: Math.round(p.y * 100) / 100,
       z: Math.round((p.z || 0) * 10) / 10,
@@ -935,6 +1030,7 @@ function applyRemoteOpponentAction(msg) {
   const s = runtime.state;
   if (!s?.isPvp || !msg.action) return;
   const act = msg.action;
+  const opp = s.pvpOpponent;
   if (act.kind === "slash") {
     s.slashes.push({
       x: act.x * TILE_SIZE,
@@ -983,18 +1079,157 @@ function applyRemoteOpponentAction(msg) {
       anchorY: act.anchorY ?? 0.5,
     };
     spawnVfxAnim(act.x, act.y, act.sheetKey, act.sizePx || 88, act.duration ?? act.dur ?? 0.45, opts);
+  } else if (act.kind === "decal") {
+    spawnGroundDecal(act.x, act.y, act.sheetKey, act.sizePx || 84, act.duration || 0.5, act.opts || {});
   } else if (act.kind === "ring") {
-    spawnRing(act.x, act.y, act.radPx || 40, act.color || "#facc15", act.dur || 0.35);
-    spawnBurst(act.x, act.y, act.color || "#facc15", 14, 1.2);
+    spawnRing(act.x, act.y, act.radPx || 40, act.color || "#facc15", act.dur || 0.35, act.opts || {});
+    spawnBurst(act.x, act.y, act.color || "#facc15", act.burstCount ?? 14, act.burstSpeed ?? 1.2);
   } else if (act.kind === "beam") {
     s.beams.push({
       x: act.x * TILE_SIZE,
       y: act.y * TILE_SIZE,
       color: act.color || "#fde047",
-      life: 0.36,
-      maxLife: 0.36,
+      life: act.life || 0.36,
+      maxLife: act.life || 0.36,
     });
     sfx.smite();
+  } else if (act.kind === "frost_zone") {
+    if (!s.frostZones) s.frostZones = [];
+    sfx.frost();
+    const rad = act.radius || 2.0;
+    spawnRing(act.x, act.y, rad * TILE_SIZE, "#38bdf8", 0.38);
+    spawnBurst(act.x, act.y, "#bae6fd", 16, 1.15);
+    s.frostZones.push({
+      x: act.x,
+      y: act.y,
+      radius: rad,
+      timer: act.duration || 4.0,
+      maxTimer: act.duration || 4.0,
+      isVisualOnly: true,
+      dwell: new Map(),
+      frozenIds: new Set(),
+      particleCd: 0,
+    });
+  } else if (act.kind === "arrow_storm") {
+    if (!s.arrowStorms) s.arrowStorms = [];
+    if (!s.fallingArrows) s.fallingArrows = [];
+    const rad = act.radius || 2.4;
+    const dur = act.duration || 3.0;
+    sfx.ultLeap();
+    s.arrowStorms.push({
+      x: act.x,
+      y: act.y,
+      radius: rad,
+      duration: dur,
+      timer: dur,
+      tickInterval: act.tickInterval || 0.35,
+      tickTimer: 0,
+      spawnTimer: 0,
+      isVisualOnly: true,
+    });
+    spawnRing(act.x, act.y, rad * TILE_SIZE, "#facc15", 0.4);
+    addFloat(act.x, act.y - 0.5, "ARROW STORM!", "#fde047");
+  } else if (act.kind === "ult_charge" && opp) {
+    sfx.ultLeap();
+    opp.ultCharge = { timer: act.duration || 1.2, duration: act.duration || 1.2, radius: act.radius || 2.8 };
+    addFloat(opp.x, opp.y - 0.5, "CHARGING...", "#fde047");
+  } else if (act.kind === "ult_slam") {
+    if (opp) opp.ultCharge = null;
+    sfx.ultSlam();
+    const radPx = (act.radius || 2.8) * TILE_SIZE;
+    spawnBurst(act.x, act.y, "#fbbf24", 30, 1.55);
+    spawnBurst(act.x, act.y, "#ffffff", 16, 1.25);
+    spawnRing(act.x, act.y, radPx, "#fbbf24", 0.45);
+    spawnRing(act.x, act.y, radPx * 0.6, "#ffffff", 0.3);
+    spawnGroundDecal(act.x, act.y, "vfx_holy_ground_impact", radPx * 2.15, 0.9, { scaleStart: 0.72, scaleEnd: 1.08, spin: 0.35 });
+    spawnGroundDecal(act.x, act.y, "vfx_ground_slam_shockwave", radPx * 1.45, 0.24, { scaleStart: 0.15, scaleEnd: 1.85 });
+    s.beams.push({ x: act.x * TILE_SIZE, y: act.y * TILE_SIZE, color: "#fde047", life: 0.42, maxLife: 0.42 });
+  } else if (act.kind === "radiant_charge" && opp) {
+    sfx.heal();
+    opp.radiantCharge = { timer: act.duration || 0.65, duration: act.duration || 0.65, angle: act.angle || 0 };
+    spawnRing(opp.x, opp.y, 34, "#fb923c", 0.35);
+    spawnBurst(opp.x, opp.y, "#fde047", 10, 0.9);
+  } else if (act.kind === "radiant_release") {
+    if (opp) opp.radiantCharge = null;
+    sfx.slash();
+    sfx.nova();
+    s.slashes.push({
+      x: act.slashX * TILE_SIZE,
+      y: act.slashY * TILE_SIZE,
+      angle: act.angle || 0,
+      radius: 44,
+      variant: "gold",
+      color: act.color || "#fb923c",
+      life: 0.24,
+      maxLife: 0.24,
+    });
+    spawnBurst(act.slashX, act.slashY, "#fb923c", 16, 1.2);
+    spawnRing(act.x, act.y, 38, "#fde047", 0.28);
+  } else if (act.kind === "valiant_windup" && opp) {
+    sfx.ultLeap();
+    opp.valiantCharge = {
+      phase: "windup",
+      timer: act.windupDur || 0.62,
+      windupDur: act.windupDur || 0.62,
+      dashDur: act.dashDur || 0.38,
+      startX: act.startX,
+      startY: act.startY,
+      targetX: act.targetX,
+      targetY: act.targetY,
+      travelDist: act.travelDist || 0,
+      spearDistMax: act.spearDistMax || 1.65,
+      dirX: act.dirX || 1,
+      dirY: act.dirY || 0,
+    };
+    spawnRing(act.startX, act.startY, 26, "#38bdf8", 0.35);
+  } else if (act.kind === "valiant_dash" && opp) {
+    sfx.dash();
+    if (opp.valiantCharge) {
+      opp.valiantCharge.phase = "dash";
+      opp.valiantCharge.timer = act.dashDur || 0.38;
+    }
+    spawnBurst(act.x, act.y, "#38bdf8", 14, 1.25);
+    spawnRing(act.x, act.y, 34, "#facc15", 0.25);
+  } else if (act.kind === "valiant_slam") {
+    if (opp) opp.valiantCharge = null;
+    sfx.smite();
+    const ang = act.angle || 0;
+    s.beams.push({ x: act.x * TILE_SIZE, y: act.y * TILE_SIZE, color: "#38bdf8", life: 0.28, maxLife: 0.28 });
+    s.slashes.push(
+      { x: act.x * TILE_SIZE, y: act.y * TILE_SIZE, angle: ang + 0.6, radius: 42, variant: "steel_cyan", flipY: false, life: 0.22, maxLife: 0.22, color: "#38bdf8" },
+      { x: act.x * TILE_SIZE, y: act.y * TILE_SIZE, angle: ang - 0.6, radius: 42, variant: "gold", flipY: true, life: 0.22, maxLife: 0.22, color: "#fde047" }
+    );
+    spawnBurst(act.x, act.y, "#facc15", 20, 1.45);
+    spawnBurst(act.x, act.y, "#38bdf8", 14, 1.25);
+    spawnRing(act.x, act.y, 1.75 * TILE_SIZE, "#38bdf8", 0.3, { delay: 0, lineWidth: 3 });
+    spawnRing(act.x, act.y, 2.05 * TILE_SIZE, "#fde047", 0.38, { delay: 0.06, lineWidth: 2.5 });
+    spawnGroundDecal(act.x, act.y, "vfx_spear_impact_crater", 104, 0.95, { scaleStart: 0.55, scaleEnd: 1.05 });
+    spawnGroundDecal(act.x, act.y, "vfx_ground_slam_shockwave", 92, 0.25, { angle: ang - Math.PI / 2, scaleStart: 0.45, scaleEnd: 1.55 });
+  } else if (act.kind === "leap_start" && opp) {
+    sfx.ultLeap();
+    opp.leap = { progress: 0, duration: act.duration || 1.25, radius: act.radius || 2.8 };
+    spawnBurst(act.x, act.y, "#fde047", 14, 1.1);
+    addFloat(act.x, act.y - 0.5, "SKYFALL!", "#f97316");
+  } else if (act.kind === "leap_land") {
+    if (opp) opp.leap = null;
+    sfx.ultSlam();
+    sfx.nova();
+    const radPx = (act.radius || 2.8) * TILE_SIZE;
+    spawnRing(act.x, act.y, radPx * 0.88, "#ffffff", 0.36, { delay: 0, lineWidth: 3.5 });
+    spawnRing(act.x, act.y, radPx * 1.0, "#fde047", 0.44, { delay: 0.07, lineWidth: 3 });
+    spawnRing(act.x, act.y, radPx * 1.12, "#f97316", 0.52, { delay: 0.14, lineWidth: 2.8 });
+    spawnRing(act.x, act.y, radPx * 0.72, "#38bdf8", 0.44, { delay: 0.21, lineWidth: 2.4 });
+    spawnRing(act.x, act.y, radPx * 1.24, "#fef08a", 0.56, { delay: 0.28, lineWidth: 2 });
+    spawnGroundDecal(act.x, act.y, "vfx_ground_slam_shockwave", radPx * 1.45, 0.24, { scaleStart: 0.1, scaleEnd: 2.0 });
+    spawnGroundDecal(act.x, act.y, "vfx_skyfall_impact", radPx * 2.25, 0.8, { scaleStart: 0.72, scaleEnd: 1.12, spin: 0.35 });
+    s.beams.push({ x: act.x * TILE_SIZE, y: act.y * TILE_SIZE, color: "#fde047", life: 0.44, maxLife: 0.44 });
+    spawnBurst(act.x, act.y, "#f97316", 32, 1.7);
+    spawnBurst(act.x, act.y, "#fde047", 20, 1.35);
+  } else if (act.kind === "clear_charges" && opp) {
+    opp.ultCharge = null;
+    opp.radiantCharge = null;
+    opp.valiantCharge = null;
+    opp.leap = null;
   }
 }
 
@@ -1068,6 +1303,32 @@ function handleRemoteRoundOver(msg) {
   showFloorBanner(`${title} (${mySc} - ${oppSc})`);
   runtime.uiDirty = true;
   if (pvpHooks.updateUI) pvpHooks.updateUI();
+  if (pvpHooks.updateRoomAndBossHUD) pvpHooks.updateRoomAndBossHUD();
+}
+
+function startPvpEndLobbyCountdown(baseSummary) {
+  clearPvpEndCountdown();
+  const summaryEl = document.getElementById("end-dialog-summary");
+  const sanctumBtn = document.getElementById("btn-end-sanctum");
+  let rem = 5;
+  const syncText = () => {
+    if (summaryEl) summaryEl.textContent = `${baseSummary} Returning to PvP Lobby in ${rem}s...`;
+    if (sanctumBtn) sanctumBtn.textContent = `Return to PvP Lobby (${rem}s)`;
+  };
+  syncText();
+  pvpEndCountdownTimer = setInterval(() => {
+    const dlg = document.getElementById("end-dialog");
+    if (!dlg?.open || !runtime.state?.isPvp) {
+      clearPvpEndCountdown();
+      return;
+    }
+    rem -= 1;
+    if (rem <= 0) {
+      returnToPvpLobbyFromMatch({ leaveRoom: false, openLobby: true });
+    } else {
+      syncText();
+    }
+  }, 1000);
 }
 
 function handleRemoteMatchOver(msg) {
@@ -1088,10 +1349,11 @@ function handleRemoteMatchOver(msg) {
     sfx.gameOver();
   }
   if (pvpHooks.updateUI) pvpHooks.updateUI();
+  if (pvpHooks.updateRoomAndBossHUD) pvpHooks.updateRoomAndBossHUD();
 
   const dlg = document.getElementById("end-dialog");
   document.getElementById("end-dialog-title").textContent = won ? "PvP Arena Champion!" : "Defeated in the Arena";
-  document.getElementById("end-dialog-summary").textContent = won
+  const baseSummary = won
     ? `You defeated ${s.pvpOpponent?.name || "your rival"} (${s.pvpScores[s.pvpMySlot]} - ${s.pvpScores[s.pvpMySlot === 0 ? 1 : 0]}) and earned +2 Soul Shards!`
     : `${s.pvpOpponent?.name || "Your rival"} claimed victory (${s.pvpScores[s.pvpMySlot]} - ${s.pvpScores[s.pvpMySlot === 0 ? 1 : 0]}).`;
   document.getElementById("end-stats").innerHTML = `
@@ -1102,9 +1364,8 @@ function handleRemoteMatchOver(msg) {
   `;
   const endlessBtn = document.getElementById("btn-end-endless");
   if (endlessBtn) endlessBtn.hidden = true;
-  const sanctumBtn = document.getElementById("btn-end-sanctum");
-  if (sanctumBtn) sanctumBtn.textContent = "Return to PvP Lobby";
   dlg.showModal();
+  startPvpEndLobbyCountdown(baseSummary);
 }
 
 function handleOpponentDisconnected() {
@@ -1115,9 +1376,9 @@ function handleOpponentDisconnected() {
   addLog("Opponent disconnected from the PvP Arena.", "story");
   const dlg = document.getElementById("end-dialog");
   document.getElementById("end-dialog-title").textContent = "Rival Disconnected";
-  document.getElementById("end-dialog-summary").textContent = "Your opponent left the arena. Returning you cleanly to the Lobby.";
   document.getElementById("end-stats").innerHTML = "";
   const endlessBtn = document.getElementById("btn-end-endless");
   if (endlessBtn) endlessBtn.hidden = true;
   dlg.showModal();
+  startPvpEndLobbyCountdown("Your opponent left the arena.");
 }
