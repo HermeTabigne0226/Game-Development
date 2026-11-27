@@ -707,6 +707,9 @@ export function showMainMenu() {
     const isMobile = isNativeApk || window.innerWidth <= 960 || window.matchMedia?.("(pointer: coarse)")?.matches;
     const isOnline = navigator.onLine && (!window.AndroidApp?.isOnline || window.AndroidApp.isOnline());
     checkUpdBtn.hidden = !(isMobile && isOnline);
+    if (!checkUpdBtn.hidden && typeof window.__checkUpdateHighlight === "function") {
+      window.__checkUpdateHighlight();
+    }
   }
   menu.hidden = false;
 }

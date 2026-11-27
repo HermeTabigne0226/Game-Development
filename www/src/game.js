@@ -444,6 +444,7 @@ function setupControls() {
     const progFill = document.getElementById("update-progress-fill");
     const dlBtn = document.getElementById("btn-update-download");
     const restartBtn = document.getElementById("btn-update-restart");
+    const refreshUpdBtn = document.getElementById("btn-update-refresh");
     const laterBtn = document.getElementById("btn-update-later");
 
     let pendingApkUrl = "https://github.com/HermeTabigne0226/Game-Development/releases/latest/download/Chronicles-of-the-Shattered-Crown.apk";
@@ -522,7 +523,8 @@ function setupControls() {
       if (progFill) progFill.style.width = "0%";
       if (dlBtn) { dlBtn.hidden = true; dlBtn.disabled = false; dlBtn.textContent = "Download & Update"; }
       if (restartBtn) restartBtn.hidden = true;
-      updDlg.showModal();
+      if (refreshUpdBtn) { refreshUpdBtn.disabled = true; refreshUpdBtn.textContent = "Checking..."; }
+      if (!updDlg.open) updDlg.showModal();
 
       try {
         const [relOut, pkgOut] = await Promise.allSettled([
@@ -589,10 +591,53 @@ function setupControls() {
       } catch {
         if (latestBadgeEl) latestBadgeEl.textContent = "Offline";
         if (statusEl) statusEl.textContent = "No Internet connection detected. Connect to Wi-Fi or Mobile Data to check for updates.";
+      } finally {
+        if (refreshUpdBtn) {
+          refreshUpdBtn.disabled = false;
+          refreshUpdBtn.textContent = "Refresh";
+        }
       }
     };
+    let lastBgHighlightAt = 0;
+    const checkUpdateHighlight = async (force = false) => {
+      if (checkUpdateBtn.hidden) return;
+      const now = Date.now();
+      if (!force && now - lastBgHighlightAt < 30000) return;
+      lastBgHighlightAt = now;
+      const isNative = Boolean(window.Capacitor || window.AndroidApp);
+      let installedVer = GAME_VERSION;
+      try {
+        if (window.AndroidApp?.getAppVersion) {
+          const info = JSON.parse(window.AndroidApp.getAppVersion());
+          if (info?.versionName) installedVer = formatDisplayVer(info.versionName);
+        }
+      } catch {}
+      try {
+        const [relOut, pkgOut] = await Promise.allSettled([
+          fetch("https://api.github.com/repos/HermeTabigne0226/Game-Development/releases/tags/latest-apk", { cache: "no-store" }),
+          fetch("https://raw.githubusercontent.com/HermeTabigne0226/Game-Development/main/package.json", { cache: "no-store" }),
+        ]);
+        let candidate = null;
+        if (relOut.status === "fulfilled" && relOut.value.ok) {
+          const rel = await relOut.value.json();
+          const m = String(rel.body || "").match(/Version:\s*(v?\.?\d+\.\d+(?:\.\d+)?(?:-[\w.]+)?)/i);
+          if (m) candidate = m[1];
+        }
+        if (!isNative && pkgOut.status === "fulfilled" && pkgOut.value.ok) {
+          const pkg = await pkgOut.value.json();
+          if (pkg?.version && (!candidate || isNewerVersion(`v.${pkg.version}`, candidate))) {
+            candidate = `v.${pkg.version}`;
+          }
+        }
+        const hasNew = Boolean(candidate && isNewerVersion(formatDisplayVer(candidate), installedVer));
+        checkUpdateBtn.classList.toggle("has-update", hasNew);
+        checkUpdateBtn.textContent = hasNew ? `Check Update (${formatDisplayVer(candidate)}!)` : "Check Update";
+      } catch {}
+    };
+    window.__checkUpdateHighlight = checkUpdateHighlight;
     window.__openCheckUpdateModal = triggerCheckUpdate;
     checkUpdateBtn.addEventListener("click", triggerCheckUpdate);
+    if (refreshUpdBtn) refreshUpdBtn.addEventListener("click", triggerCheckUpdate);
   }
 
   document.getElementById("menu-btn-exit").addEventListener("click", () => {

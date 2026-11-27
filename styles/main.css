@@ -43,6 +43,19 @@ body[data-btn-size="big"] {
   --mobile-btn-scale: 1.32;
 }
 
+#menu-btn-check-update.has-update {
+  border-color: #facc15 !important;
+  color: #fef08a !important;
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.25), rgba(30, 41, 59, 0.95)) !important;
+  box-shadow: 0 0 14px rgba(250, 204, 21, 0.45);
+  animation: updateBtnGlow 1.6s ease-in-out infinite;
+}
+
+@keyframes updateBtnGlow {
+  0%, 100% { box-shadow: 0 0 10px rgba(250, 204, 21, 0.35); }
+  50% { box-shadow: 0 0 20px rgba(250, 204, 21, 0.75); }
+}
+
 .pixel-icon {
   image-rendering: pixelated;
   width: 22px;
