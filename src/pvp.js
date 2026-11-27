@@ -61,18 +61,23 @@ export const PVP_MAPS = [
 ];
 
 export function getSavedPvpServerUrl() {
-  try {
-    const saved = localStorage.getItem(PVP_SERVER_URL_KEY);
-    if (saved) return saved;
-  } catch {}
   const host = window.location.hostname || "";
   const proto = window.location.protocol;
-  if (
-    proto !== "capacitor:" &&
-    proto !== "file:" &&
-    !host.endsWith("vercel.app") &&
-    window.location.host
-  ) {
+  const isNativeOrVercel =
+    proto === "capacitor:" ||
+    proto === "file:" ||
+    Boolean(window.Capacitor || window.AndroidApp) ||
+    host.endsWith("vercel.app") ||
+    (proto === "https:" && host === "localhost");
+  try {
+    const saved = localStorage.getItem(PVP_SERVER_URL_KEY);
+    if (saved) {
+      const staleLocal = isNativeOrVercel && /^ws:\/\/(localhost|127\.0\.0\.1|[^/:]+\.vercel\.app)(:|\/|$)/i.test(saved);
+      const blockedMixed = proto === "https:" && !window.Capacitor && !window.AndroidApp && host !== "localhost" && saved.startsWith("ws://");
+      if (!staleLocal && !blockedMixed) return saved;
+    }
+  } catch {}
+  if (!isNativeOrVercel && window.location.host) {
     const wsProto = proto === "https:" ? "wss:" : "ws:";
     return `${wsProto}//${window.location.host}/ws`;
   }
@@ -366,6 +371,8 @@ class PvpNetworkClient {
     }
     if (
       window.location.protocol === "https:" &&
+      !window.Capacitor &&
+      !window.AndroidApp &&
       wsUrl.startsWith("ws://") &&
       !/^ws:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/i.test(wsUrl)
     ) {
