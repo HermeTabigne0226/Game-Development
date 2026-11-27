@@ -1120,47 +1120,44 @@ export function renderFrame(ts) {
     }
   }
 
-  // Skyfall Judgment airborne landing AOE reticle & expanding max-radius wave indicator
+  // Skyfall Judgment airborne landing AOE reticle & progressive 3-stage expansion
   if (p.leap) {
     const radPx = p.leap.spell.radii[p.leap.rankIdx] * TILE_SIZE;
     const lx = p.x * TILE_SIZE;
     const ly = p.y * TILE_SIZE;
     const prog = Math.min(1, p.leap.progress || 0);
     ctx.save();
-    ctx.fillStyle = `rgba(249, 115, 22, ${0.08 + prog * 0.14})`;
+    ctx.fillStyle = `rgba(249, 115, 22, ${0.07 + prog * 0.14})`;
     ctx.beginPath();
     ctx.arc(lx, ly, Math.max(8, radPx * prog), 0, Math.PI * 2);
     ctx.fill();
 
-    if (assets.vfx_skyfall_reticle) {
+    // Outer dashed landing range guide
+    ctx.strokeStyle = "rgba(249, 115, 22, 0.55)";
+    ctx.lineWidth = 1.6;
+    ctx.setLineDash([6, 5]);
+    ctx.beginPath();
+    ctx.arc(lx, ly, radPx, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const stageKey = prog < 0.34 ? "vfx_skyfall_stage1" : prog < 0.68 ? "vfx_skyfall_stage2" : "vfx_skyfall_stage3";
+    const stageImg = assets[stageKey] || assets.vfx_skyfall_reticle;
+    if (stageImg) {
       ctx.save();
       ctx.imageSmoothingEnabled = false;
-      ctx.globalAlpha = 0.85;
+      ctx.globalAlpha = 0.92;
       ctx.translate(lx, ly);
       ctx.rotate(ts * 0.0012);
-      const sz = radPx * 2.1;
-      ctx.drawImage(assets.vfx_skyfall_reticle, -sz / 2, -sz / 2, sz, sz);
+      const sz = radPx * 2.24;
+      ctx.drawImage(stageImg, -sz / 2, -sz / 2, sz, sz);
       ctx.restore();
-    } else {
-      ctx.strokeStyle = "rgba(249, 115, 22, 0.85)";
-      ctx.lineWidth = 2;
-      ctx.setLineDash([7, 5]);
-      ctx.beginPath();
-      ctx.arc(lx, ly, radPx, 0, Math.PI * 2);
-      ctx.stroke();
     }
 
     ctx.setLineDash([]);
-    ctx.strokeStyle = "rgba(253, 224, 71, 0.96)";
-    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = "rgba(253, 224, 71, 0.85)";
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(lx, ly, Math.max(8, radPx * prog), 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.72)";
-    ctx.lineWidth = 1.25;
-    ctx.beginPath();
-    ctx.arc(lx, ly, radPx * 0.45, 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
   }

@@ -111,6 +111,10 @@ export async function loadAllAssets(onProgress = null) {
     vfx_arrow_storm_reticle: "assets/generated/vfx/vfx_arrow_storm_reticle.png",
     vfx_arrow_storm_volley: "assets/generated/vfx/vfx_arrow_storm_volley.png",
     vfx_arrow_storm_impact: "assets/generated/vfx/vfx_arrow_storm_impact.png",
+    vfx_skyfall_stage1: "assets/generated/vfx/vfx_skyfall_stage1.png",
+    vfx_skyfall_stage2: "assets/generated/vfx/vfx_skyfall_stage2.png",
+    vfx_skyfall_stage3: "assets/generated/vfx/vfx_skyfall_stage3.png",
+    vfx_skyfall_impact: "assets/generated/vfx/vfx_skyfall_impact.png",
   };
 
   const list = Object.entries(manifest);

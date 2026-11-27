@@ -1086,7 +1086,7 @@ export function updateSimulation(dt) {
       spawnRing(p.x, p.y, radPx * 0.72, "#38bdf8", 0.44, { delay: 0.21, lineWidth: 2.4 });
       spawnRing(p.x, p.y, radPx * 1.24, "#fef08a", 0.56, { delay: 0.28, lineWidth: 2 });
       spawnGroundDecal(p.x, p.y, "vfx_ground_slam_shockwave", radPx * 1.45, 0.24, { scaleStart: 0.1, scaleEnd: 2.0 });
-      spawnGroundDecal(p.x, p.y, "vfx_holy_ground_impact", radPx * 2.1, 0.85, { scaleStart: 0.75, scaleEnd: 1.05, spin: 0.3 });
+      spawnGroundDecal(p.x, p.y, "vfx_skyfall_impact", radPx * 2.25, 0.8, { scaleStart: 0.72, scaleEnd: 1.12, spin: 0.35 });
       s.beams.push({ x: p.x * TILE_SIZE, y: p.y * TILE_SIZE, color: "#fde047", life: 0.44, maxLife: 0.44 });
       spawnBurst(p.x, p.y, "#f97316", 32, 1.7);
       spawnBurst(p.x, p.y, "#fde047", 20, 1.35);

@@ -1,4 +1,4 @@
-const CACHE_NAME = "shattered-crown-v46";
+const CACHE_NAME = "shattered-crown-v47";
 
 const PRECACHE_URLS = [
   "./",
@@ -43,6 +43,10 @@ const PRECACHE_URLS = [
   "./assets/generated/vfx/vfx_arrow_storm_reticle.png",
   "./assets/generated/vfx/vfx_arrow_storm_volley.png",
   "./assets/generated/vfx/vfx_arrow_storm_impact.png",
+  "./assets/generated/vfx/vfx_skyfall_stage1.png",
+  "./assets/generated/vfx/vfx_skyfall_stage2.png",
+  "./assets/generated/vfx/vfx_skyfall_stage3.png",
+  "./assets/generated/vfx/vfx_skyfall_impact.png",
   "./assets/generated/ranger/ranger_idle.png",
   "./assets/generated/ranger/ranger_walk.png",
   "./assets/generated/ranger/ranger_attack.png",

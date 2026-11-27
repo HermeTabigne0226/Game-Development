@@ -1,8 +1,15 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.2.4";
+export const GAME_VERSION = "v.1.2.4.1";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.2.4.1",
+    title: "Hotfix — Skyfall Judgment 4-Stage VFX",
+    notes: [
+      "Skyfall Judgment 4-Stage VFX: Upgraded leap telegraph into 3 progressive pixel-art expansion frames (Small -> Medium -> Full Max Radius) followed by a blazing fiery Skyfall Impact starburst decal on landing.",
+    ],
+  },
   {
     version: "v.1.2.4",
     title: "Frozen Crystal, Rain Storm VFX, Skyfall & Menu Showcase",
