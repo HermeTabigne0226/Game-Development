@@ -472,53 +472,80 @@ export function updateRoomAndBossHUD() {
       const myCls = HERO_CLASSES[p.heroClass === "paladin" ? "gilded" : p.heroClass] || HERO_CLASSES.gilded;
       const oppCls = HERO_CLASSES[opp?.heroClass === "paladin" ? "gilded" : opp?.heroClass] || HERO_CLASSES.gilded;
 
-      const p1Name = document.getElementById("pvp-hud-p1-name");
-      const p1Cls = document.getElementById("pvp-hud-p1-class");
-      const p1Fill = document.getElementById("pvp-hud-p1-hp-fill");
-      const p1Text = document.getElementById("pvp-hud-p1-hp-text");
-      const p1Wins = document.getElementById("pvp-hud-p1-wins");
-      const p1Skills = document.getElementById("pvp-hud-p1-skills");
+      const mySideData = {
+        isLocal: true,
+        name: p.name || myCls.name,
+        clsName: myCls.name,
+        hp: Math.max(0, Math.ceil(p.hp)),
+        maxHp: Math.max(1, stats.maxHp),
+        wins: mySc,
+        spellObjs: getActiveSpells(p),
+      };
+      const oppIds = Array.isArray(s.pvpOppInfo?.loadout) && s.pvpOppInfo.loadout.length >= 4
+        ? s.pvpOppInfo.loadout
+        : (CLASS_DEFAULT_LOADOUTS[oppCls.id] || DEFAULT_LOADOUT);
+      const oppSideData = {
+        isLocal: false,
+        name: opp?.name || oppCls.name,
+        clsName: oppCls.name,
+        hp: Math.max(0, Math.ceil(opp?.hp ?? 0)),
+        maxHp: Math.max(1, opp?.maxHp || 1000),
+        wins: oppSc,
+        spellObjs: oppIds.map((id) => SPELLS.find((sp) => sp.id === id)).filter(Boolean),
+      };
 
-      if (p1Name) p1Name.textContent = p.name || myCls.name;
-      if (p1Cls) p1Cls.textContent = myCls.name;
-      const myHpVal = Math.max(0, Math.ceil(p.hp));
-      const myMaxHp = Math.max(1, stats.maxHp);
-      const myPct = Math.max(0, Math.min(100, (p.hp / myMaxHp) * 100));
-      if (p1Fill) {
-        p1Fill.style.width = `${myPct}%`;
-        p1Fill.classList.toggle("danger", myPct <= 25);
-      }
-      if (p1Text) p1Text.textContent = `${myHpVal}`;
-      if (p1Wins) {
-        const pips = p1Wins.querySelectorAll(".pvp-win-pip");
-        pips.forEach((pip, idx) => pip.classList.toggle("won", idx < mySc));
-        const cnt = p1Wins.querySelector(".pvp-win-count");
-        if (cnt) cnt.textContent = `${mySc}W`;
-      }
+      // Match HUD sides to arena spawn positions: Slot 0 = Left (p1), Slot 1 = Right (p2)
+      const leftData = s.pvpMySlot === 1 ? oppSideData : mySideData;
+      const rightData = s.pvpMySlot === 1 ? mySideData : oppSideData;
 
-      const p2Name = document.getElementById("pvp-hud-p2-name");
-      const p2Cls = document.getElementById("pvp-hud-p2-class");
-      const p2Fill = document.getElementById("pvp-hud-p2-hp-fill");
-      const p2Text = document.getElementById("pvp-hud-p2-hp-text");
-      const p2Wins = document.getElementById("pvp-hud-p2-wins");
-      const p2Skills = document.getElementById("pvp-hud-p2-skills");
+      const applyHudSide = (prefix, sideData) => {
+        const nameEl = document.getElementById(`pvp-hud-${prefix}-name`);
+        const clsEl = document.getElementById(`pvp-hud-${prefix}-class`);
+        const fillEl = document.getElementById(`pvp-hud-${prefix}-hp-fill`);
+        const textEl = document.getElementById(`pvp-hud-${prefix}-hp-text`);
+        const winsEl = document.getElementById(`pvp-hud-${prefix}-wins`);
+        const skillsEl = document.getElementById(`pvp-hud-${prefix}-skills`);
 
-      if (p2Name) p2Name.textContent = opp?.name || oppCls.name;
-      if (p2Cls) p2Cls.textContent = oppCls.name;
-      const oppHpVal = Math.max(0, Math.ceil(opp?.hp ?? 0));
-      const oppMaxHp = Math.max(1, opp?.maxHp || 1000);
-      const oppPct = Math.max(0, Math.min(100, ((opp?.hp ?? 0) / oppMaxHp) * 100));
-      if (p2Fill) {
-        p2Fill.style.width = `${oppPct}%`;
-        p2Fill.classList.toggle("danger", oppPct <= 25);
-      }
-      if (p2Text) p2Text.textContent = `${oppHpVal}`;
-      if (p2Wins) {
-        const pips = p2Wins.querySelectorAll(".pvp-win-pip");
-        pips.forEach((pip, idx) => pip.classList.toggle("won", idx < oppSc));
-        const cnt = p2Wins.querySelector(".pvp-win-count");
-        if (cnt) cnt.textContent = `${oppSc}W`;
-      }
+        if (nameEl) nameEl.textContent = sideData.name;
+        if (clsEl) clsEl.textContent = sideData.clsName;
+        const pct = Math.max(0, Math.min(100, (sideData.hp / sideData.maxHp) * 100));
+        if (fillEl) {
+          fillEl.style.width = `${pct}%`;
+          fillEl.classList.toggle("danger", pct <= 25);
+        }
+        if (textEl) textEl.textContent = `${sideData.hp}`;
+        if (winsEl) {
+          const pips = winsEl.querySelectorAll(".pvp-win-pip");
+          pips.forEach((pip, idx) => pip.classList.toggle("won", idx < sideData.wins));
+          const cnt = winsEl.querySelector(".pvp-win-count");
+          if (cnt) cnt.textContent = `${sideData.wins}W`;
+        }
+        const sigKey = `${prefix}Sig`;
+        const sig = `${sideData.isLocal ? "L" : "R"}:${sideData.spellObjs.map((sp) => sp.id).join(",")}`;
+        if (skillsEl && sfHud.dataset[sigKey] !== sig) {
+          sfHud.dataset[sigKey] = sig;
+          skillsEl.innerHTML = sideData.spellObjs
+            .map(
+              (sp) =>
+                `<div class="pvp-sf-skill${sp.isUltimate ? " ult" : ""}" data-spell-id="${sp.id}" title="${sp.name}"><img src="${sp.icon}" alt="${sp.name}" />${sideData.isLocal ? `<span class="pvp-sf-skill-cd" hidden></span>` : ""}</div>`
+            )
+            .join("");
+        }
+        if (skillsEl && sideData.isLocal) {
+          for (const el of skillsEl.querySelectorAll(".pvp-sf-skill")) {
+            const cd = s.spellCooldowns?.[el.dataset.spellId] || 0;
+            const cdBadge = el.querySelector(".pvp-sf-skill-cd");
+            el.classList.toggle("on-cd", cd > 0);
+            if (cdBadge) {
+              cdBadge.hidden = cd <= 0;
+              if (cd > 0) cdBadge.textContent = String(Math.ceil(cd));
+            }
+          }
+        }
+      };
+
+      applyHudSide("p1", leftData);
+      applyHudSide("p2", rightData);
 
       const roundEl = document.getElementById("pvp-hud-round");
       const timerEl = document.getElementById("pvp-hud-timer");
@@ -527,45 +554,6 @@ export function updateRoomAndBossHUD() {
       if (timerEl) {
         timerEl.textContent = String(remSec).padStart(2, "0");
         timerEl.classList.toggle("low", remSec <= 15);
-      }
-
-      const mySpells = getActiveSpells(p);
-      const p1Sig = mySpells.map((sp) => sp.id).join(",");
-      if (p1Skills && sfHud.dataset.p1Sig !== p1Sig) {
-        sfHud.dataset.p1Sig = p1Sig;
-        p1Skills.innerHTML = mySpells
-          .map(
-            (sp) =>
-              `<div class="pvp-sf-skill${sp.isUltimate ? " ult" : ""}" data-spell-id="${sp.id}" title="${sp.name}"><img src="${sp.icon}" alt="${sp.name}" /><span class="pvp-sf-skill-cd" hidden></span></div>`
-          )
-          .join("");
-      }
-      if (p1Skills) {
-        for (const el of p1Skills.querySelectorAll(".pvp-sf-skill")) {
-          const cd = s.spellCooldowns?.[el.dataset.spellId] || 0;
-          const cdBadge = el.querySelector(".pvp-sf-skill-cd");
-          el.classList.toggle("on-cd", cd > 0);
-          if (cdBadge) {
-            cdBadge.hidden = cd <= 0;
-            if (cd > 0) cdBadge.textContent = String(Math.ceil(cd));
-          }
-        }
-      }
-
-      const oppIds = Array.isArray(s.pvpOppInfo?.loadout) && s.pvpOppInfo.loadout.length >= 4
-        ? s.pvpOppInfo.loadout
-        : (CLASS_DEFAULT_LOADOUTS[oppCls.id] || DEFAULT_LOADOUT);
-      const p2Sig = oppIds.join(",");
-      if (p2Skills && sfHud.dataset.p2Sig !== p2Sig) {
-        sfHud.dataset.p2Sig = p2Sig;
-        p2Skills.innerHTML = oppIds
-          .map((id) => SPELLS.find((sp) => sp.id === id))
-          .filter(Boolean)
-          .map(
-            (sp) =>
-              `<div class="pvp-sf-skill${sp.isUltimate ? " ult" : ""}" title="${sp.name}"><img src="${sp.icon}" alt="${sp.name}" /></div>`
-          )
-          .join("");
       }
     }
     bgm.play("boss");

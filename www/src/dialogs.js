@@ -58,6 +58,15 @@ import {
 import { buildSpellButtons, uiHooks, updateCooldownUI, updateUI } from "./ui.js";
 import { descendFloor, worldHooks } from "./world.js";
 
+function escapeHtml(val) {
+  return String(val ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export function useInventoryItem(index) {
   const s = runtime.state;
   if (!s || s.runEnded || s.dyingTimer > 0) return;
@@ -1602,7 +1611,7 @@ export function openPvpDialog() {
         lanHostBtn.textContent = "Stop LAN Server";
         lanHostBtn.className = "btn btn-secondary btn-sm";
         lanHostTitle.textContent = `Phone LAN Host Active: ${activeLanHostIp}`;
-        lanHostDesc.innerHTML = `2nd Phone APK: type <code>${activeLanHostIp}</code> (or tap <b>Scan Wi-Fi</b>).`;
+        lanHostDesc.innerHTML = `2nd Phone APK: type <code>${escapeHtml(activeLanHostIp)}</code> (or tap <b>Scan Wi-Fi</b>).`;
         if (lanCopyIpBtn) lanCopyIpBtn.hidden = false;
       } else {
         activeLanHostIp = "";
@@ -1625,7 +1634,7 @@ export function openPvpDialog() {
             if (info?.ips?.length) {
               activeLanHostIp = info.ips[0];
               lanHostTitle.textContent = `Your LAN IP: ${info.ips.join(" / ")}`;
-              lanHostDesc.innerHTML = `On a friend's Phone, type <code>${activeLanHostIp}</code> (or tap <b>Scan Wi-Fi</b>).`;
+              lanHostDesc.innerHTML = `On a friend's Phone, type <code>${escapeHtml(activeLanHostIp)}</code> (or tap <b>Scan Wi-Fi</b>).`;
               if (lanCopyIpBtn) lanCopyIpBtn.hidden = false;
             }
           })
@@ -1713,6 +1722,9 @@ export function openPvpDialog() {
         const pingTxt = typeof runtime.netPingMs === "number" ? ` · ${Math.round(runtime.netPingMs)} ms` : "";
         connPill.textContent = `Connected${pingTxt}`;
         connPill.className = "pvp-conn-pill online";
+      } else if (pvpNet.waking) {
+        connPill.textContent = `Waking... (${pvpNet.retryAttempt}/${pvpNet.maxRetries})`;
+        connPill.className = "pvp-conn-pill pending";
       } else if (pvpNet.connecting) {
         connPill.textContent = "Connecting...";
         connPill.className = "pvp-conn-pill pending";
@@ -1731,6 +1743,9 @@ export function openPvpDialog() {
           ? `LAN Connected (${pvpNet.clientIp || "Wi-Fi"}). Create a LAN match or join a friend on your Wi-Fi!`
           : `Network Connected (${pvpNet.clientIp || "Online"}). Same-Wi-Fi lobbies appear first with a Same Network badge.`;
         statusEl.className = "pvp-status-msg ok";
+      } else if (pvpNet.waking) {
+        statusEl.textContent = `Waking PvP server, retrying automatically... (Attempt ${pvpNet.retryAttempt}/${pvpNet.maxRetries})`;
+        statusEl.className = "pvp-status-msg waking";
       } else {
         statusEl.textContent = activeMode === "lan"
           ? "Tap Host LAN on Phone, tap Scan Wi-Fi, or type your friend's IP (e.g. 192.168.1.5)."
@@ -1772,10 +1787,14 @@ export function openPvpDialog() {
           const m = PVP_MAPS[r.mapId] || PVP_MAPS[0];
           const lockBadge = r.hasPassword ? `<span class="pvp-lock-pill">🔒 Locked</span>` : "";
           const netBadge = r.sameNetwork ? `<span class="pvp-net-pill">Same Network</span>` : "";
+          const safeRoomName = escapeHtml(r.name || "Dungeon Arena");
+          const safeHostName = escapeHtml(r.hostName || "Challenger");
+          const safeHostRole = escapeHtml(HERO_CLASSES[r.hostClass]?.name || r.hostClass || "Hero");
+          const safeMapName = escapeHtml(m.name || "Arena");
           card.innerHTML = `
             <div class="pvp-lobby-meta">
-              <strong>${r.name} ${lockBadge} ${netBadge}</strong>
-              <span>Host: ${r.hostName} (${HERO_CLASSES[r.hostClass]?.name || r.hostClass}) · Map: ${m.name}</span>
+              <strong>${safeRoomName} ${lockBadge} ${netBadge}</strong>
+              <span>Host: ${safeHostName} (${safeHostRole}) · Map: ${safeMapName}</span>
             </div>
             <button type="button" class="btn btn-primary btn-sm">Join</button>
           `;
@@ -1835,11 +1854,11 @@ export function openPvpDialog() {
           if (pl) {
             const cls = HERO_CLASSES[pl.heroClass] || HERO_CLASSES.gilded;
             const youTag = slot === pvpNet.mySlot ? " (You)" : "";
-            const verTag = pl.appVersion && pl.appVersion !== "unknown" ? ` · ${pl.appVersion}` : "";
+            const verTag = pl.appVersion && pl.appVersion !== "unknown" ? ` · ${escapeHtml(pl.appVersion)}` : "";
             box.innerHTML = `
               <span class="pvp-slot-tag">${slot === 0 ? "HOST" : "CHALLENGER"}${youTag}</span>
-              <strong>${pl.heroName}</strong>
-              <span class="pvp-hero-role">${cls.name}${verTag}</span>
+              <strong>${escapeHtml(pl.heroName || cls.name)}</strong>
+              <span class="pvp-hero-role">${escapeHtml(cls.name)}${verTag}</span>
               <span class="pvp-ready-pill ${pl.ready ? "is-ready" : ""}">${pl.ready ? "READY" : "Not Ready"}</span>
             `;
           } else {
@@ -2155,7 +2174,10 @@ export function openPvpDialog() {
   renderPvpUI();
   if (previewRafId) cancelAnimationFrame(previewRafId);
   previewRafId = requestAnimationFrame(tickHeroPreviews);
-  dlg.addEventListener("close", () => {
+  if (dlg._pvpCloseHandler) {
+    dlg.removeEventListener("close", dlg._pvpCloseHandler);
+  }
+  dlg._pvpCloseHandler = () => {
     if (previewRafId) {
       cancelAnimationFrame(previewRafId);
       previewRafId = 0;
@@ -2163,9 +2185,10 @@ export function openPvpDialog() {
     if (!keepRoomOnClose && !runtime.state?.isPvp && pvpNet.connected && pvpNet.room) {
       pvpNet.send({ type: "leave_lobby" });
     }
-  }, { once: true });
+  };
+  dlg.addEventListener("close", dlg._pvpCloseHandler, { once: true });
 
-  if (!pvpNet.connected && !pvpNet.connecting) {
+  if (!pvpNet.connected && !pvpNet.connecting && !pvpNet.waking) {
     if (activeMode === "network") {
       connectForMode("network");
     } else if (activeMode === "lan" && (window.location.protocol === "http:" || getLanStatusObj()?.running)) {
@@ -2175,7 +2198,7 @@ export function openPvpDialog() {
     pvpNet.send({ type: "list_lobbies" });
   }
 
-  dlg.showModal();
+  if (!dlg.open) dlg.showModal();
 }
 
 // Wire hooks

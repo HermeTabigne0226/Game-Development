@@ -2617,6 +2617,7 @@ body.pvp-active .canvas-frame {
 }
 
 .pvp-status-msg.ok { color: #86efac; border-color: rgba(74, 222, 128, 0.4); }
+.pvp-status-msg.waking { color: #fef08a; border-color: rgba(250, 204, 21, 0.5); background: rgba(113, 63, 18, 0.3); }
 .pvp-status-msg.error { color: #fca5a5; border-color: rgba(248, 113, 113, 0.55); }
 
 .pvp-fighter-strip {

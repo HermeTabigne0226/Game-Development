@@ -434,12 +434,79 @@ export const pvpHooks = {
 };
 
 let pvpEndCountdownTimer = null;
+let pvpEndBackupTimer = null;
 let pvpRoundLostRetryTimer = null;
+let pvpBgHeartbeatTimer = null;
+
+export function clearPvpBgHeartbeat() {
+  if (pvpBgHeartbeatTimer) {
+    clearInterval(pvpBgHeartbeatTimer);
+    pvpBgHeartbeatTimer = null;
+  }
+}
+
+export function startPvpBgHeartbeat() {
+  clearPvpBgHeartbeat();
+  let lastTick = Date.now();
+  pvpBgHeartbeatTimer = setInterval(() => {
+    const now = Date.now();
+    const elapsed = Math.min(2.0, Math.max(0, (now - lastTick) / 1000));
+    lastTick = now;
+    const s = runtime.state;
+    if (!s?.isPvp) {
+      clearPvpBgHeartbeat();
+      return;
+    }
+    if (s.runEnded || s.pvpRoundEnded) return;
+    if ((s.pvpIntroTimer || 0) > 0) {
+      syncPvpIntroTimer(s);
+    }
+    const p = s.player;
+    if (p && (document.hidden || !document.hasFocus())) {
+      if (p.iFrames > 0) {
+        const wallNow = performance.now();
+        const dtSec = p.pvpLastIFrameTs ? Math.max(0, (wallNow - p.pvpLastIFrameTs) / 1000) : elapsed;
+        p.iFrames = Math.max(0, p.iFrames - dtSec);
+        p.pvpLastIFrameTs = wallNow;
+      }
+      if ((s.pvpIntroTimer || 0) <= 0) {
+        s.pvpRoundTimer = Math.max(0, (s.pvpRoundTimer ?? 99) - elapsed);
+        if (s.pvpRoundTimer <= 0 && !s.pvpTimeoutSent) {
+          s.pvpTimeoutSent = true;
+          notifyLocalPvpTimeout();
+        }
+      }
+      if (p.hp <= 0) {
+        notifyLocalPvpDefeat();
+        return;
+      }
+      if (pvpNet.connected) {
+        const stats = getPlayerStats(p);
+        pvpNet.send({
+          type: "pvp_sync",
+          round: s.pvpRound || 1,
+          x: Math.round(p.x * 100) / 100,
+          y: Math.round(p.y * 100) / 100,
+          z: Math.round((p.z || 0) * 10) / 10,
+          anim: p.anim,
+          facingLeft: Boolean(p.facingLeft),
+          aimAngle: Math.round((p.aimAngle || 0) * 1000) / 1000,
+          hp: Math.max(0, Math.round(p.hp)),
+          maxHp: Math.round(stats.maxHp),
+        });
+      }
+    }
+  }, 400);
+}
 
 export function clearPvpEndCountdown() {
   if (pvpEndCountdownTimer) {
     clearInterval(pvpEndCountdownTimer);
     pvpEndCountdownTimer = null;
+  }
+  if (pvpEndBackupTimer) {
+    clearTimeout(pvpEndBackupTimer);
+    pvpEndBackupTimer = null;
   }
 }
 
@@ -450,11 +517,20 @@ export function clearPvpRoundLostRetry() {
   }
 }
 
+function closeModalIfOpen(id, reason = "pvp_cleanup") {
+  const el = document.getElementById(id);
+  if (el?.open) {
+    try { el.close(reason); } catch {}
+  }
+}
+
 export function returnToPvpLobbyFromMatch({ leaveRoom = false, openLobby = true } = {}) {
   clearPvpEndCountdown();
   clearPvpRoundLostRetry();
-  const dlg = document.getElementById("end-dialog");
-  if (dlg?.open) dlg.close("pvp_return");
+  clearPvpBgHeartbeat();
+  closeModalIfOpen("confirm-dialog", "pvp_return");
+  closeModalIfOpen("pvp-guide-dialog", "pvp_return");
+  closeModalIfOpen("end-dialog", "pvp_return");
   const vsOverlay = document.getElementById("pvp-vs-screen");
   if (vsOverlay) vsOverlay.hidden = true;
   if (leaveRoom && pvpNet.connected && pvpNet.room) {
@@ -463,6 +539,8 @@ export function returnToPvpLobbyFromMatch({ leaveRoom = false, openLobby = true 
   if (runtime.state) {
     runtime.state.isPvp = false;
     runtime.state.runEnded = true;
+    runtime.state.pvpRoundEnded = true;
+    runtime.state.pvpMatchOverShown = false;
   }
   document.body.classList.remove("pvp-active");
   const sfHud = document.getElementById("pvp-sf-hud");
@@ -472,11 +550,20 @@ export function returnToPvpLobbyFromMatch({ leaveRoom = false, openLobby = true 
   if (openLobby && pvpHooks.openPvpDialog) pvpHooks.openPvpDialog();
 }
 
+const CLOUD_WAKE_BACKOFFS_MS = [2500, 4000, 5000, 6500, 8000];
+
 class PvpNetworkClient {
   constructor() {
     this.ws = null;
     this.connected = false;
     this.connecting = false;
+    this.waking = false;
+    this.retryAttempt = 0;
+    this.maxRetries = CLOUD_WAKE_BACKOFFS_MS.length;
+    this.retryTimer = null;
+    this.connectTimeoutTimer = null;
+    this.targetUrl = "";
+    this.manualDisconnect = false;
     this.clientId = null;
     this.clientIp = "";
     this.lobbies = [];
@@ -500,7 +587,52 @@ class PvpNetworkClient {
     if (pvpHooks.onLobbyStateChange) pvpHooks.onLobbyStateChange(event, data);
   }
 
-  connect(rawUrl) {
+  clearRetryTimers() {
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
+    if (this.connectTimeoutTimer) {
+      clearTimeout(this.connectTimeoutTimer);
+      this.connectTimeoutTimer = null;
+    }
+  }
+
+  pingCloudHealth(wsUrl) {
+    if (!wsUrl || !wsUrl.startsWith("wss://")) return;
+    const healthUrl = wsUrl.replace(/^wss:/i, "https:").replace(/\/ws$/i, "/health");
+    try {
+      fetch(healthUrl, { mode: "cors", cache: "no-store" }).catch(() => {});
+    } catch {}
+  }
+
+  scheduleCloudRetry(wsUrl) {
+    if (this.manualDisconnect || !wsUrl || !wsUrl.startsWith("wss://") || this.targetUrl !== wsUrl) {
+      return false;
+    }
+    if (this.retryAttempt >= this.maxRetries) {
+      this.waking = false;
+      this.connecting = false;
+      return false;
+    }
+    const delay = CLOUD_WAKE_BACKOFFS_MS[this.retryAttempt] || 6000;
+    this.retryAttempt += 1;
+    this.waking = true;
+    this.connecting = true;
+    this.lastError = "";
+    this.emitUI("waking", { attempt: this.retryAttempt, maxRetries: this.maxRetries });
+    this.pingCloudHealth(wsUrl);
+    this.clearRetryTimers();
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null;
+      if (!this.manualDisconnect && this.targetUrl === wsUrl && !this.connected) {
+        this.connect(wsUrl, { isRetry: true });
+      }
+    }, delay);
+    return true;
+  }
+
+  connect(rawUrl, { isRetry = false } = {}) {
     const wsUrl = normalizeWsUrl(rawUrl);
     if (!wsUrl) {
       this.lastError = "Enter a Server URL first: use wss://your-service.onrender.com/ws (Online) or ws://<PC-IP>:8080/ws (Same Wi-Fi).";
@@ -519,16 +651,43 @@ class PvpNetworkClient {
       return;
     }
     setSavedPvpServerUrl(wsUrl);
-    this.disconnect();
+    this.disconnect({ preserveRetry: isRetry });
+    this.manualDisconnect = false;
+    this.targetUrl = wsUrl;
+    if (!isRetry) {
+      this.retryAttempt = 0;
+      this.waking = false;
+    }
     this.connecting = true;
     this.lastError = "";
-    this.emitUI("connecting");
+    if (!isRetry && wsUrl.startsWith("wss://")) {
+      this.pingCloudHealth(wsUrl);
+    }
+    this.emitUI(this.waking ? "waking" : "connecting", {
+      attempt: this.retryAttempt,
+      maxRetries: this.maxRetries,
+    });
 
     try {
       const ws = new WebSocket(wsUrl);
       this.ws = ws;
+      let opened = false;
+      let retryQueuedForSocket = false;
+
+      if (wsUrl.startsWith("wss://")) {
+        this.connectTimeoutTimer = setTimeout(() => {
+          if (this.ws === ws && !opened) {
+            try { ws.close(); } catch {}
+          }
+        }, 12000);
+      }
+
       ws.onopen = () => {
         if (this.ws !== ws) return;
+        opened = true;
+        this.clearRetryTimers();
+        this.waking = false;
+        this.retryAttempt = 0;
         this.connected = true;
         this.connecting = false;
         this.lastError = "";
@@ -545,10 +704,16 @@ class PvpNetworkClient {
       };
       ws.onerror = () => {
         if (this.ws !== ws) return;
+        if (!opened && !this.manualDisconnect && wsUrl.startsWith("wss://")) {
+          if (!retryQueuedForSocket && this.scheduleCloudRetry(wsUrl)) {
+            retryQueuedForSocket = true;
+            return;
+          }
+        }
         const isNative = Boolean(window.Capacitor || window.AndroidApp);
-        if (isNative && /^ws:\/\/(localhost|127\.0\.0\.1)(:|\/)/i.test(url)) {
+        if (isNative && /^ws:\/\/(localhost|127\.0\.0\.1)(:|\/)/i.test(wsUrl)) {
           this.lastError = "Phone cannot join PC via localhost — enter PC's Wi-Fi IP (e.g. 192.168.x.x) or tap Scan Wi-Fi.";
-        } else if (url.startsWith("ws://") && !url.includes("localhost") && !url.includes("127.0.0.1")) {
+        } else if (wsUrl.startsWith("ws://") && !wsUrl.includes("localhost") && !wsUrl.includes("127.0.0.1")) {
           this.lastError = "Cannot reach LAN Host — verify same Wi-Fi, allow port 8080 in Firewall, or Host LAN on Phone.";
         } else {
           this.lastError = "Connection failed — check Server URL and ensure host/relay is awake.";
@@ -557,22 +722,41 @@ class PvpNetworkClient {
       };
       ws.onclose = () => {
         if (this.ws !== ws) return;
+        this.clearRetryTimers();
         this.connected = false;
-        this.connecting = false;
         this.stopPingLoop();
         runtime.netPingMs = null;
         this.room = null;
         this.mySlot = -1;
+        if (!opened && !this.manualDisconnect && wsUrl.startsWith("wss://")) {
+          if (retryQueuedForSocket || this.scheduleCloudRetry(wsUrl)) {
+            retryQueuedForSocket = true;
+            return;
+          }
+        }
+        this.waking = false;
+        this.connecting = false;
         this.emitUI("disconnected");
+        if (opened && !this.manualDisconnect && runtime.state?.isPvp && !runtime.state.runEnded && !runtime.state.pvpMatchOverShown) {
+          handlePvpConnectionLost();
+        }
       };
     } catch (err) {
       this.connecting = false;
+      this.waking = false;
       this.lastError = err?.message || "Invalid WebSocket URL.";
       this.emitUI("error", { message: this.lastError });
     }
   }
 
-  disconnect() {
+  disconnect({ preserveRetry = false } = {}) {
+    if (!preserveRetry) {
+      this.manualDisconnect = true;
+      this.targetUrl = "";
+      this.waking = false;
+      this.retryAttempt = 0;
+    }
+    this.clearRetryTimers();
     this.stopPingLoop();
     runtime.netPingMs = null;
     if (this.ws) {
@@ -676,6 +860,9 @@ class PvpNetworkClient {
       case "pvp_hit":
         applyIncomingPvpHit(msg);
         break;
+      case "pvp_server_hp":
+        applyServerHpSync(msg);
+        break;
     }
   }
 }
@@ -753,6 +940,7 @@ function setupPvpMatchEntities(room, mySlot, isNextRound = false) {
     pvpRound: room.round || 1,
     pvpScores: [...(room.scores || [0, 0])],
     pvpRoundEnded: false,
+    pvpMatchOverShown: false,
     pvpTimeoutSent: false,
     pvpRoundTimer: 99,
     pvpRoundBanner: null,
@@ -812,16 +1000,16 @@ function setupPvpMatchEntities(room, mySlot, isNextRound = false) {
 function showPvpVsLoadingScreen(room, mySlot, durationMs = 3000) {
   const overlay = document.getElementById("pvp-vs-screen");
   if (!overlay) return;
-  const myInfo = room.players[mySlot] || {};
-  const oppInfo = room.players[mySlot === 0 ? 1 : 0] || {};
-  const myClsId = myInfo.heroClass === "paladin" ? "gilded" : myInfo.heroClass || "gilded";
-  const oppClsId = oppInfo.heroClass === "paladin" ? "gilded" : oppInfo.heroClass || "gilded";
-  const myCls = HERO_CLASSES[myClsId] || HERO_CLASSES.gilded;
-  const oppCls = HERO_CLASSES[oppClsId] || HERO_CLASSES.gilded;
+  const leftInfo = room.players[0] || {};
+  const rightInfo = room.players[1] || {};
+  const leftClsId = leftInfo.heroClass === "paladin" ? "gilded" : leftInfo.heroClass || "gilded";
+  const rightClsId = rightInfo.heroClass === "paladin" ? "gilded" : rightInfo.heroClass || "gilded";
+  const leftCls = HERO_CLASSES[leftClsId] || HERO_CLASSES.gilded;
+  const rightCls = HERO_CLASSES[rightClsId] || HERO_CLASSES.gilded;
   const map = PVP_MAPS[room.mapId] || PVP_MAPS[0];
 
-  const myIds = Array.isArray(myInfo.loadout) && myInfo.loadout.length >= 4 ? myInfo.loadout : (CLASS_DEFAULT_LOADOUTS[myCls.id] || DEFAULT_LOADOUT);
-  const oppIds = Array.isArray(oppInfo.loadout) && oppInfo.loadout.length >= 4 ? oppInfo.loadout : (CLASS_DEFAULT_LOADOUTS[oppCls.id] || DEFAULT_LOADOUT);
+  const leftIds = Array.isArray(leftInfo.loadout) && leftInfo.loadout.length >= 4 ? leftInfo.loadout : (CLASS_DEFAULT_LOADOUTS[leftCls.id] || DEFAULT_LOADOUT);
+  const rightIds = Array.isArray(rightInfo.loadout) && rightInfo.loadout.length >= 4 ? rightInfo.loadout : (CLASS_DEFAULT_LOADOUTS[rightCls.id] || DEFAULT_LOADOUT);
 
   const renderSkillsHtml = (ids) =>
     ids
@@ -837,13 +1025,13 @@ function showPvpVsLoadingScreen(room, mySlot, durationMs = 3000) {
   document.getElementById("pvp-vs-map-name").textContent = map.name;
   document.getElementById("pvp-vs-map-sub").textContent = map.subtitle;
 
-  document.getElementById("pvp-vs-left-name").textContent = myInfo.heroName || myCls.name;
-  document.getElementById("pvp-vs-left-class").textContent = `${myCls.name} · 1,000 HP`;
-  document.getElementById("pvp-vs-left-skills").innerHTML = renderSkillsHtml(myIds);
+  document.getElementById("pvp-vs-left-name").textContent = `${leftInfo.heroName || leftCls.name}${mySlot === 0 ? " (You)" : ""}`;
+  document.getElementById("pvp-vs-left-class").textContent = `${leftCls.name} · 1,000 HP`;
+  document.getElementById("pvp-vs-left-skills").innerHTML = renderSkillsHtml(leftIds);
 
-  document.getElementById("pvp-vs-right-name").textContent = oppInfo.heroName || oppCls.name;
-  document.getElementById("pvp-vs-right-class").textContent = `${oppCls.name} · 1,000 HP`;
-  document.getElementById("pvp-vs-right-skills").innerHTML = renderSkillsHtml(oppIds);
+  document.getElementById("pvp-vs-right-name").textContent = `${rightInfo.heroName || rightCls.name}${mySlot === 1 ? " (You)" : ""}`;
+  document.getElementById("pvp-vs-right-class").textContent = `${rightCls.name} · 1,000 HP`;
+  document.getElementById("pvp-vs-right-skills").innerHTML = renderSkillsHtml(rightIds);
 
   const barEl = document.getElementById("pvp-vs-bar-fill");
   const statusEl = document.getElementById("pvp-vs-status");
@@ -876,8 +1064,8 @@ function showPvpVsLoadingScreen(room, mySlot, durationMs = 3000) {
       const sheet = runtime.assets[`${clsId}_walk`] || runtime.assets[`${clsId}_idle`] || runtime.assets.gilded_idle;
       if (sheet) drawSheetFrame(c, sheet, animIdx, 8, 8, 96, 96, flip);
     };
-    drawSide(leftCtx, myCls.id, false);
-    drawSide(rightCtx, oppCls.id, true);
+    drawSide(leftCtx, leftCls.id, false);
+    drawSide(rightCtx, rightCls.id, true);
 
     if (elapsed < durationMs && !overlay.hidden) {
       requestAnimationFrame(tick);
@@ -902,8 +1090,12 @@ export function syncPvpIntroTimer(s = runtime.state) {
 }
 
 export function startPvpMatchSession(room, mySlot) {
+  clearPvpEndCountdown();
   clearPvpRoundLostRetry();
+  closeModalIfOpen("confirm-dialog", "match_start");
+  closeModalIfOpen("end-dialog", "match_start");
   setupPvpMatchEntities(room, mySlot, false);
+  startPvpBgHeartbeat();
   const st = runtime.state;
   setTimeout(() => { if (runtime.state === st) syncPvpIntroTimer(st); }, 4560);
   runtime.isCanvasVisible = true;
@@ -921,8 +1113,12 @@ export function startPvpMatchSession(room, mySlot) {
 }
 
 export function startPvpRound(room, mySlot) {
+  clearPvpEndCountdown();
   clearPvpRoundLostRetry();
+  closeModalIfOpen("confirm-dialog", "next_round");
+  closeModalIfOpen("end-dialog", "next_round");
   setupPvpMatchEntities(room, mySlot, true);
+  startPvpBgHeartbeat();
   const st = runtime.state;
   setTimeout(() => { if (runtime.state === st) syncPvpIntroTimer(st); }, 3060);
   runtime.isCanvasVisible = true;
@@ -968,13 +1164,30 @@ export function notifyLocalPvpDefeat() {
   let retries = 0;
   pvpRoundLostRetryTimer = setInterval(() => {
     const cur = runtime.state;
-    if (!cur?.isPvp || cur.runEnded || (cur.pvpRound || 1) !== roundNum || !pvpNet.connected || retries >= 5) {
+    if (!cur?.isPvp || cur.runEnded || (cur.pvpRound || 1) !== roundNum) {
       clearPvpRoundLostRetry();
       return;
     }
+    if (!pvpNet.connected || retries >= 6) {
+      clearPvpRoundLostRetry();
+      if (!cur.pvpMatchOverShown && !cur.runEnded) {
+        if (pvpNet.room?.status === "lobby") {
+          handleRemoteMatchOver({
+            winnerSlot: cur.pvpMySlot === 0 ? 1 : 0,
+            scores: [...(pvpNet.room.scores || cur.pvpScores || [0, 0])],
+            round: roundNum,
+            reason: "ko",
+          });
+        } else {
+          handlePvpConnectionLost("Match result timed out. Returning to PvP Lobby.");
+        }
+      }
+      return;
+    }
     retries += 1;
+    pvpNet.send({ type: "pvp_sync", round: roundNum, hp: 0, maxHp: Math.round(stats.maxHp) });
     pvpNet.send({ type: "round_lost", round: roundNum });
-  }, 1000);
+  }, 750);
 }
 
 export function notifyLocalPvpTimeout() {
@@ -1002,6 +1215,8 @@ export function updatePvpFrame(dt) {
     opp.x += (opp.targetX - opp.x) * Math.min(1, dt * 16);
     opp.y += (opp.targetY - opp.y) * Math.min(1, dt * 16);
     if (opp.hurtTimer > 0) opp.hurtTimer = Math.max(0, opp.hurtTimer - dt);
+    if (opp.chilled > 0) opp.chilled = Math.max(0, opp.chilled - dt);
+    if (opp.sunderTimer > 0) opp.sunderTimer = Math.max(0, opp.sunderTimer - dt);
     if (opp.frozenTimer > 0) opp.frozenTimer = Math.max(0, opp.frozenTimer - dt);
     if (opp.stunTimer > 0) opp.stunTimer = Math.max(0, opp.stunTimer - dt);
     if (opp.ultCharge) {
@@ -1185,7 +1400,7 @@ export function broadcastPvpAction(action) {
 export function sendPvpHit(payload) {
   const s = runtime.state;
   if (!s?.isPvp || !pvpNet.connected) return;
-  pvpNet.send({ type: "pvp_hit", ...payload });
+  pvpNet.send({ type: "pvp_hit", round: s.pvpRound || 1, ...payload });
 }
 
 function applyRemoteOpponentSync(msg) {
@@ -1434,10 +1649,31 @@ function applyRemoteOpponentAction(msg) {
   }
 }
 
+function applyServerHpSync(msg) {
+  const s = runtime.state;
+  if (!s?.isPvp || s.pvpRoundEnded || s.runEnded) return;
+  if (typeof msg.round === "number" && msg.round !== (s.pvpRound || 1)) return;
+  const p = s.player;
+  if (!p || typeof msg.hp !== "number") return;
+  const targetHp = Math.max(0, Math.round(msg.hp));
+  if (targetHp < p.hp) {
+    p.hp = targetHp;
+    runtime.uiDirty = true;
+    if (p.hp <= 0) {
+      notifyLocalPvpDefeat();
+    }
+  }
+}
+
 function applyIncomingPvpHit(msg) {
   const s = runtime.state;
   if (!s?.isPvp || s.pvpRoundEnded || s.runEnded) return;
   const p = s.player;
+  const wallNow = performance.now();
+  if (p.iFrames > 0 && p.pvpLastIFrameTs) {
+    p.iFrames = Math.max(0, p.iFrames - Math.max(0, (wallNow - p.pvpLastIFrameTs) / 1000));
+  }
+  p.pvpLastIFrameTs = wallNow;
   if (p.iFrames > 0) {
     addFloat(p.x, p.y - 0.35, "EVADED!", "#38bdf8");
     return;
@@ -1452,6 +1688,7 @@ function applyIncomingPvpHit(msg) {
 
   p.hp = Math.max(0, p.hp - dmg);
   p.iFrames = Math.max(p.iFrames || 0, 0.14);
+  p.pvpLastIFrameTs = wallNow;
   if (msg.stunDur) p.stunTimer = Math.max(p.stunTimer || 0, Number(msg.stunDur));
   if (msg.freezeDur) p.frozenTimer = Math.max(p.frozenTimer || 0, Number(msg.freezeDur));
   if (msg.sunderDur) p.sunderTimer = Math.max(p.sunderTimer || 0, Number(msg.sunderDur));
@@ -1510,33 +1747,67 @@ function handleRemoteRoundOver(msg) {
 
 function startPvpEndLobbyCountdown(baseSummary) {
   clearPvpEndCountdown();
+  const dlg = document.getElementById("end-dialog");
   const summaryEl = document.getElementById("end-dialog-summary");
   const sanctumBtn = document.getElementById("btn-end-sanctum");
-  let rem = 3;
-  const syncText = () => {
-    if (summaryEl) summaryEl.textContent = `${baseSummary} Returning to PvP Lobby in ${rem}s...`;
-    if (sanctumBtn) sanctumBtn.textContent = `Return to PvP Lobby (${rem}s)`;
-  };
-  syncText();
-  pvpEndCountdownTimer = setInterval(() => {
-    const dlg = document.getElementById("end-dialog");
-    if (!dlg?.open || !runtime.state?.isPvp) {
+  const endsAt = Date.now() + 3000;
+  const finishReturn = () => {
+    if (!runtime.state?.isPvp) {
       clearPvpEndCountdown();
       return;
     }
-    rem -= 1;
-    if (rem <= 0) {
-      returnToPvpLobbyFromMatch({ leaveRoom: false, openLobby: true });
-    } else {
-      syncText();
+    returnToPvpLobbyFromMatch({ leaveRoom: false, openLobby: true });
+  };
+  const syncText = () => {
+    const rem = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+    if (summaryEl) {
+      summaryEl.textContent = rem > 0 ? `${baseSummary} Returning to PvP Lobby in ${rem}s...` : `${baseSummary} Returning to PvP Lobby...`;
     }
-  }, 1000);
+    if (sanctumBtn) {
+      sanctumBtn.textContent = rem > 0 ? `Return to PvP Lobby (${rem}s)` : "Returning to PvP Lobby...";
+    }
+    if (rem <= 0) {
+      finishReturn();
+    }
+  };
+  if (dlg) {
+    dlg.addEventListener(
+      "close",
+      () => {
+        if (dlg.returnValue !== "pvp_return" && dlg.returnValue !== "sanctum" && runtime.state?.isPvp && runtime.state?.runEnded) {
+          finishReturn();
+        }
+      },
+      { once: true }
+    );
+  }
+  syncText();
+  pvpEndCountdownTimer = setInterval(() => {
+    if (!runtime.state?.isPvp) {
+      clearPvpEndCountdown();
+      return;
+    }
+    syncText();
+  }, 250);
+  pvpEndBackupTimer = setTimeout(finishReturn, 3200);
+}
+
+function showPvpEndDialogSafe(dlg) {
+  if (!dlg) return;
+  closeModalIfOpen("confirm-dialog", "match_over");
+  closeModalIfOpen("pvp-guide-dialog", "match_over");
+  closeModalIfOpen("skill-dialog", "match_over");
+  if (!dlg.open) {
+    try { dlg.showModal(); } catch {}
+  }
 }
 
 function handleRemoteMatchOver(msg) {
   clearPvpRoundLostRetry();
+  clearPvpBgHeartbeat();
   const s = runtime.state;
-  if (!s?.isPvp) return;
+  if (!s?.isPvp || s.pvpMatchOverShown) return;
+  s.pvpMatchOverShown = true;
   s.pvpRoundEnded = true;
   s.runEnded = true;
   s.pvpScores = [...(msg.scores || [0, 0])];
@@ -1567,13 +1838,16 @@ function handleRemoteMatchOver(msg) {
   `;
   const endlessBtn = document.getElementById("btn-end-endless");
   if (endlessBtn) endlessBtn.hidden = true;
-  dlg.showModal();
+  showPvpEndDialogSafe(dlg);
   startPvpEndLobbyCountdown(baseSummary);
 }
 
 function handleOpponentDisconnected() {
+  clearPvpBgHeartbeat();
+  clearPvpRoundLostRetry();
   const s = runtime.state;
-  if (!s?.isPvp || s.runEnded) return;
+  if (!s?.isPvp || s.runEnded || s.pvpMatchOverShown) return;
+  s.pvpMatchOverShown = true;
   s.pvpRoundEnded = true;
   s.runEnded = true;
   addLog("Opponent disconnected from the PvP Arena.", "story");
@@ -1582,6 +1856,24 @@ function handleOpponentDisconnected() {
   document.getElementById("end-stats").innerHTML = "";
   const endlessBtn = document.getElementById("btn-end-endless");
   if (endlessBtn) endlessBtn.hidden = true;
-  dlg.showModal();
+  showPvpEndDialogSafe(dlg);
   startPvpEndLobbyCountdown("Your opponent left the arena.");
+}
+
+function handlePvpConnectionLost(reasonText = "Connection to the PvP server was lost.") {
+  clearPvpBgHeartbeat();
+  clearPvpRoundLostRetry();
+  const s = runtime.state;
+  if (!s?.isPvp || s.runEnded || s.pvpMatchOverShown) return;
+  s.pvpMatchOverShown = true;
+  s.pvpRoundEnded = true;
+  s.runEnded = true;
+  addLog(reasonText, "story");
+  const dlg = document.getElementById("end-dialog");
+  document.getElementById("end-dialog-title").textContent = "Match Ended";
+  document.getElementById("end-stats").innerHTML = "";
+  const endlessBtn = document.getElementById("btn-end-endless");
+  if (endlessBtn) endlessBtn.hidden = true;
+  showPvpEndDialogSafe(dlg);
+  startPvpEndLobbyCountdown(reasonText);
 }

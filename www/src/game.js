@@ -254,6 +254,10 @@ function setupControls() {
 
   const handleMenuButtonClick = async () => {
     if (runtime.state?.isPvp) {
+      keys.clear();
+      touchMove.active = false;
+      touchMove.x = 0;
+      touchMove.y = 0;
       const choice = await openConfirmDialog({
         eyebrow: "PvP Arena Menu",
         title: "Return to Lobby or Exit Match?",
@@ -396,6 +400,15 @@ function setupControls() {
     const isBeta = /beta/i.test(raw);
     return { tier: isBeta ? 1 : 0, nums: [Number(m[1]), Number(m[2]), Number(m[3] || 0)] };
   };
+  const formatDisplayVer = (str) => {
+    const raw = String(str || "").trim();
+    const m = raw.match(/(\d+)\.(\d+)(?:\.(\d+))?/);
+    if (!m) return raw || GAME_VERSION;
+    const base = `v.${m[1]}.${m[2]}.${m[3] || 0}`;
+    if (/beta/i.test(raw)) return `${base} Beta`;
+    if (/alpha/i.test(raw)) return `${base} Alpha`;
+    return base;
+  };
   const isNewerVersion = (candidate, current) => {
     const a = parseSemver(candidate);
     const b = parseSemver(current);
@@ -482,7 +495,7 @@ function setupControls() {
       try {
         if (window.AndroidApp?.getAppVersion) {
           const info = JSON.parse(window.AndroidApp.getAppVersion());
-          if (info?.versionName) installedVer = `v.${info.versionName.replace(/^v\.?/i, "")}`;
+          if (info?.versionName) installedVer = formatDisplayVer(info.versionName);
         }
       } catch {}
 
@@ -524,7 +537,7 @@ function setupControls() {
           return;
         }
 
-        const normLatest = `v.${latestVer.replace(/^v\.?/i, "")}`;
+        const normLatest = formatDisplayVer(latestVer);
         if (latestBadgeEl) latestBadgeEl.textContent = normLatest;
 
         if (isNewerVersion(normLatest, installedVer)) {

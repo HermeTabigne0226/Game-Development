@@ -1,16 +1,16 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.0 Beta";
+export const GAME_VERSION = "v.1.0.0 Beta";
 
 export const PATCH_NOTES = [
   {
-    version: "v.1.0 Beta",
-    title: "Beta Launch — Rebalanced 1,000 HP PvP, Power-Up Vials & Full VFX Sync",
+    version: "v.1.0.0 Beta",
+    title: "Beta Launch — Rebalanced 1,000 HP PvP, Power-Up Vials & Security Hardening",
     notes: [
       "1,000 HP PvP Rebalance & No Mana Limits: Standardized all 3 classes to 1,000 HP with balanced gear, scaled PvP damage & healing for longer tactical duels, removed PvP skill/dash MP restrictions, and set PvP Dodge/Dash cooldown to 6 seconds.",
       "PvP Power-Up Vials (15s Arena Spawns): Replaced static PvP shrines/wells with color-coded walk-over Vials spawning every 15s — Red (+5%–20% HP), Green (2.5%/s Regen for 5s), Yellow (+30% DMG for 7s), Purple (+30% Speed for 6s), and Cyan (+8 DEF & -1.5s CD).",
       "Full Skill VFX Sync & Round-Start Vision Fog: Synced all Gilded Knight & Sylvan Ranger skill animations/telegraphs to your rival's screen and enabled consistent 6-tile line-of-sight fog from frame 1.",
-      "Round Countdown, Auto-Return Lobby & Empty Lobby Cleanup: Fixed Round 2+ countdown & KO sync, added a 3s auto-return countdown to the PvP Lobby, added Lobby/Exit Match confirmation, pruned empty/stale lobbies automatically, and fixed background loading screen stalls.",
+      "Security, Cold-Start Wake & Reliable Lobby Return: Escaped PvP lobby names, added relay rate limits/hit clamping and Render cold-start auto-retry banner, fixed Round 2+ KO sync & wall-clock 3s post-match return to PvP Lobby, pruned empty/stale lobbies, and fixed background loading screen stalls.",
     ],
   },
   {

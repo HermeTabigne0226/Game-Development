@@ -7,6 +7,31 @@ const dgram = require("dgram");
 
 const PORT = Number(process.argv[2] || process.env.PORT) || 8080;
 const ROOT_DIR = path.resolve(__dirname);
+const WWW_DIR = path.resolve(__dirname, "www");
+const IS_CLOUD_RELAY = Boolean(process.env.RENDER || process.env.PVP_RELAY_ONLY === "1");
+const STATIC_DIR = IS_CLOUD_RELAY ? WWW_DIR : ROOT_DIR;
+
+const MAX_WS_CLIENTS = 200;
+const MAX_CLIENTS_PER_IP = 12;
+const MAX_ROOMS = 60;
+const MAX_ROOMS_PER_IP = 4;
+const CREATE_LOBBY_COOLDOWN_MS = 1200;
+const WS_MSG_RATE_LIMIT = 80;
+const MAX_PVP_HIT_DMG = 340;
+const MAX_PVP_HIT_RATE = 14;
+
+const BLOCKED_TOP_PATHS = new Set([
+  "server.js",
+  "package.json",
+  "package-lock.json",
+  "render.yaml",
+  "vercel.json",
+  "capacitor.config.json",
+  "capacitor.config.ts",
+  "android",
+  "scripts",
+  "node_modules",
+]);
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -31,7 +56,7 @@ const MIME_TYPES = {
   ".ttf": "font/ttf",
 };
 
-/** Resolve a URL path safely within ROOT_DIR, returning null on invalid or escaping paths. */
+/** Resolve a URL path safely within STATIC_DIR, blocking traversal, dotfiles, and server files. */
 function resolveSafePath(urlPath) {
   let decoded;
   try {
@@ -39,12 +64,44 @@ function resolveSafePath(urlPath) {
   } catch {
     return null;
   }
+  if (!decoded || decoded.includes("\0")) return null;
   const relative = decoded.replace(/^\/+/, "");
-  const fullPath = path.resolve(ROOT_DIR, relative);
-  if (fullPath !== ROOT_DIR && !fullPath.startsWith(ROOT_DIR + path.sep)) {
+  const segments = relative.split(/[\\/]+/).filter(Boolean);
+  if (segments.some((seg) => seg.startsWith(".") || seg === "..")) {
+    return null;
+  }
+  if (!IS_CLOUD_RELAY && segments.length > 0 && BLOCKED_TOP_PATHS.has(segments[0].toLowerCase())) {
+    return null;
+  }
+  const fullPath = path.resolve(STATIC_DIR, relative);
+  if (fullPath !== STATIC_DIR && !fullPath.startsWith(STATIC_DIR + path.sep)) {
     return null;
   }
   return fullPath;
+}
+
+function sanitizeText(raw, fallback, maxLen = 24) {
+  const cleaned = String(raw ?? "")
+    .replace(/[\u0000-\u001F\u007F<>]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, maxLen);
+  return cleaned || fallback;
+}
+
+function sanitizeLoadout(raw) {
+  if (!Array.isArray(raw)) return null;
+  const list = raw
+    .slice(0, 4)
+    .map((id) => String(id ?? "").replace(/[^a-zA-Z0-9_]/g, "").slice(0, 32))
+    .filter(Boolean);
+  return list.length ? list : null;
+}
+
+function clampNum(val, min, max, fallback = 0) {
+  const n = Number(val);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(min, Math.min(max, n));
 }
 
 function normalizeIp(rawIp) {
@@ -225,6 +282,8 @@ function finishPvpRound(room, winnerIdx, reason = "ko") {
     room.players.forEach((pl) => {
       pl.ready = false;
       pl.lastHp = 1000;
+      pl.lastX = null;
+      pl.lastY = null;
     });
     room.roundTimer = setTimeout(() => {
       if (rooms.has(room.id)) broadcastRoomUpdate(room);
@@ -245,7 +304,15 @@ function finishPvpRound(room, winnerIdx, reason = "ko") {
     room.roundTimer = setTimeout(() => {
       if (!rooms.has(room.id) || room.players.length < 2) return;
       room.roundEnded = false;
-      room.players.forEach((pl) => { pl.lastHp = 1000; });
+      room.roundStartedAt = Date.now();
+      room.players.forEach((pl) => {
+        pl.lastHp = 1000;
+        pl.estHp = 1000;
+        pl.bgDmgApplied = false;
+        pl.lastSyncAt = Date.now();
+        pl.lastX = null;
+        pl.lastY = null;
+      });
       const detail = serializeRoomDetail(room);
       for (let i = 0; i < room.players.length; i++) {
         sendWsJson(room.players[i].client, {
@@ -264,7 +331,15 @@ function launchPvpRoomMatch(room) {
   room.round = 1;
   room.roundEnded = false;
   room.scores = [0, 0];
-  room.players.forEach((pl) => { pl.lastHp = 1000; });
+  room.roundStartedAt = Date.now();
+  room.players.forEach((pl) => {
+    pl.lastHp = 1000;
+    pl.estHp = 1000;
+    pl.bgDmgApplied = false;
+    pl.lastSyncAt = Date.now();
+    pl.lastX = null;
+    pl.lastY = null;
+  });
   const detail = serializeRoomDetail(room);
   for (let i = 0; i < room.players.length; i++) {
     sendWsJson(room.players[i].client, {
@@ -334,14 +409,32 @@ function handleClientMessage(client, msg) {
   }
 
   if (msg.type === "create_lobby") {
+    pruneRooms();
+    const now = Date.now();
+    if (now - (client.lastLobbyCreatedAt || 0) < CREATE_LOBBY_COOLDOWN_MS) {
+      sendWsJson(client, { type: "error", message: "Please wait a moment before creating another lobby." });
+      return;
+    }
+    const existingOwn = client.roomId && rooms.has(client.roomId);
+    if (!existingOwn && rooms.size >= MAX_ROOMS) {
+      sendWsJson(client, { type: "error", message: "Arena lobbies are full right now. Please join an open lobby!" });
+      return;
+    }
+    const hostedByIp = [...rooms.values()].filter((r) => r.hostIp === client.ip && r.id !== client.roomId).length;
+    if (hostedByIp >= MAX_ROOMS_PER_IP) {
+      sendWsJson(client, { type: "error", message: "Too many active lobbies from your network." });
+      return;
+    }
     removeClientFromRoom(client);
+    client.lastLobbyCreatedAt = now;
     const id = `arena_${nextRoomNum++}_${crypto.randomBytes(2).toString("hex")}`;
-    const cleanName = String(msg.name || `${msg.heroName || "Sir Aldric"}'s Arena`).trim().slice(0, 28) || "Dungeon Arena";
+    const safeHeroName = sanitizeText(msg.heroName, "Sir Aldric", 20);
+    const cleanName = sanitizeText(msg.name, `${safeHeroName}'s Arena`, 28);
     const room = {
       id,
       name: cleanName,
       mapId: Math.max(0, Math.min(3, Number(msg.mapId) || 0)),
-      passwordHash: hashPassword(msg.password || ""),
+      passwordHash: hashPassword(String(msg.password || "").slice(0, 32)),
       hostIp: client.ip,
       status: "lobby",
       round: 1,
@@ -354,10 +447,10 @@ function handleClientMessage(client, msg) {
         {
           id: client.id,
           client,
-          heroName: String(msg.heroName || "Sir Aldric").trim().slice(0, 20) || "Sir Aldric",
+          heroName: safeHeroName,
           heroClass: ["mage", "gilded", "ranger"].includes(msg.heroClass) ? msg.heroClass : "gilded",
-          appVersion: String(msg.appVersion || "unknown").trim().slice(0, 20),
-          loadout: Array.isArray(msg.loadout) ? msg.loadout.slice(0, 4) : null,
+          appVersion: sanitizeText(msg.appVersion, "unknown", 20),
+          loadout: sanitizeLoadout(msg.loadout),
           ready: false,
         },
       ],
@@ -379,7 +472,7 @@ function handleClientMessage(client, msg) {
       sendWsJson(client, { type: "error", message: "Lobby is already full or in a match." });
       return;
     }
-    if (room.passwordHash && hashPassword(msg.password || "") !== room.passwordHash) {
+    if (room.passwordHash && hashPassword(String(msg.password || "").slice(0, 32)) !== room.passwordHash) {
       sendWsJson(client, { type: "error", code: "bad_password", message: "Incorrect room password." });
       return;
     }
@@ -387,10 +480,10 @@ function handleClientMessage(client, msg) {
     room.players.push({
       id: client.id,
       client,
-      heroName: String(msg.heroName || "Challenger").trim().slice(0, 20) || "Challenger",
+      heroName: sanitizeText(msg.heroName, "Challenger", 20),
       heroClass: ["mage", "gilded", "ranger"].includes(msg.heroClass) ? msg.heroClass : "gilded",
-      appVersion: String(msg.appVersion || "unknown").trim().slice(0, 20),
-      loadout: Array.isArray(msg.loadout) ? msg.loadout.slice(0, 4) : null,
+      appVersion: sanitizeText(msg.appVersion, "unknown", 20),
+      loadout: sanitizeLoadout(msg.loadout),
       ready: false,
     });
     client.roomId = room.id;
@@ -413,10 +506,10 @@ function handleClientMessage(client, msg) {
 
   if (msg.type === "update_player") {
     const pl = room.players[pIdx];
-    if (typeof msg.heroName === "string") pl.heroName = msg.heroName.trim().slice(0, 20) || pl.heroName;
+    if (typeof msg.heroName === "string") pl.heroName = sanitizeText(msg.heroName, pl.heroName, 20);
     if (["mage", "gilded", "ranger"].includes(msg.heroClass)) pl.heroClass = msg.heroClass;
-    if (typeof msg.appVersion === "string" && msg.appVersion.trim()) pl.appVersion = msg.appVersion.trim().slice(0, 20);
-    if (Array.isArray(msg.loadout)) pl.loadout = msg.loadout.slice(0, 4);
+    if (typeof msg.appVersion === "string" && msg.appVersion.trim()) pl.appVersion = sanitizeText(msg.appVersion, pl.appVersion, 20);
+    if (Array.isArray(msg.loadout)) pl.loadout = sanitizeLoadout(msg.loadout) || pl.loadout;
     if (typeof msg.ready === "boolean") pl.ready = msg.ready;
     if (pIdx === 0 && msg.mapId !== undefined) {
       room.mapId = Math.max(0, Math.min(3, Number(msg.mapId) || 0));
@@ -457,13 +550,13 @@ function handleClientMessage(client, msg) {
   }
 
   if (msg.type === "round_lost") {
-    if (typeof msg.round === "number" && msg.round !== room.round) return;
+    if (typeof msg.round === "number" && msg.round < room.round) return;
     finishPvpRound(room, pIdx === 0 ? 1 : 0, "ko");
     return;
   }
 
   if (msg.type === "round_timeout") {
-    if (typeof msg.round === "number" && msg.round !== room.round) return;
+    if (typeof msg.round === "number" && msg.round < room.round) return;
     if (room.status !== "playing" || room.roundEnded || room.players.length < 2) return;
     const hp0 = Number.isFinite(room.players[0].lastHp) ? room.players[0].lastHp : 1000;
     const hp1 = Number.isFinite(room.players[1].lastHp) ? room.players[1].lastHp : 1000;
@@ -473,16 +566,112 @@ function handleClientMessage(client, msg) {
   }
 
   if (msg.type === "pvp_sync" && typeof msg.hp === "number") {
-    if (typeof msg.round === "number" && msg.round !== room.round) return;
-    room.players[pIdx].lastHp = Math.max(0, msg.hp);
-    if (room.status === "playing" && !room.roundEnded && room.players[pIdx].lastHp <= 0) {
+    if (room.status !== "playing" || room.roundEnded) return;
+    if (typeof msg.round === "number" && msg.round < room.round) return;
+    const pl = room.players[pIdx];
+    const now = Date.now();
+    if (Number.isFinite(msg.x)) pl.lastX = clampNum(msg.x, 0, 40, pl.lastX ?? 0);
+    if (Number.isFinite(msg.y)) pl.lastY = clampNum(msg.y, 0, 40, pl.lastY ?? 0);
+    let clampedHp = clampNum(msg.hp, 0, 1000, pl.lastHp ?? 1000);
+    if (pl.bgDmgApplied && Number.isFinite(pl.estHp)) {
+      if (clampedHp > pl.estHp) {
+        clampedHp = pl.estHp;
+        sendWsJson(pl.client, { type: "pvp_server_hp", round: room.round, hp: clampedHp });
+      }
+      pl.bgDmgApplied = false;
+    }
+    pl.lastSyncAt = now;
+    pl.lastHp = clampedHp;
+    pl.estHp = clampedHp;
+    if (!room.roundEnded && pl.lastHp <= 0) {
       finishPvpRound(room, pIdx === 0 ? 1 : 0, "ko");
     }
+    const peer = room.players[pIdx === 0 ? 1 : 0];
+    if (peer) {
+      sendWsJson(peer.client, { ...msg, hp: clampedHp, fromSlot: pIdx });
+    }
+    return;
   }
 
-  // Forward real-time gameplay events (pvp_sync, pvp_action, pvp_hit, pvp_prop)
+  if (msg.type === "pvp_hit") {
+    if (room.status !== "playing" || room.roundEnded || room.players.length < 2) return;
+    if (typeof msg.round === "number" && msg.round !== room.round) return;
+    const now = Date.now();
+    if (now - (client.hitWindowStart || 0) >= 1000) {
+      client.hitWindowStart = now;
+      client.hitCount = 0;
+    }
+    client.hitCount = (client.hitCount || 0) + 1;
+    if (client.hitCount > MAX_PVP_HIT_RATE) return;
+
+    const rawDmg = Number(msg.dmg);
+    if (!Number.isFinite(rawDmg) || rawDmg <= 0) return;
+    const pl = room.players[pIdx];
+    const peerIdx = pIdx === 0 ? 1 : 0;
+    const peer = room.players[peerIdx];
+    if (!peer) return;
+
+    if (
+      Number.isFinite(pl.lastX) &&
+      Number.isFinite(pl.lastY) &&
+      Number.isFinite(peer.lastX) &&
+      Number.isFinite(peer.lastY)
+    ) {
+      const dist = Math.hypot(pl.lastX - peer.lastX, pl.lastY - peer.lastY);
+      const maxRange = msg.isSkill || msg.isRanged ? 15.5 : 5.5;
+      if (dist > maxRange) return;
+    }
+
+    const validatedHit = {
+      type: "pvp_hit",
+      fromSlot: pIdx,
+      round: room.round,
+      dmg: Math.max(1, Math.min(MAX_PVP_HIT_DMG, Math.round(rawDmg))),
+      isCrit: Boolean(msg.isCrit),
+      source: sanitizeText(msg.source, "strike", 32),
+      knockX: clampNum(msg.knockX, -8, 8, 0),
+      knockY: clampNum(msg.knockY, -8, 8, 0),
+      stunDur: clampNum(msg.stunDur, 0, 1.8, 0),
+      freezeDur: clampNum(msg.freezeDur, 0, 2.2, 0),
+      sunderDur: clampNum(msg.sunderDur, 0, 4.0, 0),
+      isSkill: Boolean(msg.isSkill),
+      isRanged: Boolean(msg.isRanged),
+    };
+
+    // If rival client stopped syncing (Alt+Tab, menu, or mobile Home screen pause), apply server-side damage
+    const rivalSilentMs = now - (peer.lastSyncAt || room.roundStartedAt || now);
+    const roundAgeMs = now - (room.roundStartedAt || now);
+    if (roundAgeMs > 2500 && rivalSilentMs > 800) {
+      const srvDmg = Math.max(1, Math.round(validatedHit.dmg * 0.72));
+      const baseHp = Number.isFinite(peer.estHp) ? peer.estHp : (peer.lastHp ?? 1000);
+      peer.estHp = Math.max(0, baseHp - srvDmg);
+      peer.lastHp = peer.estHp;
+      peer.bgDmgApplied = true;
+      sendWsJson(pl.client, {
+        type: "pvp_sync",
+        fromSlot: peerIdx,
+        round: room.round,
+        hp: peer.estHp,
+        maxHp: 1000,
+      });
+      sendWsJson(peer.client, {
+        type: "pvp_server_hp",
+        round: room.round,
+        hp: peer.estHp,
+      });
+      if (peer.estHp <= 0) {
+        finishPvpRound(room, pIdx, "ko");
+        return;
+      }
+    }
+
+    sendWsJson(peer.client, validatedHit);
+    return;
+  }
+
+  // Forward real-time gameplay events (pvp_action, pvp_prop)
   const peer = room.players[pIdx === 0 ? 1 : 0];
-  if (peer) {
+  if (peer && (msg.type === "pvp_action" || msg.type === "pvp_prop")) {
     sendWsJson(peer.client, { ...msg, fromSlot: pIdx });
   }
 }
@@ -566,6 +755,19 @@ server.on("upgrade", (req, socket) => {
     return;
   }
 
+  const clientIp = normalizeIp(req.headers["x-forwarded-for"] || req.socket.remoteAddress);
+  if (clients.size >= MAX_WS_CLIENTS) {
+    socket.write("HTTP/1.1 503 Service Unavailable\r\nConnection: close\r\n\r\n");
+    socket.destroy();
+    return;
+  }
+  const ipConnCount = [...clients.values()].filter((c) => c.ip === clientIp).length;
+  if (ipConnCount >= MAX_CLIENTS_PER_IP) {
+    socket.write("HTTP/1.1 429 Too Many Requests\r\nConnection: close\r\n\r\n");
+    socket.destroy();
+    return;
+  }
+
   const acceptKey = crypto
     .createHash("sha1")
     .update(`${key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11`)
@@ -578,20 +780,25 @@ server.on("upgrade", (req, socket) => {
       `Sec-WebSocket-Accept: ${acceptKey}\r\n\r\n`
   );
 
-  const clientIp = normalizeIp(req.headers["x-forwarded-for"] || req.socket.remoteAddress);
   const client = {
     id: `c_${nextClientId++}`,
     ip: clientIp,
     socket,
     roomId: null,
     lastSeen: Date.now(),
+    lastLobbyCreatedAt: 0,
+    msgWindowStart: Date.now(),
+    msgCount: 0,
+    hitWindowStart: Date.now(),
+    hitCount: 0,
   };
   clients.set(client.id, client);
   sendWsJson(client, { type: "welcome", id: client.id, ip: clientIp });
 
   let rxBuf = Buffer.alloc(0);
   socket.on("data", (chunk) => {
-    client.lastSeen = Date.now();
+    const now = Date.now();
+    client.lastSeen = now;
     rxBuf = Buffer.concat([rxBuf, chunk]);
     while (rxBuf.length >= 2) {
       const b0 = rxBuf[0];
@@ -640,8 +847,23 @@ server.on("upgrade", (req, socket) => {
       }
       if (opcode === 0xA) continue;
       if (opcode === 0x1) {
+        const msgNow = Date.now();
+        if (msgNow - (client.msgWindowStart || 0) >= 1000) {
+          client.msgWindowStart = msgNow;
+          client.msgCount = 0;
+        }
+        client.msgCount += 1;
         try {
           const parsed = JSON.parse(payload.toString("utf8"));
+          const isCriticalMsg =
+            parsed &&
+            (parsed.type === "round_lost" ||
+              parsed.type === "round_timeout" ||
+              parsed.type === "leave_lobby" ||
+              (parsed.type === "pvp_sync" && Number(parsed.hp) <= 0));
+          if (!isCriticalMsg && client.msgCount > WS_MSG_RATE_LIMIT) {
+            continue;
+          }
           handleClientMessage(client, parsed);
         } catch {}
       }

@@ -220,6 +220,8 @@ export function damageEnemy(enemy, rawDmg, isCrit = false, sourceLabel = "strike
       stunDur: options.stunDur || 0,
       freezeDur: options.freezeDur || 0,
       sunderDur: options.sunderDur || 0,
+      isSkill: Boolean(options.isSkill),
+      isRanged: Boolean(options.isRanged || options.isAoe || p.heroClass !== "gilded"),
     });
     if (isCrit && p.heroClass === "gilded") {
       for (const sp of getActiveSpells(p)) {
@@ -495,7 +497,7 @@ export function performMeleeAttack() {
     } else if (isResonanceShot) {
       p.mp = Math.min(stats.maxMp, p.mp + 2);
       runtime.uiDirty = true;
-      addFloat(p.x, p.y - 0.5, "RESONANCE +2 MP!", "#c084fc");
+      if (!s.isPvp) addFloat(p.x, p.y - 0.5, "RESONANCE +2 MP!", "#c084fc");
     }
 
     const pushShot = (shotAng, dmgVal, radScale = 1, pierce = false) => {
@@ -792,7 +794,7 @@ export function castSpell(spellId) {
     p.basicShotCount = (p.basicShotCount || 0) + 1;
     if (p.basicShotCount % 3 === 0) {
       p.mp = Math.min(stats.maxMp, p.mp + 2);
-      addFloat(p.x, p.y - 0.55, "RESONANCE +2 MP!", "#c084fc");
+      if (!s.isPvp) addFloat(p.x, p.y - 0.55, "RESONANCE +2 MP!", "#c084fc");
     }
   }
   runtime.uiDirty = true;

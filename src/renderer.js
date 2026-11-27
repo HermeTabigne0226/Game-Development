@@ -99,7 +99,7 @@ export function renderFrame(ts) {
   }
   const menuOpen = !document.getElementById("main-menu").hidden || !document.getElementById("loading-screen").hidden;
   const modalOpen = Boolean(document.querySelector("dialog[open]")) || menuOpen;
-  const canSimulate = s.isPvp ? !modalOpen : (!modalOpen && runtime.isCanvasVisible && !document.hidden);
+  const canSimulate = s.isPvp ? (!menuOpen && (!s.runEnded || s.pvpRoundEnded)) : (!modalOpen && runtime.isCanvasVisible && !document.hidden);
   if (canSimulate) {
     runtime.animTimer += dt;
     if (runtime.animTimer >= 0.095) {
@@ -728,11 +728,29 @@ export function renderFrame(ts) {
       }
       ctx.restore();
     } else if (e.hurtTimer > 0) {
-      ctx.fillStyle = "rgba(255,255,255,0.5)";
-      ctx.fillRect(cx - size * 0.35, cy - size * 0.35, size * 0.7, size * 0.7);
+      ctx.save();
+      ctx.fillStyle = "rgba(255, 255, 255, 0.36)";
+      ctx.beginPath();
+      ctx.ellipse(cx, cy - ez, size * 0.32, size * 0.38, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     } else if (e.chilled > 0) {
-      ctx.fillStyle = "rgba(56, 189, 248, 0.32)";
-      ctx.fillRect(cx - size * 0.35, cy - size * 0.35, size * 0.7, size * 0.7);
+      ctx.save();
+      ctx.strokeStyle = "rgba(125, 211, 252, 0.85)";
+      ctx.fillStyle = "rgba(56, 189, 248, 0.18)";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + size * 0.36, size * 0.38, size * 0.16, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      for (let k = 0; k < 3; k++) {
+        const a = ts * 0.005 + (k * Math.PI * 2) / 3;
+        ctx.fillStyle = "#e0f2fe";
+        ctx.beginPath();
+        ctx.arc(cx + Math.cos(a) * size * 0.34, cy - ez + Math.sin(a) * size * 0.16, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
     }
 
     if (e.windupTimer > 0) {
@@ -1333,20 +1351,22 @@ export function renderFrame(ts) {
   if (s.isPvp) {
     const p1HudCvs = document.getElementById("pvp-hud-p1-portrait");
     const p2HudCvs = document.getElementById("pvp-hud-p2-portrait");
-    if (p1HudCvs) {
+    const opp = s.pvpOpponent;
+    const oppPrefix = opp?.heroClass === "mage" ? "mage" : opp?.heroClass === "ranger" ? "ranger" : "gilded";
+    const oppSheet = opp ? (assets[`${oppPrefix}_${opp.anim || "idle"}`] || assets[`${oppPrefix}_idle`] || assets.gilded_idle) : null;
+    const leftSheet = s.pvpMySlot === 1 ? oppSheet : pAnimSheet;
+    const rightSheet = s.pvpMySlot === 1 ? pAnimSheet : oppSheet;
+    if (p1HudCvs && leftSheet) {
       const c1 = p1HudCvs.getContext("2d");
       c1.clearRect(0, 0, 44, 44);
       c1.imageSmoothingEnabled = false;
-      drawSheetFrame(c1, pAnimSheet, animFrame, 2, 2, 40, 40, false);
+      drawSheetFrame(c1, leftSheet, animFrame, 2, 2, 40, 40, false);
     }
-    if (p2HudCvs && s.pvpOpponent) {
-      const opp = s.pvpOpponent;
-      const oppPrefix = opp.heroClass === "mage" ? "mage" : opp.heroClass === "ranger" ? "ranger" : "gilded";
-      const oppSheet = assets[`${oppPrefix}_${opp.anim || "idle"}`] || assets[`${oppPrefix}_idle`] || assets.gilded_idle;
+    if (p2HudCvs && rightSheet) {
       const c2 = p2HudCvs.getContext("2d");
       c2.clearRect(0, 0, 44, 44);
       c2.imageSmoothingEnabled = false;
-      drawSheetFrame(c2, oppSheet, animFrame, 2, 2, 40, 40, true);
+      drawSheetFrame(c2, rightSheet, animFrame, 2, 2, 40, 40, true);
     }
   }
   if (!renderMinimap._lastTs || ts - renderMinimap._lastTs >= 150) {
