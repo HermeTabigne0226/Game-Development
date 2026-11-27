@@ -496,7 +496,7 @@
 
           <div class="hero-name-field">
             <label for="hero-name-input">Hero Name</label>
-            <input id="hero-name-input" type="text" maxlength="20" placeholder="Enter your hero's name..." />
+            <input id="hero-name-input" type="text" maxlength="20" placeholder="Enter your hero's name..." autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" />
           </div>
 
           <div class="hero-name-field">
@@ -976,7 +976,7 @@
             </div>
             <div class="pvp-fighter-name">
               <label for="pvp-hero-name">Fighter Name</label>
-              <input id="pvp-hero-name" type="text" maxlength="18" placeholder="Sir Aldric" />
+              <input id="pvp-hero-name" type="text" maxlength="18" placeholder="Sir Aldric" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" />
             </div>
           </div>
 
@@ -1092,6 +1092,24 @@
         <button type="button" id="btn-update-later" class="btn btn-secondary">Later</button>
         <button type="button" id="btn-update-download" class="btn btn-primary" hidden>Download &amp; Update</button>
         <button type="button" id="btn-update-restart" class="btn btn-primary" hidden>Restart Game</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- In-Game Pause Menu Modal -->
+  <dialog id="ingame-menu-dialog" closedby="any" aria-labelledby="ingame-menu-title">
+    <div class="dialog-card ingame-menu-card">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">Game Paused</span>
+          <h1 id="ingame-menu-title">Game Menu</h1>
+        </div>
+      </div>
+      <div class="ingame-menu-actions">
+        <button type="button" id="btn-ingame-resume" class="btn btn-primary btn-lg medieval-btn" autofocus>Resume</button>
+        <button type="button" id="btn-ingame-settings" class="btn btn-secondary btn-lg medieval-btn">Settings</button>
+        <button type="button" id="btn-ingame-patch-notes" class="btn btn-secondary btn-lg medieval-btn">Patch Notes</button>
+        <button type="button" id="btn-ingame-main-menu" class="btn btn-secondary btn-lg medieval-btn">Main Menu</button>
       </div>
     </div>
   </dialog>

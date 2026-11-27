@@ -284,6 +284,16 @@ body[data-btn-size="big"] {
     user-select: none;
     -webkit-user-select: none;
   }
+  input,
+  textarea,
+  [contenteditable] {
+    user-select: text;
+    -webkit-user-select: text;
+    direction: ltr;
+    unicode-bidi: plaintext;
+    text-align: left;
+    touch-action: manipulation;
+  }
   #app {
     position: fixed;
     inset: 0;
@@ -3524,6 +3534,23 @@ dialog::backdrop {
   overscroll-behavior: contain;
 }
 
+.ingame-menu-card {
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+.ingame-menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ingame-menu-actions .btn {
+  width: 100%;
+  min-block-size: 44px;
+  justify-content: center;
+}
+
 .dialog-card {
   padding: 20px;
   display: flex;
@@ -3894,6 +3921,22 @@ dialog.pixel-dialog {
   .pixel-quest-card {
     padding: 8px 10px;
     gap: 6px;
+    overflow-y: auto;
+  }
+  dialog.kbd-focused,
+  dialog:has(input:focus, textarea:focus) {
+    max-height: calc(100dvh - 8px);
+    overflow-y: auto;
+    margin-top: 4px;
+    margin-bottom: auto;
+  }
+  #title-dialog.kbd-focused .quest-wizard-steps,
+  #title-dialog.kbd-focused .title-hero-banner,
+  #title-dialog.kbd-focused .title-col-details .story-lead,
+  #title-dialog:has(input:focus) .quest-wizard-steps,
+  #title-dialog:has(input:focus) .title-hero-banner,
+  #title-dialog:has(input:focus) .title-col-details .story-lead {
+    display: none;
   }
   .quest-wizard-steps {
     padding: 4px 6px;

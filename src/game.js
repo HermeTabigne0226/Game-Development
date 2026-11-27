@@ -262,11 +262,14 @@ function setupControls() {
   }
 
   const handleMenuButtonClick = async () => {
+    keys.clear();
+    touchMove.active = false;
+    touchMove.x = 0;
+    touchMove.y = 0;
+    touchAim.active = false;
+    touchAim.x = 0;
+    touchAim.y = 0;
     if (runtime.state?.isPvp) {
-      keys.clear();
-      touchMove.active = false;
-      touchMove.x = 0;
-      touchMove.y = 0;
       const choice = await openConfirmDialog({
         eyebrow: "PvP Arena Menu",
         title: "Return to Lobby or Exit Match?",
@@ -285,7 +288,7 @@ function setupControls() {
       return;
     }
     saveRun();
-    showMainMenu();
+    document.getElementById("ingame-menu-dialog")?.showModal();
   };
 
   document.getElementById("mhud-btn-skills").addEventListener("click", openSkillDialog);
@@ -359,11 +362,24 @@ function setupControls() {
     document.getElementById("help-dialog").showModal();
   });
 
-  document.getElementById("btn-menu").addEventListener("click", () => {
-    if (runtime.state?.isPvp) {
-      document.getElementById("mhud-btn-menu")?.click();
-      return;
-    }
+  document.getElementById("btn-menu").addEventListener("click", handleMenuButtonClick);
+
+  document.getElementById("btn-ingame-resume")?.addEventListener("click", () => {
+    document.getElementById("ingame-menu-dialog")?.close("resume");
+  });
+
+  document.getElementById("btn-ingame-settings")?.addEventListener("click", () => {
+    syncSettingsUI();
+    document.getElementById("settings-dialog")?.showModal();
+  });
+
+  document.getElementById("btn-ingame-patch-notes")?.addEventListener("click", () => {
+    markPatchNotesSeen();
+    document.getElementById("patch-notes-dialog")?.showModal();
+  });
+
+  document.getElementById("btn-ingame-main-menu")?.addEventListener("click", () => {
+    document.getElementById("ingame-menu-dialog")?.close("menu");
     saveRun();
     showMainMenu();
   });
@@ -756,8 +772,52 @@ function setupControls() {
   for (const dlg of document.querySelectorAll("dialog")) {
     dlg.addEventListener("close", () => {
       dlg.returnValue = "";
+      dlg.classList.remove("kbd-focused");
       keys.clear();
       runtime.lastFrameTime = performance.now();
+    });
+  }
+
+  // Keep focused text inputs visible above mobile virtual keyboards and guard IME Enter
+  const scrollFocusedInputIntoView = (el) => {
+    if (!el || typeof el.scrollIntoView !== "function") return;
+    el.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+  };
+  document.addEventListener("focusin", (e) => {
+    const input = e.target?.closest?.("input:not([type='hidden']):not([type='checkbox']):not([type='radio']), textarea");
+    if (!input) return;
+    const dlg = input.closest("dialog");
+    if (dlg) dlg.classList.add("kbd-focused");
+    if (isMobileLayout()) {
+      setTimeout(() => scrollFocusedInputIntoView(input), 120);
+      setTimeout(() => scrollFocusedInputIntoView(input), 320);
+    }
+  });
+  document.addEventListener("focusout", (e) => {
+    const input = e.target?.closest?.("input, textarea");
+    if (!input) return;
+    const dlg = input.closest("dialog");
+    if (!dlg) return;
+    setTimeout(() => {
+      const active = document.activeElement;
+      if (!active || !dlg.contains(active) || !active.matches("input, textarea")) {
+        dlg.classList.remove("kbd-focused");
+      }
+    }, 60);
+  });
+  window.visualViewport?.addEventListener("resize", () => {
+    const active = document.activeElement;
+    if (active?.matches?.("input:not([type='hidden']), textarea")) {
+      setTimeout(() => scrollFocusedInputIntoView(active), 50);
+    }
+  });
+  for (const nameEl of [document.getElementById("hero-name-input"), document.getElementById("pvp-hero-name")]) {
+    nameEl?.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        if (event.isComposing || event.keyCode === 229) return;
+        event.preventDefault();
+        nameEl.blur();
+      }
     });
   }
 }
