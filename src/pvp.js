@@ -1,7 +1,7 @@
 import { sfx } from "./audio.js";
 import { drawSheetFrame } from "./assets.js";
 import { CLASS_DEFAULT_LOADOUTS, DEFAULT_LOADOUT, HERO_CLASSES, ITEMS, SPELLS } from "./data.js";
-import { MAP_H, MAP_W, TILE } from "./dungeon.js";
+import { MAP_H, MAP_W, TILE, computeFOV } from "./dungeon.js";
 import {
   addFloat,
   addLog,
@@ -192,14 +192,14 @@ export function buildPvpArenaLevel(mapId = 0) {
     for (let x = x0; x <= x1; x++) {
       grid[y][x] = TILE.FLOOR;
       explored[y][x] = true;
-      visible[y][x] = true;
+      visible[y][x] = false;
     }
   }
-  // Reveal 1-tile outer wall perimeter around arena
+  // Reveal 1-tile outer wall perimeter around arena (dimmed until within vision radius)
   for (let y = Math.max(0, y0 - 1); y <= Math.min(MAP_H - 1, y1 + 1); y++) {
     for (let x = Math.max(0, x0 - 1); x <= Math.min(MAP_W - 1, x1 + 1); x++) {
       explored[y][x] = true;
-      visible[y][x] = true;
+      visible[y][x] = false;
     }
   }
 
@@ -733,6 +733,7 @@ function setupPvpMatchEntities(room, mySlot, isNextRound = false) {
 
   const opp = createOpponentEntity(oppInfo, oppSpawn);
   level.enemies = [opp];
+  computeFOV(level, mySpawn.x, mySpawn.y, 6);
 
   const introDur = isNextRound ? 3.0 : 4.5;
   runtime.state = {

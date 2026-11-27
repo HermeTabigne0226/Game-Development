@@ -379,18 +379,20 @@ export function renderFrame(ts) {
       const vx = (pu.x + 0.5) * TILE_SIZE;
       const vy = (pu.y + 0.5) * TILE_SIZE;
       const bob = Math.sin(ts * 0.0055 + pu.id) * 2.5;
+      const inSight = Boolean(lvl.visible[pu.y]?.[pu.x]);
       ctx.save();
+      ctx.globalAlpha = inSight ? 1 : 0.58;
       ctx.fillStyle = pu.glow || "rgba(250, 204, 21, 0.32)";
       ctx.beginPath();
       ctx.ellipse(vx, vy + 8, 13, 6, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = pu.color;
       ctx.lineWidth = 1.5;
-      ctx.globalAlpha = 0.65 + Math.sin(ts * 0.008 + pu.id) * 0.25;
+      ctx.globalAlpha = (inSight ? 1 : 0.58) * (0.65 + Math.sin(ts * 0.008 + pu.id) * 0.25);
       ctx.beginPath();
       ctx.arc(vx, vy + bob, 14, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.globalAlpha = 1;
+      ctx.globalAlpha = inSight ? 1 : 0.58;
 
       // Pixel-style potion vial silhouette with dynamic color
       const fy = vy + bob;

@@ -47,7 +47,7 @@ export const worldHooks = {
 
 export function updateFOVIfNeeded(force = false) {
   const s = runtime.state;
-  if (!s || s.isPvp || s.level?.isPvp) return;
+  if (!s) return;
   const tx = Math.floor(s.player.x);
   const ty = Math.floor(s.player.y);
   if (force || tx !== s.lastFovTile.x || ty !== s.lastFovTile.y) {
