@@ -29,12 +29,11 @@ export async function loadAllAssets(onProgress = null) {
     gilded_attack: "spritecook-pixel-art-characters/gilded-knight/attack_sheet.png",
     gilded_walk: "spritecook-pixel-art-characters/gilded-knight/walk_sheet.png",
 
-    soldier_idle: "assets/generated/tiny-rpg/Soldier-Idle.png",
-    soldier_walk: "assets/generated/tiny-rpg/Soldier-Walk.png",
-    soldier_attack: "assets/generated/tiny-rpg/Soldier-Attack01.png",
-    soldier_bow: "assets/generated/tiny-rpg/Soldier-Attack03.png",
-    soldier_hurt: "assets/generated/tiny-rpg/Soldier-Hurt.png",
-    soldier_death: "assets/generated/tiny-rpg/Soldier-Death.png",
+    ranger_idle: "assets/generated/ranger/ranger_idle.png",
+    ranger_walk: "assets/generated/ranger/ranger_walk.png",
+    ranger_attack: "assets/generated/ranger/ranger_attack.png",
+    ranger_bow: "assets/generated/ranger/ranger_attack.png",
+
     arrow_proj: "assets/generated/tiny-rpg/Arrow01(32x32).png",
 
     orc_idle: "assets/generated/tiny-rpg/Orc-Idle.png",
@@ -51,6 +50,9 @@ export async function loadAllAssets(onProgress = null) {
     slime: "spritecook-game-asset-pack/slime.png",
     bat: "spritecook-game-asset-pack/bat.png",
     skeleton: "spritecook-game-asset-pack/skeleton.png",
+    goblin_slinger: "assets/generated/enemies/goblin_slinger.png",
+    clockwork_sentinel: "assets/generated/enemies/clockwork_sentinel.png",
+    void_acolyte: "assets/generated/enemies/void_acolyte.png",
     void_king: "assets/generated/void_king_boss.png",
     dungeon_tiles: "assets/generated/dungeon_tiles.png",
 

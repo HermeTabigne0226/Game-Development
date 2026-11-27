@@ -571,18 +571,47 @@ body {
     width: 34px;
     height: 34px;
   }
-  .touch-action-btn.atk {
-    right: 10px;
-    bottom: 8px;
-    width: 88px;
-    height: 88px;
-    border: none;
-    background: url("../assets/attack_normal.svg") center / contain no-repeat;
+  .touch-atk-wheel {
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    width: 98px;
+    height: 98px;
+    border-radius: 50%;
+    background: url("../assets/joystick_base.png") center / contain no-repeat;
+    image-rendering: pixelated;
+    opacity: 0.88;
+    pointer-events: auto;
+    touch-action: none;
     filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.55));
+    transition: opacity 0.12s ease, transform 0.12s ease;
   }
-  .touch-action-btn.atk:active {
-    background-image: url("../assets/attack_pressed.svg");
-    transform: scale(0.95);
+  .touch-atk-wheel.active {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  .touch-atk-knob {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    background: url("../assets/knob_sword.svg") center / contain no-repeat;
+    image-rendering: pixelated;
+    pointer-events: none;
+    transition: transform 0.08s ease-out;
+  }
+  .touch-atk-wheel[data-weapon-kind="wand"] .touch-atk-knob {
+    background-image: url("../assets/knob_wand.svg");
+  }
+  .touch-atk-wheel[data-weapon-kind="arrow"] .touch-atk-knob {
+    background-image: url("../assets/knob_arrow.svg");
+  }
+  .touch-atk-wheel.active .touch-atk-knob {
+    transition: none;
+    filter: brightness(1.12);
   }
   .touch-action-btn.dash {
     right: 16px;
@@ -1814,6 +1843,57 @@ body {
   grid-column: 1 / -1;
 }
 
+.menu-buttons #menu-btn-exit {
+  grid-column: 1 / -1;
+}
+
+.menu-version-badge {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(250, 204, 21, 0.55);
+  color: #fde047;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.menu-patch-box {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(133, 100, 34, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.menu-patch-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.menu-patch-head strong {
+  font-size: 0.82rem;
+  color: #fde047;
+}
+
+.menu-patch-list {
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.74rem;
+  line-height: 1.35;
+  color: #cbd5e1;
+}
+
 .menu-footer-credit {
   display: flex;
   align-items: center;
@@ -2493,4 +2573,47 @@ kbd {
   font-size: 0.8rem;
   color: #cbd5e1;
   line-height: 1.35;
+}
+
+.relics-section h3 {
+  margin: 12px 0 6px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.relics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.relic-pill {
+  padding: 6px 8px;
+  border-radius: 7px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.74rem;
+}
+
+.relic-pill span {
+  color: #cbd5e1;
+  line-height: 1.3;
+}
+
+.codex-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.codex-tab.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(250, 204, 21, 0.14);
 }

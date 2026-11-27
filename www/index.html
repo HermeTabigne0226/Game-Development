@@ -37,6 +37,7 @@
       <div class="title-hero-banner medieval-banner">
         <img src="spritecook-isometric-buildings/castle.webp" alt="Oakhaven Bastion" class="bastion-img" />
         <div class="title-overlay medieval-overlay">
+          <span id="menu-version-badge" class="menu-version-badge">v.1.2.0</span>
           <img src="assets/generated/game_logo.png" alt="" class="menu-crest-logo" />
           <span class="eyebrow">Aethelgard Chronicles</span>
           <h1>Chronicles of the Shattered Crown</h1>
@@ -51,7 +52,15 @@
           <button type="button" id="menu-btn-play" class="btn btn-primary btn-lg medieval-btn">New Quest</button>
           <button type="button" id="menu-btn-resume" class="btn btn-secondary btn-lg medieval-btn" hidden>Resume</button>
           <button type="button" id="menu-btn-settings" class="btn btn-secondary btn-lg medieval-btn">Settings</button>
+          <button type="button" id="menu-btn-patch-notes" class="btn btn-secondary btn-lg medieval-btn">Patch Notes</button>
           <button type="button" id="menu-btn-exit" class="btn btn-secondary btn-lg medieval-btn">Exit</button>
+        </div>
+        <div class="menu-patch-box">
+          <div class="menu-patch-head">
+            <strong id="menu-patch-title">Latest Update — v.1.2.0</strong>
+            <button type="button" id="menu-btn-patch-more" class="btn btn-secondary btn-sm">View All</button>
+          </div>
+          <ul id="menu-patch-highlights" class="menu-patch-list"></ul>
         </div>
         <div id="menu-mobile-app-box" class="menu-mobile-app" hidden>
           <div class="menu-mobile-app-info">
@@ -161,6 +170,13 @@
             <div class="shard-slot" id="crown-shard-3" title="Abyssal Sanctum Shard">III</div>
           </div>
         </section>
+
+        <section class="relics-section">
+          <h3>Relics (<span id="relics-count">0</span>)</h3>
+          <div id="relics-list" class="relics-list">
+            <span class="hint-text">None claimed yet</span>
+          </div>
+        </section>
       </aside>
 
       <!-- Center: Dungeon Canvas + Action Bar -->
@@ -245,7 +261,9 @@
                 <img src="assets/dash_icon.png" alt="" class="touch-btn-icon dash-icon" />
                 <span id="touch-dash-cd" class="ts-cd" hidden></span>
               </button>
-              <button type="button" id="touch-btn-attack" class="touch-action-btn atk" aria-label="Attack"></button>
+              <div id="touch-atk-wheel" class="touch-atk-wheel" data-weapon-kind="sword" aria-label="Directional Attack Wheel">
+                <div id="touch-atk-knob" class="touch-atk-knob"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -316,7 +334,7 @@
           Ten winters ago, the <strong>Crown of Aethelgard</strong> was shattered into three shards.
           Its guardian, Sir Aurelius, vanished into the Sunken Foundry, while King Grak's goblins
           seized the upper catacombs. You are <strong>Sir Aldric</strong>, last Paladin of Oakhaven.
-          Descend 8 floors, reclaim all 3 Shards, and confront the Hollow King.
+          Descend 12 floors, reclaim all 3 Shards, and confront the Hollow King.
         </p>
 
         <div class="hero-name-field">
@@ -336,6 +354,11 @@
         <div class="sanctum-upgrades">
           <h3>Oakhaven Sanctum — Soul Shard Blessings (<span id="sanctum-shards">0</span> Shards)</h3>
           <div id="meta-upgrades-list" class="meta-grid"></div>
+        </div>
+
+        <div class="sanctum-upgrades">
+          <h3>Soul Forge — Permanent Armory &amp; Relic Unlocks</h3>
+          <div id="soul-forge-list" class="meta-grid"></div>
         </div>
       </div>
       <div class="dialog-actions">
@@ -392,14 +415,19 @@
     </div>
   </dialog>
 
-  <!-- Lore Codex Modal -->
+  <!-- Lore Codex & Bestiary Modal -->
   <dialog id="codex-dialog" closedby="any" aria-labelledby="codex-dialog-title">
-    <div class="dialog-card">
+    <div class="dialog-card codex-card">
       <div class="dialog-header">
-        <h1 id="codex-dialog-title">Lore Codex</h1>
+        <h1 id="codex-dialog-title">Lore Codex &amp; Bestiary</h1>
         <form method="dialog">
           <button value="close" class="btn btn-secondary" autofocus>Close</button>
         </form>
+      </div>
+      <div class="codex-tabs" role="tablist">
+        <button type="button" class="btn btn-secondary codex-tab active" data-codex-tab="lore">Chronicle</button>
+        <button type="button" class="btn btn-secondary codex-tab" data-codex-tab="bestiary">Bestiary</button>
+        <button type="button" class="btn btn-secondary codex-tab" data-codex-tab="history">Records</button>
       </div>
       <div id="codex-entries" class="codex-list"></div>
     </div>
@@ -416,12 +444,12 @@
       </div>
       <div class="help-content">
         <ul>
-          <li><strong>Move:</strong> Hold <kbd>WASD</kbd> or Arrow keys for smooth real-time movement. Walk into chests, wells, stairs, and NPCs to interact!</li>
-          <li><strong>Melee Attack:</strong> Press <kbd>J</kbd> or <strong>Left Click</strong> on the map to slash toward your cursor/facing direction and smash crates/barrels.</li>
-          <li><strong>Dodge Dash:</strong> Press <kbd>Space</kbd> to dash quickly with brief invulnerability frames—dodge enemy windups and boss orbs!</li>
+          <li><strong>Move:</strong> Hold <kbd>WASD</kbd> or Arrow keys for smooth real-time movement. Walk into chests, wells, shrines, anvils, stairs, and NPCs to interact!</li>
+          <li><strong>Attack:</strong> Press <kbd>J</kbd> or <strong>Left Click</strong> on the map to strike or fire toward your cursor and smash crates/barrels.</li>
+          <li><strong>Class Dash:</strong> Press <kbd>Space</kbd> to dash with brief invulnerability frames plus your hero's class Dash perk!</li>
           <li><strong>Spells:</strong> Press <kbd>1</kbd>–<kbd>4</kbd> or click a spell icon to cast immediately toward your cursor.</li>
           <li><strong>Quick Potions:</strong> Press <kbd>Q</kbd> for Health Potion, <kbd>E</kbd> for Mana Potion.</li>
-          <li><strong>Victory:</strong> Defeat the 3 Act Bosses (Floors 3, 6, and 8) to reforge the Crown. Even if you fall, you keep <strong>Soul Shards</strong> for permanent Sanctum blessings!</li>
+          <li><strong>Victory &amp; Endless:</strong> Defeat the 3 Act Bosses (Floors 4, 8, and 12) to reforge the Crown, then continue into the Endless Abyss (Floors 13+) if you dare!</li>
         </ul>
       </div>
     </div>
@@ -462,7 +490,7 @@
           <div class="hero-class-info">
             <strong>Paladin Knight</strong>
             <span class="hero-class-role">Sanctum Crusader</span>
-            <p>+4 Max HP, +2 Max MP. Balanced bastion of Oakhaven.</p>
+            <p>+4 HP, +2 MP · Passive: +25% Healing &amp; Shields · Dash: Sanctum Shockwave knockback.</p>
           </div>
         </button>
         <button type="button" id="btn-hero-gilded" class="hero-class-card" data-hero="gilded">
@@ -470,15 +498,15 @@
           <div class="hero-class-info">
             <strong>Gilded Knight</strong>
             <span class="hero-class-role">Golden Champion</span>
-            <p>+2 ATK, +5% CRIT. Swift golden templar duelist.</p>
+            <p>+2 ATK, +5% CRIT · Passive: Crits trim skill CDs by 0.5s · Dash: Golden Slash trail.</p>
           </div>
         </button>
-        <button type="button" id="btn-hero-soldier" class="hero-class-card" data-hero="soldier">
-          <canvas id="hero-preview-soldier" width="72" height="72" aria-hidden="true"></canvas>
+        <button type="button" id="btn-hero-ranger" class="hero-class-card" data-hero="ranger">
+          <canvas id="hero-preview-ranger" width="72" height="72" aria-hidden="true"></canvas>
           <div class="hero-class-info">
-            <strong>Oakhaven Soldier</strong>
-            <span class="hero-class-role">Vanguard Marksman</span>
-            <p>+1 ATK, +1 DEF, +Speed. Versatile sword &amp; bow tactician.</p>
+            <strong>Sylvan Ranger</strong>
+            <span class="hero-class-role">Emerald Marksman</span>
+            <p>+1 ATK, +1 DEF, +Speed · Passive: Every 3rd shot pierces · Dash: Parting Arrow.</p>
           </div>
         </button>
       </div>
@@ -528,6 +556,22 @@
       </div>
       <div id="item-action-compare" class="item-compare" hidden></div>
       <div id="item-action-buttons" class="item-action-buttons"></div>
+    </div>
+  </dialog>
+
+  <!-- Patch Notes Modal -->
+  <dialog id="patch-notes-dialog" closedby="any" aria-labelledby="patch-notes-dialog-title">
+    <div class="dialog-card">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">Changelog</span>
+          <h1 id="patch-notes-dialog-title">Patch Notes</h1>
+        </div>
+        <form method="dialog">
+          <button value="close" class="btn btn-secondary" autofocus>Close</button>
+        </form>
+      </div>
+      <div id="patch-notes-list" class="codex-list"></div>
     </div>
   </dialog>
 
@@ -592,6 +636,30 @@
     </div>
   </dialog>
 
+  <!-- Blacksmith / Anvil Forge Modal -->
+  <dialog id="forge-dialog" closedby="any" aria-labelledby="forge-dialog-title">
+    <div class="dialog-card shop-card">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">Runic Anvil</span>
+          <h1 id="forge-dialog-title">Foundry Forge</h1>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="shop-gold-pill">Gold: <strong id="forge-gold">0</strong></span>
+          <form method="dialog">
+            <button value="close" class="btn btn-secondary">Close</button>
+          </form>
+        </div>
+      </div>
+      <p class="hint-text" style="margin:0">Tempers equipped gear (+ATK/DEF/CRIT) or salvages satchel items for instant Gold &amp; HP/MP orbs.</p>
+      <div id="forge-equip-list" class="shop-list"></div>
+      <div class="shop-sell-section">
+        <h4>Salvage from Satchel (+Gold &amp; Vital Spark)</h4>
+        <div id="forge-salvage-list" class="shop-list"></div>
+      </div>
+    </div>
+  </dialog>
+
   <!-- Game Over / Victory Modal -->
   <dialog id="end-dialog" aria-labelledby="end-dialog-title">
     <div class="dialog-card end-card">
@@ -599,6 +667,9 @@
       <p id="end-dialog-summary" class="story-lead"></p>
       <div id="end-stats" class="stat-grid"></div>
       <div class="dialog-actions">
+        <button type="button" id="btn-end-endless" class="btn btn-secondary btn-lg" hidden>
+          Enter Endless Abyss (Floor 13+)
+        </button>
         <button type="button" id="btn-end-sanctum" class="btn btn-primary btn-lg" autofocus>
           Return to Oakhaven Sanctum
         </button>

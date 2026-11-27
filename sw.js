@@ -1,4 +1,4 @@
-const CACHE_NAME = "shattered-crown-v37";
+const CACHE_NAME = "shattered-crown-v40";
 
 const PRECACHE_URLS = [
   "./",
@@ -10,6 +10,22 @@ const PRECACHE_URLS = [
   "./src/dungeon.js",
   "./src/assets.js",
   "./src/audio.js",
+  "./src/state.js",
+  "./src/combat.js",
+  "./src/enemyAI.js",
+  "./src/world.js",
+  "./src/renderer.js",
+  "./src/ui.js",
+  "./src/dialogs.js",
+  "./assets/knob_sword.svg",
+  "./assets/knob_wand.svg",
+  "./assets/knob_arrow.svg",
+  "./assets/generated/ranger/ranger_idle.png",
+  "./assets/generated/ranger/ranger_walk.png",
+  "./assets/generated/ranger/ranger_attack.png",
+  "./assets/generated/enemies/goblin_slinger.png",
+  "./assets/generated/enemies/clockwork_sentinel.png",
+  "./assets/generated/enemies/void_acolyte.png",
   "./assets/jan_gamedev_logo.jpg",
   "./assets/dash_icon.png",
   "./assets/joystick_base.png",

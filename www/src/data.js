@@ -1,9 +1,85 @@
-// Game data: storyline acts, NPC dialogues, items, spells, enemies, and meta-upgrades
+// Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
+
+export const GAME_VERSION = "v.1.2.0";
+
+export const PATCH_NOTES = [
+  {
+    version: "v.1.2.0",
+    title: "Sylvan Ranger, Relics, Elites & Endless Abyss",
+    notes: [
+      "New 3rd Hero: Replaced Oakhaven Soldier with Sylvan Ranger (full-sized pixel-art sprites & animations matching Paladin and Gilded Knight).",
+      "Class Passives & Dash Perks: Paladin (+25% heals/shields & shockwave dash), Gilded Knight (crits trim skill CDs & slash dash), Sylvan Ranger (every 3rd shot pierces & parting arrow dash).",
+      "New Act Enemies: Goblin Slinger (Act I ranged kiter), Clockwork Sentinel (Act II directional tower shield), and Void Acolyte (Act III delayed Void Sigils).",
+      "Elite Affixes & Special Rooms: Blazing, Swift, Armored, and Vampiric elites; Ancient Shrines, Ambush Trial Chests, Foundry Forge Anvils (temper gear & salvage), and Floor Traps.",
+      "8 Passive Relics & 4pc Set Passives: Stormcaller Sigil, Emberweave Spur, Astral Siphon, Twin-Fletch Charm, Crimson Fang, Heart of Bastion, Permafrost Core, and Gilded Idol.",
+      "Boss Phase 2 & Endgame: Bosses unleash Phase 2 arena hazards at 50% HP, Malakor's Dark Mending can be interrupted, plus Endless Abyss (Floor 13+), Soul Forge unlocks, and Bestiary/Records.",
+    ],
+  },
+  {
+    version: "v.1.0.0",
+    title: "Initial Release — Chronicles of the Shattered Crown",
+    notes: [
+      "12-floor dungeon descent across 3 Acts with King Grak, Sir Aurelius, and Malakor.",
+      "15 customizable combat skills, 7 equipment sets, Quartermaster Shop, and Android APK / PWA support.",
+    ],
+  },
+];
 
 export const DIFFICULTIES = {
   normal: { id: "normal", name: "Normal", hpMult: 1.0, atkMult: 1.0, shardBonus: 0 },
   hard: { id: "hard", name: "Hard", hpMult: 1.35, atkMult: 1.25, shardBonus: 1 },
   nightmare: { id: "nightmare", name: "Nightmare", hpMult: 1.75, atkMult: 1.5, shardBonus: 2 },
+};
+
+export const HERO_CLASSES = {
+  paladin: {
+    id: "paladin",
+    name: "Paladin Knight",
+    role: "Sanctum Crusader",
+    passiveName: "Bastion's Grace",
+    passiveDesc: "+25% HP from all healing & +25% temporary DEF bonuses.",
+    dashName: "Sanctum Shockwave",
+    dashDesc: "Dashing knocks back and strikes nearby foes for 55% ATK.",
+    bonusHp: 4,
+    bonusMp: 2,
+    bonusAtk: 0,
+    bonusDef: 0,
+    bonusCrit: 0,
+    bonusSpeed: 0,
+    startWeapon: "iron_sword",
+  },
+  gilded: {
+    id: "gilded",
+    name: "Gilded Knight",
+    role: "Golden Champion",
+    passiveName: "Templar Reflex",
+    passiveDesc: "Critical hits reduce all active skill cooldowns by 0.5s.",
+    dashName: "Golden Afterimage",
+    dashDesc: "Dashing slashes enemies along your path for 75% ATK.",
+    bonusHp: 0,
+    bonusMp: 0,
+    bonusAtk: 2,
+    bonusDef: 0,
+    bonusCrit: 5,
+    bonusSpeed: 0,
+    startWeapon: "iron_sword",
+  },
+  ranger: {
+    id: "ranger",
+    name: "Sylvan Ranger",
+    role: "Emerald Marksman",
+    passiveName: "Keen Quiver",
+    passiveDesc: "Every 3rd basic attack fires a piercing emerald shot (+35% DMG).",
+    dashName: "Parting Shot",
+    dashDesc: "Dashing fires a swift arrow (70% ATK) at the nearest visible enemy.",
+    bonusHp: 0,
+    bonusMp: 0,
+    bonusAtk: 1,
+    bonusDef: 1,
+    bonusCrit: 2,
+    bonusSpeed: 0.45,
+    startWeapon: "oak_shortbow",
+  },
 };
 
 export const ACTS = [
@@ -70,7 +146,7 @@ export const SPELLS = [
     range: 7.5,
     type: "projectile",
     icon: "assets/generated/skill_frost_lance.jpg",
-    desc: "Hurl an ice lance toward your cursor that leaves a Frost AOE on impact or max range, slowing enemies and freezing them after 1s inside (Lv 1, 3, 5, 7).",
+    desc: "Hurl an ice lance that leaves a Frost AOE on impact or max range, slowing enemies and freezing them after 1s inside (Lv 1, 3, 5, 7).",
     color: "#38bdf8",
   },
   {
@@ -254,7 +330,7 @@ export const SPELLS = [
     range: 8.0,
     type: "arrow_volley",
     icon: "assets/generated/skill_arrow_volley.jpg",
-    desc: "[Soldier] Fire a 3-arrow spread toward your target dealing 85%–135% ATK per arrow (Lv 1, 3, 5, 7).",
+    desc: "[Ranger] Fire a 3-arrow spread toward your target dealing 85%–135% ATK per arrow (Lv 1, 3, 5, 7).",
     color: "#38bdf8",
   },
   {
@@ -269,7 +345,7 @@ export const SPELLS = [
     range: 9.0,
     type: "piercing_shot",
     icon: "assets/generated/skill_piercing_shot.jpg",
-    desc: "[Soldier] Loose a high-velocity war-arrow that pierces all enemies in a line (Lv 1, 3, 5, 7).",
+    desc: "[Ranger] Loose a high-velocity war-arrow that pierces all enemies in a line (Lv 1, 3, 5, 7).",
     color: "#facc15",
   },
   {
@@ -285,7 +361,7 @@ export const SPELLS = [
     duration: 5.0,
     type: "battle_rally",
     icon: "assets/generated/skill_battle_rally.jpg",
-    desc: "[Soldier] Restore 14–28 HP and gain +4–10 ATK for 5s (Lv 1, 3, 5, 7).",
+    desc: "[Ranger] Restore 14–28 HP and gain +4–10 ATK for 5s (Lv 1, 3, 5, 7).",
     color: "#fb923c",
   },
   {
@@ -305,12 +381,106 @@ export const SPELLS = [
     chills: [2.0, 2.5, 3.0],
     type: "ultimate_barrage",
     icon: "assets/generated/skill_siege_barrage.jpg",
-    desc: "ULTIMATE [Soldier] (Lv 5, 10, 15): Rain a storm of arrows for 3s in a wide AOE, damaging & slowing enemies inside!",
+    desc: "ULTIMATE [Ranger] (Lv 5, 10, 15): Rain a storm of arrows for 3s in a wide AOE, damaging & slowing enemies inside!",
     color: "#fde047",
   },
 ];
 
 export const DEFAULT_LOADOUT = ["holy_smite", "arcane_bolt", "whirlwind", "skyfall_slam"];
+
+export const RELICS = {
+  storm_sigil: {
+    id: "storm_sigil",
+    name: "Stormcaller Sigil",
+    color: "#38bdf8",
+    desc: "Every 4th hit chains lightning to up to 2 nearby foes (65% ATK).",
+  },
+  ember_spur: {
+    id: "ember_spur",
+    name: "Emberweave Spur",
+    color: "#fb923c",
+    desc: "Dashing leaves blazing embers that sear nearby enemies for 70% ATK.",
+  },
+  mana_siphon: {
+    id: "mana_siphon",
+    name: "Astral Siphon",
+    color: "#60a5fa",
+    desc: "Slaying any enemy restores 3 MP.",
+  },
+  twin_fletch: {
+    id: "twin_fletch",
+    name: "Twin-Fletch Charm",
+    color: "#4ade80",
+    desc: "Ranged attacks have a 35% chance to fire an extra angled bolt (55% ATK).",
+  },
+  vampiric_fang: {
+    id: "vampiric_fang",
+    name: "Crimson Fang",
+    color: "#f87171",
+    desc: "Critical hits restore 2 HP.",
+  },
+  aegis_heart: {
+    id: "aegis_heart",
+    name: "Heart of Bastion",
+    color: "#facc15",
+    desc: "Taking a hit below 40% HP grants +8 DEF & brief ward (14s CD).",
+  },
+  frost_core: {
+    id: "frost_core",
+    name: "Permafrost Core",
+    color: "#7dd3fc",
+    desc: "Chilled or frozen enemies take +20% bonus damage from all hits.",
+  },
+  greedy_idol: {
+    id: "greedy_idol",
+    name: "Gilded Idol",
+    color: "#fde047",
+    desc: "+35% Gold drops and +1 ATK per 100 Gold held (max +10 ATK).",
+  },
+};
+
+export const ELITE_AFFIXES = {
+  blazing: {
+    id: "blazing",
+    label: "Blazing",
+    color: "#f97316",
+    hpMult: 1.45,
+    atkMult: 1.2,
+    speedMult: 1.05,
+    defBonus: 1,
+    desc: "Emits scorching fire pulses every 3s.",
+  },
+  swift: {
+    id: "swift",
+    label: "Swift",
+    color: "#38bdf8",
+    hpMult: 1.3,
+    atkMult: 1.1,
+    speedMult: 1.38,
+    defBonus: 0,
+    desc: "Moves and attacks significantly faster.",
+  },
+  armored: {
+    id: "armored",
+    label: "Armored",
+    color: "#94a3b8",
+    hpMult: 1.55,
+    atkMult: 1.1,
+    speedMult: 0.95,
+    defBonus: 5,
+    desc: "Reinforced plating grants high DEF.",
+  },
+  vampiric: {
+    id: "vampiric",
+    label: "Vampiric",
+    color: "#ef4444",
+    hpMult: 1.4,
+    atkMult: 1.25,
+    speedMult: 1.1,
+    defBonus: 1,
+    desc: "Leeches HP whenever it strikes you.",
+  },
+};
 
 export const RARITIES = {
   common: { id: "common", label: "Common", color: "#9ca3af", bg: "rgba(156, 163, 175, 0.14)" },
@@ -337,7 +507,7 @@ export function getItemPrice(item) {
     return 15;
   }
   const rarity = item.rarity || (item.tier === 3 ? "legendary" : item.tier === 2 ? "unique" : item.setId ? "rare" : "common");
-  return RARITY_PRICES[rarity] || 24;
+  return (RARITY_PRICES[rarity] || 24) + (item.upgradeLv || 0) * 25;
 }
 
 export const ITEMS = {
@@ -402,6 +572,24 @@ export const ITEMS = {
     atk: 5,
     crit: 4,
     desc: "+5 ATK, +4% CRIT · Ranged (Fires Arrows)",
+  },
+  emerald_recurve: {
+    id: "emerald_recurve",
+    name: "Emerald Recurve",
+    type: "weapon",
+    slot: "weapon",
+    rarity: "rare",
+    weaponType: "bow",
+    projectileKind: "arrow",
+    projColor: "#4ade80",
+    projSpeed: 14.0,
+    attackCd: 0.32,
+    setId: "ranger",
+    tier: 2,
+    icon: "assets/bow_icon.svg",
+    atk: 11,
+    crit: 10,
+    desc: "[Sylvan Ranger Set] +11 ATK, +10% CRIT · Rapid Emerald Arrows",
   },
   apprentice_wand: {
     id: "apprentice_wand",
@@ -1008,15 +1196,15 @@ export const EQUIPMENT_SETS = {
     color: "#38bdf8",
     bonuses: [
       { count: 2, def: 4, maxHp: 12, label: "2pc: +4 DEF, +12 Max HP" },
-      { count: 4, def: 8, maxHp: 24, atk: 4, label: "4pc: +8 DEF, +24 Max HP, +4 ATK" },
+      { count: 4, def: 8, maxHp: 24, atk: 4, passiveId: "vanguard_thorns", label: "4pc: +8 DEF, +24 HP, +4 ATK · Reflects 25% melee DMG" },
     ],
   },
   ranger: {
     name: "Sylvan Ranger Set",
-    color: "#38bdf8",
+    color: "#4ade80",
     bonuses: [
       { count: 2, crit: 6, atk: 4, label: "2pc: +6% CRIT, +4 ATK" },
-      { count: 4, crit: 14, atk: 9, speed: 0.55, label: "4pc: +14% CRIT, +9 ATK, +Speed" },
+      { count: 4, crit: 14, atk: 9, speed: 0.55, passiveId: "ranger_windstep", label: "4pc: +14% CRIT, +9 ATK, +Speed · Crits grant Windstep Haste" },
     ],
   },
   crimson: {
@@ -1024,7 +1212,7 @@ export const EQUIPMENT_SETS = {
     color: "#3b82f6",
     bonuses: [
       { count: 2, crit: 8, atk: 3, label: "2pc: +8% CRIT, +3 ATK" },
-      { count: 4, crit: 15, atk: 7, speed: 0.45, label: "4pc: +15% CRIT, +7 ATK, +Speed" },
+      { count: 4, crit: 15, atk: 7, speed: 0.45, passiveId: "crimson_harvest", label: "4pc: +15% CRIT, +7 ATK, +Speed · Kills heal +5 HP" },
     ],
   },
   astral: {
@@ -1032,7 +1220,7 @@ export const EQUIPMENT_SETS = {
     color: "#a855f7",
     bonuses: [
       { count: 2, maxMp: 18, atk: 5, label: "2pc: +18 Max MP, +5 ATK" },
-      { count: 4, maxMp: 35, atk: 11, crit: 12, label: "4pc: +35 Max MP, +11 ATK, +12% CRIT" },
+      { count: 4, maxMp: 35, atk: 11, crit: 12, passiveId: "astral_efficiency", label: "4pc: +35 MP, +11 ATK, +12% CRIT · -25% Skill MP Cost" },
     ],
   },
   sunfire: {
@@ -1040,7 +1228,7 @@ export const EQUIPMENT_SETS = {
     color: "#a855f7",
     bonuses: [
       { count: 2, maxMp: 14, atk: 3, label: "2pc: +14 Max MP, +3 ATK" },
-      { count: 4, maxMp: 28, atk: 7, def: 5, label: "4pc: +28 Max MP, +7 ATK, +5 DEF" },
+      { count: 4, maxMp: 28, atk: 7, def: 5, passiveId: "sunfire_burn", label: "4pc: +28 MP, +7 ATK, +5 DEF · Attacks ignite foes" },
     ],
   },
   voidbreaker: {
@@ -1048,7 +1236,7 @@ export const EQUIPMENT_SETS = {
     color: "#facc15",
     bonuses: [
       { count: 2, atk: 6, def: 5, label: "2pc: +6 ATK, +5 DEF" },
-      { count: 4, atk: 12, def: 10, crit: 10, maxHp: 25, label: "4pc: +12 ATK, +10 DEF, +10% CRIT, +25 HP" },
+      { count: 4, atk: 12, def: 10, crit: 10, maxHp: 25, passiveId: "voidbreaker_slayer", label: "4pc: +12 ATK, +10 DEF, +10% CRIT · +20% DMG vs Bosses/Elites" },
     ],
   },
   sovereign: {
@@ -1056,7 +1244,7 @@ export const EQUIPMENT_SETS = {
     color: "#facc15",
     bonuses: [
       { count: 2, def: 10, atk: 8, maxHp: 20, label: "2pc: +10 DEF, +8 ATK, +20 Max HP" },
-      { count: 4, def: 18, atk: 16, crit: 15, maxHp: 40, label: "4pc: +18 DEF, +16 ATK, +15% CRIT, +40 HP" },
+      { count: 4, def: 18, atk: 16, crit: 15, maxHp: 40, passiveId: "sovereign_fury", label: "4pc: +18 DEF, +16 ATK, +15% CRIT · +20% Skill Damage" },
     ],
   },
 };
@@ -1074,6 +1262,7 @@ export const ENEMIES = {
     speed: 1.75,
     attackCd: 1.15,
     isSheet: false,
+    lore: "Gelatinous scavenger feeding on damp catacomb moss.",
   },
   bat: {
     id: "bat",
@@ -1087,6 +1276,7 @@ export const ENEMIES = {
     speed: 2.9,
     attackCd: 0.9,
     isSheet: false,
+    lore: "Swift cave predator drawn to torchlight and steel.",
   },
   skeleton: {
     id: "skeleton",
@@ -1100,6 +1290,24 @@ export const ENEMIES = {
     speed: 2.15,
     attackCd: 1.05,
     isSheet: false,
+    lore: "Fallen sentinel of Aethelgard reanimated by the Hollow King.",
+  },
+  goblin_slinger: {
+    id: "goblin_slinger",
+    name: "Goblin Slinger",
+    sprite: "goblin_slinger",
+    hp: 20,
+    atk: 7,
+    def: 1,
+    xp: 16,
+    gold: 11,
+    speed: 2.25,
+    attackCd: 1.15,
+    rangedCd: 2.0,
+    role: "ranged_kiter",
+    projColor: "#a3e635",
+    isSheet: false,
+    lore: "Act I skirmisher that pelts intruders from afar and backpedals from blades.",
   },
   orc: {
     id: "orc",
@@ -1116,6 +1324,39 @@ export const ENEMIES = {
     attackCd: 1.05,
     isSheet: true,
     drawScale: 1.55,
+    lore: "Brutal raider armed with a notched cleaver.",
+  },
+  clockwork_sentinel: {
+    id: "clockwork_sentinel",
+    name: "Clockwork Sentinel",
+    sprite: "clockwork_sentinel",
+    hp: 44,
+    atk: 12,
+    def: 6,
+    xp: 32,
+    gold: 22,
+    speed: 1.65,
+    attackCd: 1.25,
+    role: "shielded",
+    isSheet: false,
+    lore: "Act II bronze guardian whose tower shield blocks 60% of frontal non-piercing hits.",
+  },
+  void_acolyte: {
+    id: "void_acolyte",
+    name: "Void Acolyte",
+    sprite: "void_acolyte",
+    hp: 38,
+    atk: 14,
+    def: 3,
+    xp: 36,
+    gold: 25,
+    speed: 1.85,
+    attackCd: 1.2,
+    rangedCd: 2.6,
+    role: "sigil_caster",
+    projColor: "#c084fc",
+    isSheet: false,
+    lore: "Act III cultist that weaves delayed Void Sigils beneath your feet.",
   },
   royal_goblin: {
     id: "royal_goblin",
@@ -1131,10 +1372,11 @@ export const ENEMIES = {
     speed: 2.55,
     attackCd: 1.05,
     skillCd: 3.8,
-    bossSkillDesc: "1,000 HP · Berserk Speed (Faster as HP drops), Leap Slam & Warcry (Stun)",
+    bossSkillDesc: "1,000 HP · Berserk Speed, Leap Slam, Warcry (Stun) & Phase 2 Cavern Boulders",
     isSheet: true,
     isBoss: true,
     shardIndex: 0,
+    lore: "Seized the First Crown Shard, driving his goblin host into madness.",
   },
   gilded_knight: {
     id: "gilded_knight",
@@ -1150,10 +1392,11 @@ export const ENEMIES = {
     speed: 2.4,
     attackCd: 0.95,
     skillCd: 3.5,
-    bossSkillDesc: "1,300 HP · Gilded Aegis (High DEF + Reflect), Judgment Teleport (Stun) & Solar Wave",
+    bossSkillDesc: "1,300 HP · Gilded Aegis (Reflect), Judgment Teleport (Stun), Solar Wave & Phase 2 Cross-Beams",
     isSheet: true,
     isBoss: true,
     shardIndex: 1,
+    lore: "Former Paladin Commander bound to the Second Shard inside the Sunken Foundry.",
   },
   void_king: {
     id: "void_king",
@@ -1168,10 +1411,11 @@ export const ENEMIES = {
     attackCd: 1.05,
     rangedCd: 2.1,
     skillCd: 3.2,
-    bossSkillDesc: "1,650 HP · Shadow Teleport, Mirror Clones, Dark Mending (Heal) & Soul Shatter (Stun)",
+    bossSkillDesc: "1,650 HP · Shadow Teleport, Mirror Clones, Interruptible Dark Mending & Phase 2 Void Rifts",
     isSheet: false,
     isBoss: true,
     shardIndex: 2,
+    lore: "Ancient sovereign of the Abyssal Sanctum who feeds on broken oaths.",
   },
 };
 
@@ -1206,6 +1450,41 @@ export const META_UPGRADES = [
   },
 ];
 
+export const SOUL_FORGE_UPGRADES = [
+  {
+    id: "relic_pouch",
+    name: "Reliquary Pouch",
+    desc: "Start each run with 1 random passive Relic.",
+    baseCost: 6,
+    stepCost: 0,
+    maxRank: 1,
+  },
+  {
+    id: "gold_reserve",
+    name: "Merchant's Coffer",
+    desc: "+35 Starting Gold per rank.",
+    baseCost: 3,
+    stepCost: 2,
+    maxRank: 3,
+  },
+  {
+    id: "forge_mastery",
+    name: "Runic Hammer",
+    desc: "-20% Anvil Temper cost per rank.",
+    baseCost: 4,
+    stepCost: 3,
+    maxRank: 2,
+  },
+  {
+    id: "scholar_tome",
+    name: "Veteran's Oath",
+    desc: "+12% XP gain per rank (+1 Skill Pt at Lv 1 at Rank 2).",
+    baseCost: 5,
+    stepCost: 4,
+    maxRank: 2,
+  },
+];
+
 export const LORE_CODEX = [
   {
     id: "crown",
@@ -1225,7 +1504,7 @@ export const LORE_CODEX = [
   {
     id: "malakor",
     title: "Malakor, the Hollow King",
-    text: "Neither living nor truly dead, Malakor feeds on broken oaths. Only a knight bearing all three shards can shatter his obsidian staff and end the long winter.",
+    text: "Neither living nor truly dead, Malakor feeds on broken oaths. Only a champion bearing all three shards can shatter his obsidian staff and end the long winter.",
   },
 ];
 
@@ -1236,21 +1515,12 @@ export const NPC_ENCOUNTERS = {
     sprite: "monk_idle",
     codexId: "crown",
     lines: [
-      "Peace be with you, Sir Aldric. The catacombs grow colder with each floor, yet the Sanctum's flame still answers a paladin's oath.",
+      "Peace be with you, traveler. The catacombs grow colder with each floor, yet the Sanctum's flame still answers a hero's oath.",
     ],
     choices: [
-      {
-        label: "Receive Blessing (Full HP & MP Restore)",
-        effect: "full_heal",
-      },
-      {
-        label: "Ask for Provisions (+1 Crimson Vial, +1 Azure Vial)",
-        effect: "gift_potions",
-      },
-      {
-        label: "Expand Satchel (+1 Max Inventory Slot)",
-        effect: "upgrade_inventory",
-      },
+      { label: "Receive Blessing (Full HP & MP Restore)", effect: "full_heal" },
+      { label: "Ask for Provisions (+1 Crimson Vial, +1 Azure Vial)", effect: "gift_potions" },
+      { label: "Expand Satchel (+1 Max Inventory Slot)", effect: "upgrade_inventory" },
     ],
   },
   rogue: {
@@ -1259,22 +1529,12 @@ export const NPC_ENCOUNTERS = {
     sprite: "rogue_idle",
     codexId: "grak",
     lines: [
-      "Keep your blade ready, knight. King Grak hoards the First Shard three floors down—and he's posted skeletons at every junction. Need supplies?",
+      "Keep your wits sharp. King Grak hoards the First Shard down below—and Goblin Slingers guard every junction. Need supplies?",
     ],
     choices: [
-      {
-        label: "Trade 25 Gold for Scroll of Valor (+2 ATK)",
-        effect: "buy_scroll",
-        cost: 25,
-      },
-      {
-        label: "Take Scout's Intel (+15 XP & reveal floor)",
-        effect: "reveal_floor",
-      },
-      {
-        label: "Expand Satchel (+1 Max Inventory Slot)",
-        effect: "upgrade_inventory",
-      },
+      { label: "Trade 25 Gold for Scroll of Valor (+2 ATK)", effect: "buy_scroll", cost: 25 },
+      { label: "Take Scout's Intel (+15 XP & reveal floor)", effect: "reveal_floor" },
+      { label: "Expand Satchel (+1 Max Inventory Slot)", effect: "upgrade_inventory" },
     ],
   },
   robot: {
@@ -1283,22 +1543,12 @@ export const NPC_ENCOUNTERS = {
     sprite: "robot_idle",
     codexId: "aurelius",
     lines: [
-      "CALIBRATING... Sir Aurelius ordered this foundry sealed 3,650 days ago. His gilded armor still patrols the sixth floor, bound by the Second Shard.",
+      "CALIBRATING... Sir Aurelius ordered this foundry sealed 3,650 days ago. Clockwork Sentinels still patrol these halls, bound by the Second Shard.",
     ],
     choices: [
-      {
-        label: "Overclock Weapon (+3 ATK for this run, costs 20 Gold)",
-        effect: "buy_atk",
-        cost: 20,
-      },
-      {
-        label: "Download Tactical Map (Reveal entire floor + 1 Azure Vial)",
-        effect: "reveal_and_mp",
-      },
-      {
-        label: "Expand Satchel (+1 Max Inventory Slot)",
-        effect: "upgrade_inventory",
-      },
+      { label: "Overclock Weapon (+3 ATK for this run, costs 20 Gold)", effect: "buy_atk", cost: 20 },
+      { label: "Download Tactical Map (Reveal entire floor + 1 Azure Vial)", effect: "reveal_and_mp" },
+      { label: "Expand Satchel (+1 Max Inventory Slot)", effect: "upgrade_inventory" },
     ],
   },
   pirate: {
@@ -1307,22 +1557,37 @@ export const NPC_ENCOUNTERS = {
     sprite: "pirate_idle",
     codexId: "malakor",
     lines: [
-      "Even smuggler tunnels end at Malakor's door, paladin. If you're marching into the Abyssal Sanctum, take what steel you can carry.",
+      "Even smuggler tunnels end at Malakor's door. If you're marching into the Abyssal Sanctum, take what steel you can carry.",
     ],
     choices: [
-      {
-        label: "Buy Gilded Aegis (+6 DEF, +10 Max HP) — 40 Gold",
-        effect: "buy_aegis",
-        cost: 40,
-      },
-      {
-        label: "Share a Toast (+18 HP, +10 MP)",
-        effect: "small_heal",
-      },
-      {
-        label: "Expand Satchel (+1 Max Inventory Slot)",
-        effect: "upgrade_inventory",
-      },
+      { label: "Buy Gilded Aegis (+7 DEF, +12 Max HP) — 40 Gold", effect: "buy_aegis", cost: 40 },
+      { label: "Share a Toast (+18 HP, +10 MP)", effect: "small_heal" },
+      { label: "Expand Satchel (+1 Max Inventory Slot)", effect: "upgrade_inventory" },
+    ],
+  },
+};
+
+export const SHRINE_ENCOUNTERS = {
+  blood: {
+    id: "blood",
+    title: "Altar of Crimson Steel",
+    role: "Ancient Shrine",
+    desc: "A crimson brazier pulses with ancient strength. Sacrifice vitality for power?",
+    choices: [
+      { label: "Offer 25% Current HP -> Gain +3 ATK & +4% CRIT", effect: "shrine_blood_atk" },
+      { label: "Offer 35 Gold -> Gain +1 Random Relic", effect: "shrine_relic", cost: 35 },
+      { label: "Leave Untouched", effect: "none" },
+    ],
+  },
+  sanctum: {
+    id: "sanctum",
+    title: "Shrine of Starlight",
+    role: "Ancient Shrine",
+    desc: "Cool silver light bathes this forgotten alcove, humming with arcane resonance.",
+    choices: [
+      { label: "Pray for Wisdom -> +1 Skill Point (or +25 XP if Lv 1)", effect: "shrine_skill_pt" },
+      { label: "Drink Starlight -> Full HP/MP & +8 Max MP", effect: "shrine_mp" },
+      { label: "Claim Relic Blessing -> +1 Random Relic (costs 30 Gold)", effect: "shrine_relic", cost: 30 },
     ],
   },
 };

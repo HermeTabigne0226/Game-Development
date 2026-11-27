@@ -1,0 +1,63 @@
+<svg width="256" height="256" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+  <!-- PIXEL SWORD KNOB -->
+  <rect x="20" y="6" width="24" height="2" fill="#0F172A"/>
+  <rect x="14" y="8" width="6" height="2" fill="#0F172A"/>
+  <rect x="44" y="8" width="6" height="2" fill="#0F172A"/>
+  <rect x="10" y="10" width="4" height="4" fill="#0F172A"/>
+  <rect x="50" y="10" width="4" height="4" fill="#0F172A"/>
+  <rect x="8" y="14" width="2" height="6" fill="#0F172A"/>
+  <rect x="54" y="14" width="2" height="6" fill="#0F172A"/>
+  <rect x="6" y="20" width="2" height="24" fill="#0F172A"/>
+  <rect x="56" y="20" width="2" height="24" fill="#0F172A"/>
+  <rect x="8" y="44" width="2" height="6" fill="#0F172A"/>
+  <rect x="54" y="44" width="2" height="6" fill="#0F172A"/>
+  <rect x="10" y="50" width="4" height="4" fill="#0F172A"/>
+  <rect x="50" y="50" width="4" height="4" fill="#0F172A"/>
+  <rect x="14" y="54" width="6" height="2" fill="#0F172A"/>
+  <rect x="44" y="54" width="6" height="2" fill="#0F172A"/>
+  <rect x="20" y="56" width="24" height="2" fill="#0F172A"/>
+
+  <!-- Ruby-Crimson Knob Body -->
+  <rect x="20" y="8" width="24" height="48" fill="#991B1B"/>
+  <rect x="14" y="10" width="36" height="44" fill="#991B1B"/>
+  <rect x="10" y="14" width="44" height="36" fill="#991B1B"/>
+  <rect x="8" y="20" width="48" height="24" fill="#991B1B"/>
+
+  <!-- Top Highlight & Bottom Shadow -->
+  <rect x="20" y="8" width="24" height="6" fill="#DC2626"/>
+  <rect x="14" y="10" width="36" height="6" fill="#DC2626"/>
+  <rect x="18" y="10" width="28" height="3" fill="#EF4444"/>
+  <rect x="22" y="9" width="20" height="2" fill="#F87171"/>
+  <rect x="14" y="48" width="36" height="6" fill="#450A0A"/>
+  <rect x="20" y="54" width="24" height="2" fill="#450A0A"/>
+
+  <!-- Pixel Broadsword Icon -->
+  <rect x="44" y="16" width="2" height="2" fill="#FFFFFF"/>
+  <rect x="42" y="18" width="4" height="2" fill="#F8FAFC"/>
+  <rect x="40" y="20" width="4" height="2" fill="#E2E8F0"/>
+  <rect x="38" y="22" width="4" height="2" fill="#CBD5E1"/>
+  <rect x="36" y="24" width="4" height="2" fill="#94A3B8"/>
+  <rect x="34" y="26" width="4" height="2" fill="#CBD5E1"/>
+  <rect x="32" y="28" width="4" height="2" fill="#94A3B8"/>
+  <rect x="30" y="30" width="4" height="2" fill="#CBD5E1"/>
+  <rect x="28" y="32" width="4" height="2" fill="#94A3B8"/>
+  <rect x="42" y="18" width="2" height="2" fill="#FFFFFF"/>
+  <rect x="38" y="22" width="2" height="2" fill="#FFFFFF"/>
+  <rect x="34" y="26" width="2" height="2" fill="#FFFFFF"/>
+  <rect x="30" y="30" width="2" height="2" fill="#FFFFFF"/>
+
+  <!-- Crossguard & Hilt -->
+  <rect x="24" y="34" width="8" height="2" fill="#F59E0B"/>
+  <rect x="22" y="32" width="2" height="4" fill="#D97706"/>
+  <rect x="30" y="36" width="2" height="4" fill="#D97706"/>
+  <rect x="25" y="34" width="4" height="2" fill="#FDE68A"/>
+  <rect x="22" y="38" width="4" height="2" fill="#78350F"/>
+  <rect x="20" y="40" width="4" height="2" fill="#78350F"/>
+  <rect x="18" y="42" width="3" height="3" fill="#F59E0B"/>
+  <rect x="19" y="43" width="1" height="1" fill="#FEF3C7"/>
+
+  <!-- Slash Accents -->
+  <rect x="46" y="22" width="2" height="4" fill="#FEF08A"/>
+  <rect x="44" y="26" width="2" height="4" fill="#FDE047"/>
+  <rect x="40" y="14" width="4" height="2" fill="#FEF08A"/>
+</svg>
