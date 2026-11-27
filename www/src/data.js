@@ -1,8 +1,17 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.2.0";
+export const GAME_VERSION = "v.1.2.1";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.2.1",
+    title: "Hotfixes — Skill VFX, Mobile Controls & Menu Fit",
+    notes: [
+      "Restored Skill VFX & Telegraphs: Brought back Radiant Cleave solar charge & crisp blade edge, Valiant Charge extending spear & dash wake, Divine Cataclysm expanding radius & raised greatsword, Skyfall Judgment AOE reticle & 5-ring impact, and Frost Nova crystal rings.",
+      "Mobile Attack Wheel & Skill Gaps: Enlarged the directional attack wheel (114px), moved right-hand controls inward from the screen edges for smoother 360° aiming, and widened spacing between Dash and all 4 skills.",
+      "One-Screen Menu & APK v1.2.1: Redesigned the Main Menu into a compact two-column dashboard (no scrolling needed) and synced Android APK metadata to v1.2.1 (versionCode 10201).",
+    ],
+  },
   {
     version: "v.1.2.0",
     title: "Sylvan Ranger, Relics, Elites & Endless Abyss",
