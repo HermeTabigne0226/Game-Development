@@ -2035,7 +2035,7 @@ body.pvp-active .canvas-frame {
 .menu-buttons .btn {
   justify-content: center;
   width: 100%;
-  min-block-size: 40px;
+  min-block-size: 42px;
 }
 
 .menu-buttons #menu-btn-resume,
@@ -2044,31 +2044,86 @@ body.pvp-active .canvas-frame {
   grid-column: 1 / -1;
 }
 
-.resume-menu-btn {
-  border-color: #fde047;
-  box-shadow: 0 0 14px rgba(250, 204, 21, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+/* Pixel-Art RPG Button Sprites (Main Menu & In-Game Pause Menu) */
+.rpg-btn {
+  position: relative;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 8px 14px;
+  font-family: "Georgia", "Palatino Linotype", "Book Antiqua", serif;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background-color: transparent !important;
+  background-position: center !important;
+  background-size: 100% 100% !important;
+  background-repeat: no-repeat !important;
+  image-rendering: pixelated;
+  box-shadow: none !important;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.72));
+  transition: transform 0.08s ease, filter 0.14s ease;
 }
 
-.new-quest-secondary {
-  border-color: rgba(250, 204, 21, 0.55);
-  background: linear-gradient(135deg, rgba(161, 98, 7, 0.28), rgba(20, 24, 36, 0.96));
-  color: #fef08a;
+.rpg-btn:hover:not(:disabled) {
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.8)) brightness(1.1);
 }
 
-.new-quest-secondary:hover {
-  border-color: #fde047;
-  color: #ffffff;
+.rpg-btn:active:not(:disabled) {
+  transform: translateY(2px);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.75)) brightness(0.95);
 }
 
-.pvp-menu-btn {
-  border-color: #38bdf8;
-  background: linear-gradient(135deg, rgba(14, 116, 144, 0.45), rgba(20, 24, 36, 0.95));
-  color: #bae6fd;
+/* 1. Ornate Gold Banner (Resume / Primary CTA) */
+.rpg-btn-gold,
+.rpg-btn.btn-primary {
+  background-image: url("../assets/ui/btn-gold.png") !important;
+  color: #1c1003;
+  text-shadow: 0 1px 0 rgba(254, 249, 195, 0.55);
 }
 
-.pvp-menu-btn:hover {
-  border-color: #7dd3fc;
-  color: #ffffff;
+/* 2. Wood & Bronze Riveted Plank (New Quest when Resume is active) */
+.rpg-btn-wood,
+.rpg-btn.new-quest-secondary {
+  background-image: url("../assets/ui/btn-wood.png") !important;
+  color: #f3d098;
+  text-shadow: 0 2px 0 #120904;
+}
+
+/* 3. Steel & Slate-Teal Arena Bar (PvP Arena) */
+.rpg-btn-arena,
+.rpg-btn.pvp-menu-btn {
+  background-image: url("../assets/ui/btn-arena.png") !important;
+  color: #e2eef3;
+  text-shadow: 0 2px 0 #0a1418;
+}
+
+/* 4. Dark Iron Riveted Plate (Settings) */
+.rpg-btn-iron {
+  background-image: url("../assets/ui/btn-iron.png") !important;
+  color: #f1f5f9;
+  text-shadow: 0 2px 0 #090b10;
+}
+
+/* 5. Gold-Trimmed Ornate Stone Plate (Patch Notes) */
+.rpg-btn-patch {
+  background-image: url("../assets/ui/btn-patch.png") !important;
+  color: #fde68a;
+  text-shadow: 0 2px 0 #14120a;
+}
+
+/* 6. Weathered Stone Plate (Check Update) */
+.rpg-btn-stone {
+  background-image: url("../assets/ui/btn-stone.png") !important;
+  color: #d6d3d1;
+  text-shadow: 0 2px 0 #0a0908;
+}
+
+/* 7. Rusted Iron Plate (Exit / Main Menu) */
+.rpg-btn-rust,
+.rpg-btn.exit-menu-btn {
+  background-image: url("../assets/ui/btn-rust.png") !important;
+  color: #f3c4a2;
+  text-shadow: 0 2px 0 #0d0807;
 }
 
 .menu-buttons #menu-btn-exit {
@@ -2077,17 +2132,6 @@ body.pvp-active .canvas-frame {
 
 .menu-buttons #menu-btn-check-update[hidden] + #menu-btn-exit {
   grid-column: 1 / -1;
-}
-
-.exit-menu-btn {
-  border-color: rgba(248, 113, 113, 0.4);
-  color: #fecaca;
-}
-
-.exit-menu-btn:hover {
-  border-color: #f87171;
-  background: linear-gradient(135deg, rgba(127, 29, 29, 0.45), rgba(20, 24, 36, 0.95));
-  color: #ffffff;
 }
 
 .menu-version-badge {

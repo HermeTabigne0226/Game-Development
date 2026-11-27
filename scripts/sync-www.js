@@ -13,6 +13,7 @@ const ITEMS_TO_COPY = [
   "assets/knob_sword.svg",
   "assets/knob_wand.svg",
   "assets/knob_arrow.svg",
+  "assets/ui",
   "assets/generated/skill_skyfall_judgment.jpg",
   "assets/generated/skill_arcane_beam.jpg",
   "assets/generated/skill_chain_lightning.png",
