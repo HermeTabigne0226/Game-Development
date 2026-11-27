@@ -148,10 +148,48 @@ function serializeRoomDetail(room) {
   };
 }
 
+function isClientAlive(client) {
+  return Boolean(client && clients.has(client.id) && client.socket && !client.socket.destroyed && client.socket.writable);
+}
+
+function pruneRooms() {
+  let changed = false;
+  for (const [id, room] of rooms.entries()) {
+    const alive = room.players.filter((pl) => isClientAlive(pl.client));
+    if (alive.length !== room.players.length) {
+      const wasPlaying = room.status === "playing";
+      room.players = alive;
+      clearRoomAutoStart(room);
+      if (room.roundTimer) {
+        clearTimeout(room.roundTimer);
+        room.roundTimer = null;
+      }
+      changed = true;
+      if (room.players.length === 0) {
+        rooms.delete(id);
+        continue;
+      }
+      room.status = "lobby";
+      room.hostIp = room.players[0].client.ip;
+      room.players[0].ready = false;
+      if (wasPlaying) {
+        sendWsJson(room.players[0].client, { type: "opponent_left", room: serializeRoomDetail(room) });
+      } else {
+        broadcastRoomUpdate(room);
+      }
+    } else if (room.players.length === 0) {
+      rooms.delete(id);
+      changed = true;
+    }
+  }
+  return changed;
+}
+
 function broadcastLobbies() {
+  pruneRooms();
   for (const client of clients.values()) {
     const list = [...rooms.values()]
-      .filter((r) => r.status === "lobby" && r.players.length < 2)
+      .filter((r) => r.status === "lobby" && r.players.length > 0 && r.players.length < 2)
       .map((r) => serializeRoomFor(r, client.ip))
       .sort((a, b) => Number(b.sameNetwork) - Number(a.sameNetwork));
     sendWsJson(client, { type: "lobbies", lobbies: list });
@@ -286,8 +324,9 @@ function handleClientMessage(client, msg) {
   }
 
   if (msg.type === "list_lobbies") {
+    pruneRooms();
     const list = [...rooms.values()]
-      .filter((r) => r.status === "lobby" && r.players.length < 2)
+      .filter((r) => r.status === "lobby" && r.players.length > 0 && r.players.length < 2)
       .map((r) => serializeRoomFor(r, client.ip))
       .sort((a, b) => Number(b.sameNetwork) - Number(a.sameNetwork));
     sendWsJson(client, { type: "lobbies", lobbies: list });
@@ -545,12 +584,14 @@ server.on("upgrade", (req, socket) => {
     ip: clientIp,
     socket,
     roomId: null,
+    lastSeen: Date.now(),
   };
   clients.set(client.id, client);
   sendWsJson(client, { type: "welcome", id: client.id, ip: clientIp });
 
   let rxBuf = Buffer.alloc(0);
   socket.on("data", (chunk) => {
+    client.lastSeen = Date.now();
     rxBuf = Buffer.concat([rxBuf, chunk]);
     while (rxBuf.length >= 2) {
       const b0 = rxBuf[0];
@@ -597,6 +638,7 @@ server.on("upgrade", (req, socket) => {
         } catch {}
         continue;
       }
+      if (opcode === 0xA) continue;
       if (opcode === 0x1) {
         try {
           const parsed = JSON.parse(payload.toString("utf8"));
@@ -614,6 +656,25 @@ server.on("upgrade", (req, socket) => {
   socket.on("close", cleanup);
   socket.on("error", cleanup);
 });
+
+// Sweep stale/disconnected clients every 15s so empty or abandoned lobbies vanish promptly
+setInterval(() => {
+  const now = Date.now();
+  let removedAny = false;
+  for (const client of [...clients.values()]) {
+    if (!isClientAlive(client) || now - (client.lastSeen || 0) > 40000) {
+      clients.delete(client.id);
+      try { client.socket?.destroy(); } catch {}
+      removeClientFromRoom(client);
+      removedAny = true;
+    } else {
+      try { client.socket.write(Buffer.from([0x89, 0x00])); } catch {}
+    }
+  }
+  if (!removedAny && pruneRooms()) {
+    broadcastLobbies();
+  }
+}, 15000);
 
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Serving Chronicles of the Shattered Crown at http://localhost:${PORT}`);

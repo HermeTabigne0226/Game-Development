@@ -1756,14 +1756,17 @@ export function openPvpDialog() {
       }
     }
 
+    const visibleLobbies = Array.isArray(pvpNet.lobbies)
+      ? pvpNet.lobbies.filter((r) => (r.playerCount || 0) > 0 && (r.playerCount || 0) < 2)
+      : [];
     if (!inRoom && lobbyListEl) {
       if (!pvpNet.connected) {
         lobbyListEl.innerHTML = `<div class="hint-text">Connect to a server above to view &amp; join open lobbies.</div>`;
-      } else if (!pvpNet.lobbies.length) {
+      } else if (!visibleLobbies.length) {
         lobbyListEl.innerHTML = `<div class="hint-text">No open lobbies yet. Create one on the right!</div>`;
       } else {
         lobbyListEl.innerHTML = "";
-        for (const r of pvpNet.lobbies) {
+        for (const r of visibleLobbies) {
           const card = document.createElement("div");
           card.className = `pvp-lobby-item ${r.sameNetwork ? "same-net" : ""}`;
           const m = PVP_MAPS[r.mapId] || PVP_MAPS[0];
@@ -2121,7 +2124,9 @@ export function openPvpDialog() {
   };
   startBtn.onclick = () => pvpNet.send({ type: "start_match" });
 
+  let keepRoomOnClose = false;
   loadoutBtn.onclick = () => {
+    keepRoomOnClose = true;
     dlg.close("pick");
     const reopen = () => openPvpDialog();
     openLoadoutDialog(
@@ -2154,6 +2159,9 @@ export function openPvpDialog() {
     if (previewRafId) {
       cancelAnimationFrame(previewRafId);
       previewRafId = 0;
+    }
+    if (!keepRoomOnClose && !runtime.state?.isPvp && pvpNet.connected && pvpNet.room) {
+      pvpNet.send({ type: "leave_lobby" });
     }
   }, { once: true });
 

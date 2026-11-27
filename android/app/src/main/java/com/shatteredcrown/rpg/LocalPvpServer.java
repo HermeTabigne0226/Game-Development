@@ -649,7 +649,12 @@ public final class LocalPvpServer {
         JSONArray list = new JSONArray();
         for (Room r : rooms.values()) {
             synchronized (r) {
-                if ("lobby".equals(r.status) && r.players.size() < 2) {
+                r.players.removeIf((pl) -> pl.client == null || pl.client.socket == null || pl.client.socket.isClosed());
+                if (r.players.isEmpty()) {
+                    rooms.remove(r.id);
+                    continue;
+                }
+                if ("lobby".equals(r.status) && !r.players.isEmpty() && r.players.size() < 2) {
                     list.put(serializeRoomFor(r, c.ip));
                 }
             }
