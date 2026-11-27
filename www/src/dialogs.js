@@ -1749,6 +1749,32 @@ export function openPvpDialog() {
     }
   }
 
+  function createMapPreviewEl(mapCfg, width, height) {
+    if (mapCfg.splash) {
+      const img = document.createElement("img");
+      img.src = mapCfg.splash;
+      img.alt = mapCfg.name;
+      img.className = "pvp-map-splash-img";
+      img.loading = "lazy";
+      img.onerror = () => {
+        const fallback = document.createElement("canvas");
+        fallback.width = width;
+        fallback.height = height;
+        fallback.className = "pvp-map-thumb";
+        drawPvpMapThumbnail(fallback, mapCfg.id);
+        img.replaceWith(fallback);
+      };
+      return img;
+    }
+    const thumb = document.createElement("canvas");
+    thumb.width = width;
+    thumb.height = height;
+    thumb.className = "pvp-map-thumb";
+    thumb.setAttribute("aria-hidden", "true");
+    drawPvpMapThumbnail(thumb, mapCfg.id);
+    return thumb;
+  }
+
   function renderMapPicker() {
     if (mapGridEl) {
       mapGridEl.innerHTML = "";
@@ -1756,12 +1782,7 @@ export function openPvpDialog() {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = `pvp-map-card ${m.id === selectedMapId ? "selected" : ""}`;
-        const thumb = document.createElement("canvas");
-        thumb.width = 76;
-        thumb.height = 48;
-        thumb.className = "pvp-map-thumb";
-        thumb.setAttribute("aria-hidden", "true");
-        drawPvpMapThumbnail(thumb, m.id);
+        const preview = createMapPreviewEl(m, 88, 50);
         const meta = document.createElement("div");
         meta.className = "pvp-map-card-meta";
         const strong = document.createElement("strong");
@@ -1769,7 +1790,7 @@ export function openPvpDialog() {
         const span = document.createElement("span");
         span.textContent = m.subtitle;
         meta.append(strong, span);
-        btn.append(thumb, meta);
+        btn.append(preview, meta);
         btn.addEventListener("click", () => {
           selectedMapId = m.id;
           renderMapPicker();
@@ -1787,16 +1808,11 @@ export function openPvpDialog() {
       btn.type = "button";
       btn.className = `pvp-room-map-card ${m.id === Number(activeMapId) ? "selected" : ""}`;
       btn.title = `${m.name} — ${m.subtitle}`;
-      const thumb = document.createElement("canvas");
-      thumb.width = 72;
-      thumb.height = 44;
-      thumb.className = "pvp-map-thumb";
-      thumb.setAttribute("aria-hidden", "true");
-      drawPvpMapThumbnail(thumb, m.id);
+      const preview = createMapPreviewEl(m, 88, 50);
       const label = document.createElement("span");
       label.className = "pvp-room-map-name";
       label.textContent = m.name;
-      btn.append(thumb, label);
+      btn.append(preview, label);
       btn.addEventListener("click", () => {
         pvpNet.send({ type: "update_player", mapId: m.id });
       });

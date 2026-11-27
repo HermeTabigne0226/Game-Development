@@ -1,4 +1,4 @@
-const CACHE_NAME = "shattered-crown-v91";
+const CACHE_NAME = "shattered-crown-v93";
 
 const PRECACHE_URLS = [
   "./",
@@ -94,6 +94,10 @@ const PRECACHE_URLS = [
   "./assets/generated/enemies/goblin_slinger.png",
   "./assets/generated/enemies/clockwork_sentinel.png",
   "./assets/generated/enemies/void_acolyte.png",
+  "./assets/generated/maps/goblin_catacombs_pit_1795795312387.jpg",
+  "./assets/generated/maps/sunken_foundry_crucible_1795795321692.jpg",
+  "./assets/generated/maps/abyssal_sanctum_arena_1795795331171.jpg",
+  "./assets/generated/maps/crimson_courtyard_1795795340338.jpg",
   "./assets/jan_gamedev_logo.jpg",
   "./assets/dash_icon.png",
   "./assets/joystick_base.png",

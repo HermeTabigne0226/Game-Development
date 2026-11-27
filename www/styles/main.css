@@ -3102,14 +3102,23 @@ body.pvp-active .canvas-frame {
   color: #e2e8f0;
 }
 
-.pvp-map-thumb {
+.pvp-map-thumb,
+.pvp-map-splash-img {
   width: 100%;
-  max-width: 76px;
-  height: auto;
-  border-radius: 4px;
+  max-width: 112px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 5px;
   border: 1px solid #2c354d;
   image-rendering: pixelated;
   display: block;
+}
+
+.pvp-map-card .pvp-map-splash-img,
+.pvp-map-card .pvp-map-thumb {
+  width: 78px;
+  max-width: 78px;
+  flex-shrink: 0;
 }
 
 .pvp-map-card {
@@ -3232,8 +3241,9 @@ body.pvp-active .canvas-frame {
   .pvp-room-map-name {
     font-size: 0.62rem;
   }
-  .pvp-map-thumb {
-    max-width: 56px;
+  .pvp-map-thumb,
+  .pvp-map-splash-img {
+    max-width: 78px;
   }
 }
 

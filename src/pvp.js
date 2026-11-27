@@ -27,6 +27,7 @@ export const PVP_MAPS = [
     id: 0,
     name: "Goblin Catacombs Pit",
     subtitle: "Stone Pillars & Power Vials",
+    splash: "assets/generated/maps/goblin_catacombs_pit_1795795312387.jpg",
     floorTileIdx: 0,
     accentTileIdx: 0,
     w: 22,
@@ -37,6 +38,7 @@ export const PVP_MAPS = [
     id: 1,
     name: "Sunken Foundry Crucible",
     subtitle: "Forge Lanes & Arena Vials",
+    splash: "assets/generated/maps/sunken_foundry_crucible_1795795321692.jpg",
     floorTileIdx: 1,
     accentTileIdx: 0,
     w: 24,
@@ -47,6 +49,7 @@ export const PVP_MAPS = [
     id: 2,
     name: "Abyssal Sanctum Arena",
     subtitle: "Open Void & Power Vials",
+    splash: "assets/generated/maps/abyssal_sanctum_arena_1795795331171.jpg",
     floorTileIdx: 3,
     accentTileIdx: 0,
     w: 26,
@@ -57,6 +60,7 @@ export const PVP_MAPS = [
     id: 3,
     name: "Crimson Courtyard",
     subtitle: "3-Lane Fortress & Center Vial",
+    splash: "assets/generated/maps/crimson_courtyard_1795795340338.jpg",
     floorTileIdx: 0,
     accentTileIdx: 0,
     w: 24,
@@ -1026,6 +1030,14 @@ function showPvpVsLoadingScreen(room, mySlot, durationMs = 5000) {
   document.getElementById("pvp-vs-round").textContent = `ROUND ${room.round || 1} — 1V1 ARENA`;
   document.getElementById("pvp-vs-map-name").textContent = map.name;
   document.getElementById("pvp-vs-map-sub").textContent = map.subtitle;
+  const backdropEl = overlay.querySelector(".pvp-vs-backdrop");
+  if (backdropEl) {
+    backdropEl.style.backgroundImage = map.splash
+      ? `linear-gradient(180deg, rgba(11, 15, 26, 0.68), rgba(11, 15, 26, 0.9)), url("${map.splash}")`
+      : "";
+    backdropEl.style.backgroundSize = "cover";
+    backdropEl.style.backgroundPosition = "center";
+  }
 
   const leftIsYou = mySlot === 0;
   const rightIsYou = mySlot === 1;

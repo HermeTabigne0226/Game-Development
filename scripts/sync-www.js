@@ -19,6 +19,7 @@ const ITEMS_TO_COPY = [
   "assets/generated/skill_meteor_strike.png",
   "assets/generated/skill_mana_shield.png",
   "assets/generated/vfx",
+  "assets/generated/maps",
   "assets/generated/vfx_mage",
   "assets/generated/mage_hero",
   "assets/generated/magic staff pack",

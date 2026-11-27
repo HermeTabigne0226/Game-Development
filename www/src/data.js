@@ -1,8 +1,16 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.0.3 Beta";
+export const GAME_VERSION = "v.1.0.3.1 Beta";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.0.3.1 Beta",
+    title: "PvP Arena Map Splash Art & VS Screen Backdrops",
+    notes: [
+      "Arena Map Splash Art Cards: Added custom pixel-art splash art previews for Goblin Catacombs Pit, Sunken Foundry Crucible, Abyssal Sanctum Arena, and Crimson Courtyard in both Create Lobby and Host Room selection.",
+      "VS Matchup Backdrop: Displays the selected arena's splash art behind the 5-second pre-match VS matchup loading screen.",
+    ],
+  },
   {
     version: "v.1.0.3 Beta",
     title: "Visual Arena Map Picture Selection in PvP Lobby",
