@@ -52,7 +52,6 @@
           <div class="menu-buttons">
             <button type="button" id="menu-btn-play" class="btn btn-primary btn-lg medieval-btn">New Quest</button>
             <button type="button" id="menu-btn-pvp" class="btn btn-secondary btn-lg medieval-btn pvp-menu-btn">PvP Arena (1v1)</button>
-            <button type="button" id="menu-btn-pvp-guide" class="btn btn-secondary btn-lg medieval-btn">How to Play PvP</button>
             <button type="button" id="menu-btn-resume" class="btn btn-secondary btn-lg medieval-btn" hidden>Resume</button>
             <button type="button" id="menu-btn-settings" class="btn btn-secondary btn-lg medieval-btn">Settings</button>
             <button type="button" id="menu-btn-patch-notes" class="btn btn-secondary btn-lg medieval-btn patch-btn has-new-patch">
@@ -765,25 +764,23 @@
 
       <div class="pvp-mode-tabs" role="tablist" aria-label="Multiplayer Connection Mode">
         <button type="button" id="btn-pvp-mode-network" class="pvp-mode-tab active" role="tab" aria-selected="true">
-          🌐 Network (Render / Vercel / Online)
+          🌐 Online (Auto Cloud)
         </button>
         <button type="button" id="btn-pvp-mode-lan" class="pvp-mode-tab" role="tab" aria-selected="false">
-          📡 LAN (Wi-Fi · PC / Phone-to-Phone)
+          📡 LAN / Offline (Wi-Fi)
         </button>
       </div>
 
       <div id="pvp-network-bar" class="pvp-server-bar">
-        <label for="pvp-server-url" class="sr-only">Network Server URL</label>
-        <input id="pvp-server-url" type="text" placeholder="wss://game-development-v1fo.onrender.com/ws" />
-        <button type="button" id="btn-pvp-connect" class="btn btn-primary btn-sm">Connect</button>
-        <button type="button" id="btn-pvp-cloud-preset" class="btn btn-secondary btn-sm" title="Use Render Cloud Relay">Cloud</button>
+        <span class="hint-text" style="flex:1">Auto-connects to the Online PvP Server — no setup required.</span>
+        <button type="button" id="btn-pvp-connect" class="btn btn-primary btn-sm">Reconnect</button>
       </div>
 
       <div id="pvp-lan-panel" class="pvp-lan-panel" hidden>
         <div class="pvp-lan-host-box">
           <div class="pvp-lan-host-info">
-            <strong id="pvp-lan-host-title">LAN Server (PC or Phone Host)</strong>
-            <span id="pvp-lan-host-desc">Host directly on this Phone APK, or run <code>node server.js</code> on PC.</span>
+            <strong id="pvp-lan-host-title">LAN Server (Same Wi-Fi)</strong>
+            <span id="pvp-lan-host-desc">Host on a Phone or PC, then type the Host IP below or tap Scan Wi-Fi.</span>
           </div>
           <div class="pvp-lan-host-actions">
             <button type="button" id="btn-pvp-host-lan" class="btn btn-primary btn-sm" hidden>Host LAN on Phone</button>
@@ -791,11 +788,11 @@
           </div>
         </div>
         <div class="pvp-server-bar">
-          <label for="pvp-lan-url" class="sr-only">LAN Host IP or URL</label>
-          <input id="pvp-lan-url" type="text" placeholder="Enter Host IP (e.g. 192.168.1.5 or localhost)" />
-          <button type="button" id="btn-pvp-lan-connect" class="btn btn-primary btn-sm">Join IP</button>
-          <button type="button" id="btn-pvp-lan-localhost" class="btn btn-secondary btn-sm" title="Connect to localhost:8080">localhost</button>
-          <button type="button" id="btn-pvp-lan-scan" class="btn btn-secondary btn-sm" title="Scan Wi-Fi for Phone or PC LAN hosts">Scan Wi-Fi</button>
+          <label for="pvp-lan-url" class="sr-only">Host IP</label>
+          <input id="pvp-lan-url" type="text" placeholder="Type Host IP (e.g. 192.168.1.5)" />
+          <button type="button" id="btn-pvp-lan-connect" class="btn btn-primary btn-sm">Connect IP</button>
+          <button type="button" id="btn-pvp-lan-localhost" class="btn btn-secondary btn-sm" title="Connect to this device">This Device</button>
+          <button type="button" id="btn-pvp-lan-scan" class="btn btn-secondary btn-sm" title="Scan Wi-Fi for nearby hosts">Scan Wi-Fi</button>
         </div>
         <div id="pvp-lan-scan-results" class="pvp-scan-row" hidden></div>
       </div>
@@ -880,24 +877,23 @@
         </form>
       </div>
       <div class="help-content">
-        <p><strong>Option 1 — Online Network PvP (Easiest: Phone APK, Vercel Web, PC):</strong></p>
+        <p><strong>Option 1 — Online PvP (Fastest &amp; Easiest):</strong></p>
         <ul>
-          <li>Open <strong>PvP Arena (1v1)</strong> and stay on the <strong>Network</strong> tab (auto-connects to the Cloud Relay; wait up to ~30s if the free server is waking up).</li>
-          <li>One player creates a Lobby; the 2nd player clicks <strong>Refresh</strong> and joins, then both pick Hero/Skills and click <strong>Ready Up</strong>!</li>
+          <li>Stay on <strong>Online (Auto Cloud)</strong> — it connects automatically with zero setup.</li>
+          <li>One player clicks <strong>Create PvP Lobby</strong>; the 2nd player clicks <strong>Refresh</strong> &rarr; <strong>Join</strong>, picks a Hero, and clicks <strong>Ready Up</strong>.</li>
         </ul>
 
-        <p><strong>Option 2 — PC &harr; Phone LAN PvP (Same Wi-Fi / Router):</strong></p>
+        <p><strong>Option 2 — PC &harr; Phone LAN (Same Wi-Fi):</strong></p>
         <ul>
-          <li><strong>Step 1 (On PC):</strong> Run <code>node server.js</code> (or <code>npm run serve</code>). Open <code>http://localhost:8080</code> on your PC browser. Check the PC console (or the LAN box) for your PC's Wi-Fi IP (e.g. <code>192.168.1.12</code>).</li>
-          <li><strong>Step 2 (Important!):</strong> Do <strong>NOT</strong> type <code>localhost</code> on your Phone — on a phone, <code>localhost</code> means the phone itself! Instead, open the <strong>LAN</strong> tab in your Phone APK and tap <strong>Scan Wi-Fi</strong>, or type your PC's Wi-Fi IP (<code>192.168.x.x</code>) and tap <strong>Join IP</strong>.</li>
-          <li><strong>Firewall Check:</strong> If your Phone cannot connect to your PC IP, allow <strong>Node.js</strong> (TCP port <code>8080</code> &amp; UDP port <code>8081</code>) through Windows Defender Firewall on Private networks, or switch to Option 3 below!</li>
+          <li>Run the local server on your PC (<code>node server.js</code>). Open <strong>PvP Arena</strong> &rarr; <strong>LAN / Offline</strong> on your PC to see your <strong>PC LAN IP</strong> (e.g. <code>192.168.3.23</code>).</li>
+          <li>On your Phone APK, switch to <strong>LAN / Offline</strong>, tap <strong>Scan Wi-Fi</strong> or type just that IP (<code>192.168.3.23</code>) and tap <strong>Connect IP</strong> (allow port <code>8080</code> in Firewall if prompted).</li>
         </ul>
 
-        <p><strong>Option 3 — Phone &harr; Phone LAN PvP (Zero PC / No Internet):</strong></p>
+        <p><strong>Option 3 — Phone &harr; Phone LAN (Offline Hotspot / Wi-Fi):</strong></p>
         <ul>
-          <li>Turn on Mobile Hotspot on Phone A (and connect Phone B to it), or put both phones on the same Wi-Fi.</li>
-          <li><strong>Phone A (Host APK):</strong> Open <strong>PvP Arena</strong> &rarr; <strong>LAN</strong> tab &rarr; tap <strong>Host LAN on Phone</strong> &rarr; Create Lobby.</li>
-          <li><strong>Phone B (Joiner APK or Browser):</strong> Open <strong>LAN</strong> tab &rarr; tap <strong>Scan Wi-Fi</strong> (or enter Phone A's shown IP, e.g. <code>192.168.43.1</code>) &rarr; Join Lobby!</li>
+          <li>Connect both phones to the same Wi-Fi or turn on Mobile Hotspot on Phone A.</li>
+          <li><strong>Phone A:</strong> Switch to <strong>LAN / Offline</strong> &rarr; tap <strong>Host LAN on Phone</strong> &rarr; Create Lobby.</li>
+          <li><strong>Phone B:</strong> Switch to <strong>LAN / Offline</strong> &rarr; tap <strong>Scan Wi-Fi</strong> (or type Phone A's shown IP) &rarr; Join Lobby!</li>
         </ul>
       </div>
     </div>

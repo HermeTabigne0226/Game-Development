@@ -1,8 +1,16 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.3.9";
+export const GAME_VERSION = "v.1.3.10";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.3.10",
+    title: "Simplified 1-Click Online & Clean IP-Only LAN PvP",
+    notes: [
+      "Cleaner Main Menu & PvP Guide: Moved How to Play PvP cleanly inside the PvP Arena header so the Main Menu stays crisp.",
+      "Zero Network Jargon: Online mode now auto-connects with no ws:// URL box; LAN mode lets you type a plain IP (like 192.168.3.23) or Scan Wi-Fi cleanly.",
+    ],
+  },
   {
     version: "v.1.3.9",
     title: "Directional & Realistic Meteor Strike Landing",

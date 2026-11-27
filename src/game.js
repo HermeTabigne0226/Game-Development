@@ -326,10 +326,6 @@ function setupControls() {
     openPvpDialog();
   });
 
-  document.getElementById("menu-btn-pvp-guide")?.addEventListener("click", () => {
-    document.getElementById("pvp-guide-dialog")?.showModal();
-  });
-
   document.getElementById("menu-btn-resume").addEventListener("click", () => {
     const saved = loadSavedRun();
     if (saved) {
