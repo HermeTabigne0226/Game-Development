@@ -1,5 +1,5 @@
 import { sfx } from "./audio.js";
-import { DEFAULT_LOADOUT, HERO_CLASSES, ITEMS, SPELLS } from "./data.js";
+import { CLASS_DEFAULT_LOADOUTS, DEFAULT_LOADOUT, HERO_CLASSES, ITEMS, SPELLS } from "./data.js";
 import { MAP_H, MAP_W, TILE } from "./dungeon.js";
 import {
   addFloat,
@@ -11,6 +11,7 @@ import {
   showFloorBanner,
   spawnBurst,
   spawnRing,
+  spawnVfxAnim,
   TILE_SIZE,
 } from "./state.js";
 
@@ -282,8 +283,10 @@ export function buildPvpArenaLevel(mapId = 0) {
 }
 
 export function buildBalancedPvpPlayer(heroName, heroClassId, loadoutIds) {
-  const cls = HERO_CLASSES[heroClassId] || HERO_CLASSES.paladin;
-  const chosen = Array.isArray(loadoutIds) && loadoutIds.length >= 4 ? [...loadoutIds] : [...DEFAULT_LOADOUT[cls.id]];
+  const safeId = heroClassId === "paladin" ? "gilded" : heroClassId;
+  const cls = HERO_CLASSES[safeId] || HERO_CLASSES.gilded;
+  const defaultSet = CLASS_DEFAULT_LOADOUTS[cls.id] || DEFAULT_LOADOUT;
+  const chosen = Array.isArray(loadoutIds) && loadoutIds.length >= 4 ? [...loadoutIds] : [...defaultSet];
   const skillRanks = Object.fromEntries(SPELLS.map((sp) => [sp.id, 0]));
   for (const id of chosen) {
     const sp = SPELLS.find((x) => x.id === id);
@@ -302,7 +305,16 @@ export function buildBalancedPvpPlayer(heroName, heroClassId, loadoutIds) {
       boots: clone(ITEMS.windstep_boots),
       accessory: clone(ITEMS.blood_ring),
     };
-  } else if (cls.id === "gilded") {
+  } else if (cls.id === "mage") {
+    equipment = {
+      weapon: clone(ITEMS.trident_staff),
+      subweapon: clone(ITEMS.astral_focus),
+      armor: clone(ITEMS.astral_robes),
+      helmet: clone(ITEMS.astral_circlet),
+      boots: clone(ITEMS.windstep_boots),
+      accessory: clone(ITEMS.astral_ring),
+    };
+  } else {
     equipment = {
       weapon: clone(ITEMS.steel_blade),
       subweapon: clone(ITEMS.iron_shield),
@@ -310,15 +322,6 @@ export function buildBalancedPvpPlayer(heroName, heroClassId, loadoutIds) {
       helmet: clone(ITEMS.iron_helm),
       boots: clone(ITEMS.swift_greaves),
       accessory: clone(ITEMS.blood_ring),
-    };
-  } else {
-    equipment = {
-      weapon: clone(ITEMS.iron_sword),
-      subweapon: clone(ITEMS.wooden_buckler),
-      armor: clone(ITEMS.chainmail),
-      helmet: clone(ITEMS.iron_helm),
-      boots: clone(ITEMS.swift_greaves),
-      accessory: clone(ITEMS.sunfire_ring),
     };
   }
 
@@ -601,8 +604,9 @@ class PvpNetworkClient {
 export const pvpNet = new PvpNetworkClient();
 
 export function createOpponentEntity(playerData, spawn) {
-  const cls = HERO_CLASSES[playerData.heroClass] || HERO_CLASSES.paladin;
-  const maxHp = 74 + cls.bonusHp * 2 + (cls.id === "paladin" ? 6 : 4);
+  const safeId = playerData.heroClass === "paladin" ? "gilded" : playerData.heroClass;
+  const cls = HERO_CLASSES[safeId] || HERO_CLASSES.gilded;
+  const maxHp = 74 + cls.bonusHp * 2 + (cls.id === "gilded" ? 6 : cls.id === "mage" ? 2 : 4);
   return {
     uid: `pvp_rival_${playerData.id || playerData.slot}`,
     id: `pvp_${cls.id}`,
@@ -699,6 +703,7 @@ function setupPvpMatchEntities(room, mySlot) {
     slashes: [],
     rings: [],
     groundDecals: [],
+    vfxAnims: [],
     beams: [],
     arrowStorms: [],
     frostZones: [],
@@ -759,6 +764,7 @@ export function updatePvpFrame(dt) {
       tempDefTimer: p.tempDefTimer > 0 ? 1 : 0,
       hasteTimer: p.hasteTimer > 0 ? 1 : 0,
       retributionTimer: p.retributionTimer > 0 ? 1 : 0,
+      manaShieldTimer: p.manaShieldTimer > 0 ? 1 : 0,
     });
   }
 }
@@ -790,6 +796,7 @@ function applyRemoteOpponentSync(msg) {
   opp.tempDefTimer = msg.tempDefTimer ? 1 : 0;
   opp.hasteTimer = msg.hasteTimer ? 1 : 0;
   opp.retributionTimer = msg.retributionTimer ? 1 : 0;
+  opp.manaShieldTimer = msg.manaShieldTimer ? 1 : 0;
 }
 
 function applyRemoteOpponentAction(msg) {
@@ -824,6 +831,7 @@ function applyRemoteOpponentAction(msg) {
       isMagicOrb: Boolean(act.isMagicOrb),
       isSlashWave: Boolean(act.isSlashWave),
       isFrostLance: Boolean(act.isFrostLance),
+      projKind: act.projKind || null,
       pierce: Boolean(act.pierce),
       hitIds: new Set(),
       life: act.life || 0.7,
@@ -832,6 +840,13 @@ function applyRemoteOpponentAction(msg) {
     if (act.isArrow) sfx.arrow();
     else if (act.isFrostLance) sfx.frost();
     else sfx.magicOrb();
+  } else if (act.kind === "vfx") {
+    const opts = act.opts || {
+      angle: act.angle || 0,
+      anchorX: act.anchorX ?? 0.5,
+      anchorY: act.anchorY ?? 0.5,
+    };
+    spawnVfxAnim(act.x, act.y, act.sheetKey, act.sizePx || 88, act.duration ?? act.dur ?? 0.45, opts);
   } else if (act.kind === "ring") {
     spawnRing(act.x, act.y, act.radPx || 40, act.color || "#facc15", act.dur || 0.35);
     spawnBurst(act.x, act.y, act.color || "#facc15", 14, 1.2);

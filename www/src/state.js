@@ -206,8 +206,9 @@ export function getActiveSetBonuses(p = runtime.state?.player) {
 
 export function getPlayerStats(p = runtime.state?.player) {
   if (!p) return { atk: 7, def: 2, crit: 10, maxHp: 42, maxMp: 20, moveSpeed: 4.5, setPassives: new Set() };
-  const cls = HERO_CLASSES[p.heroClass] || HERO_CLASSES.paladin;
-  const tempDefBonus = p.heroClass === "paladin" ? Math.round((p.tempDef || 0) * 1.25) : p.tempDef || 0;
+  const resolvedId = p.heroClass === "paladin" ? "gilded" : p.heroClass;
+  const cls = HERO_CLASSES[resolvedId] || HERO_CLASSES.gilded;
+  const tempDefBonus = p.tempDef || 0;
   let atk = p.baseAtk + (p.tempAtk || 0);
   let def = p.baseDef + tempDefBonus;
   let crit = p.baseCrit;
@@ -353,6 +354,34 @@ export function spawnGroundDecal(
     spin,
     scaleStart,
     scaleEnd,
+  });
+}
+
+export function spawnVfxAnim(
+  tx,
+  ty,
+  sheetKey,
+  sizePx = 64,
+  duration = 0.55,
+  { angle = 0, scaleStart = 1, scaleEnd = 1, anchorX = 0.5, anchorY = 0.5, alpha = 1 } = {}
+) {
+  const s = runtime.state;
+  if (!s) return;
+  if (!Array.isArray(s.vfxAnims)) s.vfxAnims = [];
+  if (s.vfxAnims.length >= 28) s.vfxAnims.shift();
+  s.vfxAnims.push({
+    x: tx * TILE_SIZE,
+    y: ty * TILE_SIZE,
+    sheetKey,
+    sizePx,
+    life: duration,
+    maxLife: duration,
+    angle,
+    scaleStart,
+    scaleEnd,
+    anchorX,
+    anchorY,
+    alpha,
   });
 }
 

@@ -23,6 +23,44 @@ export const renderHooks = {
   updateUI: null,
 };
 
+const VFX_SHEET_META = {
+  vfx_arcane_beam: { fw: 168, fh: 64, cols: 8, frames: 8 },
+  vfx_arcane_orb: { fw: 128, fh: 52, cols: 8, frames: 27 },
+  vfx_blink_dash: { fw: 128, fh: 48, cols: 8, frames: 22 },
+  vfx_mana_shield: { fw: 80, fh: 76, cols: 8, frames: 20 },
+  vfx_fireball_impact: { fw: 96, fh: 64, cols: 8, frames: 15 },
+  vfx_meteor_strike: { fw: 96, fh: 96, cols: 8, frames: 26 },
+  vfx_chain_lightning: { fw: 180, fh: 72, cols: 8, frames: 14 },
+  vfx_fireball_flight: { fw: 72, fh: 32, cols: 6, frames: 6 },
+  vfx_ice_shard: { fw: 112, fh: 48, cols: 8, frames: 19 },
+  vfx_lightning_bolt: { fw: 72, fh: 32, cols: 8, frames: 10 },
+  vfx_holy_lance: { fw: 72, fh: 28, cols: 8, frames: 8 },
+  vfx_magic_missile: { fw: 156, fh: 60, cols: 8, frames: 28 },
+  vfx_arcane_burst: { fw: 72, fh: 72, cols: 8, frames: 20 },
+  vfx_fire_explosion: { fw: 64, fh: 64, cols: 4, frames: 16 },
+};
+
+const PROJ_SHEET_MAP = {
+  magic_missile: { key: "vfx_magic_missile", dw: 44, dh: 20 },
+  fireball: { key: "vfx_fireball_flight", dw: 40, dh: 18 },
+  ice_shard: { key: "vfx_ice_shard", dw: 44, dh: 20 },
+  frost_orb: { key: "vfx_ice_shard", dw: 44, dh: 20 },
+  lightning_bolt: { key: "vfx_lightning_bolt", dw: 42, dh: 18 },
+  holy_lance: { key: "vfx_holy_lance", dw: 44, dh: 18 },
+  sun_orb: { key: "vfx_holy_lance", dw: 44, dh: 18 },
+  arcane_orb: { key: "vfx_arcane_orb", dw: 48, dh: 22 },
+  void_orb: { key: "vfx_arcane_orb", dw: 48, dh: 22 },
+};
+
+function drawGridVfxFrame(targetCtx, sheet, meta, frameIdx, dx, dy, dw, dh) {
+  if (!sheet || !meta) return;
+  const f = ((frameIdx % meta.frames) + meta.frames) % meta.frames;
+  const col = f % meta.cols;
+  const row = Math.floor(f / meta.cols);
+  targetCtx.imageSmoothingEnabled = false;
+  targetCtx.drawImage(sheet, col * meta.fw, row * meta.fh, meta.fw, meta.fh, dx, dy, dw, dh);
+}
+
 export function render(ts) {
   requestAnimationFrame(render);
   if (!runtime.state || !runtime.state.level || !runtime.state.player) return;
@@ -593,6 +631,15 @@ export function renderFrame(ts) {
       ctx.restore();
     }
 
+    if (e.isPvpPlayer && (e.manaShieldTimer || 0) > 0 && assets.vfx_mana_shield) {
+      const meta = VFX_SHEET_META.vfx_mana_shield;
+      const mFrame = Math.floor(ts / 55) % meta.frames;
+      ctx.save();
+      ctx.globalAlpha = 0.78;
+      drawGridVfxFrame(ctx, assets.vfx_mana_shield, meta, mFrame, cx - 28, cy - 28 - ez, 56, 54);
+      ctx.restore();
+    }
+
     if ((e.frozenTimer || 0) > 0) {
       ctx.save();
       if (assets.vfx_frozen_crystal) {
@@ -668,14 +715,14 @@ export function renderFrame(ts) {
     }
   }
 
-  // Hero Rendering (Paladin, Gilded Knight, and Sylvan Ranger all matched at heroDrawSize = 40)
+  // Hero Rendering (Arcane Archmage, Gilded Knight, and Sylvan Ranger all matched at heroDrawSize = 40)
   const p = s.player;
   const heroPrefix =
-    p.heroClass === "gilded"
-      ? "gilded"
+    p.heroClass === "mage"
+      ? "mage"
       : p.heroClass === "ranger" || p.heroClass === "soldier"
         ? "ranger"
-        : "paladin";
+        : "gilded";
   const heroDrawSize = 40;
 
   for (const aft of s.afterimages) {
@@ -683,7 +730,7 @@ export function renderFrame(ts) {
     ctx.globalAlpha = (aft.life / aft.maxLife) * 0.45;
     drawSheetFrame(
       ctx,
-      assets[`${heroPrefix}_walk`] || assets[`${heroPrefix}_idle`] || assets.paladin_idle,
+      assets[`${heroPrefix}_walk`] || assets[`${heroPrefix}_idle`] || assets.gilded_idle,
       aft.frame,
       aft.x * TILE_SIZE - heroDrawSize / 2,
       aft.y * TILE_SIZE - heroDrawSize / 2 - 2,
@@ -703,7 +750,7 @@ export function renderFrame(ts) {
   ctx.fill();
   ctx.restore();
 
-  const pSheet = assets[`${heroPrefix}_${p.anim}`] || assets[`${heroPrefix}_idle`] || assets.paladin_idle;
+  const pSheet = assets[`${heroPrefix}_${p.anim}`] || assets[`${heroPrefix}_idle`] || assets.gilded_idle;
   ctx.save();
   if (p.iFrames > 0 && !p.leap && Math.floor(ts / 60) % 2 === 0) ctx.globalAlpha = 0.55;
   drawSheetFrame(
@@ -717,6 +764,15 @@ export function renderFrame(ts) {
     p.facingLeft
   );
   ctx.restore();
+
+  if ((p.manaShieldTimer || 0) > 0 && assets.vfx_mana_shield) {
+    const meta = VFX_SHEET_META.vfx_mana_shield;
+    const mFrame = Math.floor(ts / 55) % meta.frames;
+    ctx.save();
+    ctx.globalAlpha = Math.min(0.84, (p.manaShieldTimer < 0.8 ? p.manaShieldTimer / 0.8 : 1) * 0.82);
+    drawGridVfxFrame(ctx, assets.vfx_mana_shield, meta, mFrame, p.x * TILE_SIZE - 28, p.y * TILE_SIZE - 28 - pz, 56, 54);
+    ctx.restore();
+  }
 
   if ((p.frozenTimer || 0) > 0 && assets.vfx_frozen_crystal) {
     ctx.save();
@@ -772,7 +828,7 @@ export function renderFrame(ts) {
     ctx.save();
     ctx.translate(ax, ay);
     ctx.rotate(ang);
-    ctx.fillStyle = heroPrefix === "ranger" ? "#4ade80" : "#38bdf8";
+    ctx.fillStyle = heroPrefix === "mage" ? "#c084fc" : heroPrefix === "ranger" ? "#4ade80" : "#38bdf8";
     ctx.strokeStyle = "#0c0e14";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -864,10 +920,20 @@ export function renderFrame(ts) {
   for (const pr of s.projectiles) {
     ctx.save();
     ctx.translate(pr.x * TILE_SIZE, pr.y * TILE_SIZE);
-    if (!pr.isEnemy) {
+    if (!pr.isEnemy || pr.isPvpVisual) {
       const ang = Math.atan2(pr.vy, pr.vx);
       ctx.rotate(ang);
-      if (pr.isArrow && assets.arrow_proj) {
+      const sheetSpec = pr.projKind ? PROJ_SHEET_MAP[pr.projKind] : null;
+      const sheetImg = sheetSpec ? assets[sheetSpec.key] : null;
+      const sheetMeta = sheetSpec ? VFX_SHEET_META[sheetSpec.key] : null;
+      if (sheetImg && sheetMeta) {
+        const elapsed = Math.max(0, (pr.maxLife || 0.7) - pr.life);
+        const fIdx = Math.floor(elapsed * 24) % sheetMeta.frames;
+        const boost = pr.projKind === "arcane_orb" && pr.pierce ? 1.2 : 1;
+        const dw = sheetSpec.dw * boost;
+        const dh = sheetSpec.dh * boost;
+        drawGridVfxFrame(ctx, sheetImg, sheetMeta, fIdx, -dw * 0.55, -dh / 2, dw, dh);
+      } else if (pr.isArrow && assets.arrow_proj) {
         if (pr.fireTrail || pr.pierce) {
           ctx.fillStyle = pr.pierce ? "rgba(74, 222, 128, 0.35)" : "rgba(250, 204, 21, 0.35)";
           ctx.beginPath();
@@ -1032,6 +1098,36 @@ export function renderFrame(ts) {
       ctx.fillRect(bm.x - w / 2, bm.y - 160, w, 160);
     }
     ctx.restore();
+  }
+
+  if (s.vfxAnims?.length) {
+    for (const va of s.vfxAnims) {
+      const sheet = assets[va.sheetKey];
+      const meta = VFX_SHEET_META[va.sheetKey];
+      if (!sheet || !meta) continue;
+      const maxL = Math.max(0.01, va.maxLife || 0.5);
+      const t = Math.max(0, Math.min(0.999, 1 - va.life / maxL));
+      const frameIdx = Math.min(meta.frames - 1, Math.floor(t * meta.frames));
+      const sc = (va.scaleStart || 1) + ((va.scaleEnd || 1) - (va.scaleStart || 1)) * t;
+      const dw = (va.sizePx || 64) * sc;
+      const dh = meta.fw === meta.fh ? dw : dw * (meta.fh / meta.fw);
+      const fade = va.life < 0.08 ? va.life / 0.08 : 1;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, Math.min(1, (va.alpha ?? 1) * fade));
+      ctx.translate(va.x, va.y);
+      if (va.angle) ctx.rotate(va.angle);
+      drawGridVfxFrame(
+        ctx,
+        sheet,
+        meta,
+        frameIdx,
+        -dw * (va.anchorX ?? 0.5),
+        -dh * (va.anchorY ?? 0.5),
+        dw,
+        dh
+      );
+      ctx.restore();
+    }
   }
 
   if (p.radiantCharge) {
@@ -1386,7 +1482,7 @@ export function renderFrame(ts) {
 
   ctx.restore();
 
-  const pAnimSheet = assets[`${heroPrefix}_${p.anim}`] || assets[`${heroPrefix}_idle`] || assets.paladin_idle;
+  const pAnimSheet = assets[`${heroPrefix}_${p.anim}`] || assets[`${heroPrefix}_idle`] || assets.gilded_idle;
   portraitCtx.clearRect(0, 0, 64, 64);
   portraitCtx.imageSmoothingEnabled = false;
   drawSheetFrame(portraitCtx, pAnimSheet, animFrame, 4, 4, 56, 56);

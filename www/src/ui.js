@@ -269,7 +269,7 @@ export function updateUI() {
   p.hp = Math.min(p.hp, stats.maxHp);
   p.mp = Math.min(p.mp, stats.maxMp);
 
-  const cls = HERO_CLASSES[p.heroClass] || HERO_CLASSES.paladin;
+  const cls = HERO_CLASSES[p.heroClass === "paladin" ? "gilded" : p.heroClass] || HERO_CLASSES.gilded;
   document.getElementById("hero-name").textContent = p.name || "Sir Aldric";
   const classEl = document.querySelector(".hero-class");
   if (classEl) {

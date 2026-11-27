@@ -69,8 +69,8 @@
             </div>
             <div class="menu-heroes-row">
               <div class="menu-hero-pill">
-                <img src="spritecook-inventory-icons/shield.png" alt="" class="pixel-icon" />
-                <div><strong>Paladin</strong><span>Holy Bastion</span></div>
+                <img src="assets/generated/magic staff pack/mage staff.png" alt="" class="pixel-icon" />
+                <div><strong>Arcane Archmage</strong><span>Staves &amp; Spells</span></div>
               </div>
               <div class="menu-hero-pill">
                 <img src="spritecook-inventory-icons/sword.png" alt="" class="pixel-icon" />
@@ -157,7 +157,7 @@
             <canvas id="hero-portrait" width="64" height="64" aria-hidden="true"></canvas>
             <div>
               <h2 id="hero-name">Sir Aldric</h2>
-              <p class="hero-class">Paladin of Aethelgard &middot; Lv <span id="stat-level">1</span></p>
+              <p class="hero-class">Gilded Knight &middot; Lv <span id="stat-level">1</span></p>
             </div>
           </div>
 
@@ -549,17 +549,17 @@
       <div class="dialog-header">
         <div>
           <span class="eyebrow">Step 2 · Choose Your Champion</span>
-          <h1 id="hero-dialog-title">Select Your Knight</h1>
-          <p class="hint-text" style="margin:2px 0 0">Pick a knight class before choosing your combat skills.</p>
+          <h1 id="hero-dialog-title">Select Your Hero</h1>
+          <p class="hint-text" style="margin:2px 0 0">Pick a hero class before choosing your combat skills.</p>
         </div>
       </div>
       <div class="hero-class-grid">
-        <button type="button" id="btn-hero-paladin" class="hero-class-card" data-hero="paladin">
-          <canvas id="hero-preview-paladin" width="72" height="72" aria-hidden="true"></canvas>
+        <button type="button" id="btn-hero-mage" class="hero-class-card" data-hero="mage">
+          <canvas id="hero-preview-mage" width="72" height="72" aria-hidden="true"></canvas>
           <div class="hero-class-info">
-            <strong>Paladin Knight</strong>
-            <span class="hero-class-role">Sanctum Crusader</span>
-            <p>+4 HP, +2 MP · +25% Heals &amp; Shields · Dash: Shockwave knockback.</p>
+            <strong>Arcane Archmage</strong>
+            <span class="hero-class-role">Celestial Spellcaster</span>
+            <p>+6 MP, +1 ATK · 3rd cast fires Arcane Orb (+2 MP) · Dash: Blink Step.</p>
           </div>
         </button>
         <button type="button" id="btn-hero-gilded" class="hero-class-card" data-hero="gilded">
@@ -567,7 +567,7 @@
           <div class="hero-class-info">
             <strong>Gilded Knight</strong>
             <span class="hero-class-role">Golden Champion</span>
-            <p>+2 ATK, +5% CRIT · Crits trim skill CDs · Dash: Golden Slash trail.</p>
+            <p>+2 HP, +2 ATK, +1 DEF, +5% CRIT · Crits trim CDs · Dash: Golden Slash.</p>
           </div>
         </button>
         <button type="button" id="btn-hero-ranger" class="hero-class-card" data-hero="ranger">
@@ -807,7 +807,7 @@
             <input id="pvp-hero-name" type="text" maxlength="18" placeholder="Sir Aldric" />
           </div>
           <div class="pvp-class-pills" role="group" aria-label="Choose PvP Hero">
-            <button type="button" class="btn btn-secondary btn-sm pvp-hero-btn active" data-pvp-hero="paladin">Paladin</button>
+            <button type="button" class="btn btn-secondary btn-sm pvp-hero-btn active" data-pvp-hero="mage">Archmage</button>
             <button type="button" class="btn btn-secondary btn-sm pvp-hero-btn" data-pvp-hero="gilded">Gilded</button>
             <button type="button" class="btn btn-secondary btn-sm pvp-hero-btn" data-pvp-hero="ranger">Ranger</button>
           </div>

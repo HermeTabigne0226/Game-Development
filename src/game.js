@@ -585,10 +585,10 @@ async function init() {
       } catch (err) {
         console.warn("Failed to restore saved run, starting fresh:", err);
         clearSavedRun();
-        createNewRun(runtime.meta.heroName || "Sir Aldric", "normal", DEFAULT_LOADOUT, "paladin", true);
+        createNewRun(runtime.meta.heroName || "Sir Aldric", "normal", DEFAULT_LOADOUT, "gilded", true);
       }
     } else {
-      createNewRun(runtime.meta.heroName || "Sir Aldric", "normal", DEFAULT_LOADOUT, "paladin", true);
+      createNewRun(runtime.meta.heroName || "Sir Aldric", "normal", DEFAULT_LOADOUT, "gilded", true);
     }
   } catch (err) {
     console.error("Init run error:", err);

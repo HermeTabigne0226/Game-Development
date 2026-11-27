@@ -34,6 +34,10 @@ export async function loadAllAssets(onProgress = null) {
     ranger_attack: "assets/generated/ranger/ranger_attack.png",
     ranger_bow: "assets/generated/ranger/ranger_attack.png",
 
+    mage_idle: "assets/generated/mage_hero/mage_idle.png",
+    mage_walk: "assets/generated/mage_hero/mage_walk.png",
+    mage_attack: "assets/generated/mage_hero/mage_attack.png",
+
     arrow_proj: "assets/generated/tiny-rpg/Arrow01(32x32).png",
 
     orc_idle: "assets/generated/tiny-rpg/Orc-Idle.png",
@@ -86,6 +90,17 @@ export async function loadAllAssets(onProgress = null) {
     "assets/wand_icon.svg": "assets/wand_icon.svg",
     "assets/crossbow_icon.svg": "assets/crossbow_icon.svg",
     "assets/spellbook_icon.svg": "assets/spellbook_icon.svg",
+    "assets/generated/magic staff pack/mage staff.png": "assets/generated/magic staff pack/mage staff.png",
+    "assets/generated/magic staff pack/ice staff.png": "assets/generated/magic staff pack/ice staff.png",
+    "assets/generated/magic staff pack/fire staff.png": "assets/generated/magic staff pack/fire staff.png",
+    "assets/generated/magic staff pack/holy staff.png": "assets/generated/magic staff pack/holy staff.png",
+    "assets/generated/magic staff pack/trident staff.png": "assets/generated/magic staff pack/trident staff.png",
+    "assets/generated/magic books/magic book _1.png": "assets/generated/magic books/magic book _1.png",
+    "assets/generated/magic books/magic book _5.png": "assets/generated/magic books/magic book _5.png",
+    "assets/generated/magic books/magic book _12.png": "assets/generated/magic books/magic book _12.png",
+    "assets/generated/magic books/magic book _15.png": "assets/generated/magic books/magic book _15.png",
+    "assets/generated/magic books/magic book _19.png": "assets/generated/magic books/magic book _19.png",
+    "assets/generated/magic books/magic book _28.png": "assets/generated/magic books/magic book _28.png",
 
     // Pixel-art skill VFX & aura sprites
     vfx_frost_zone: "assets/generated/vfx/vfx_frost_zone.png",
@@ -123,6 +138,20 @@ export async function loadAllAssets(onProgress = null) {
     melee_slash_gold: "assets/generated/vfx/melee_slash_gold.png",
     melee_slash_frame3: "assets/generated/vfx/melee_slash_frame3.png",
     melee_slash_steel_cyan: "assets/generated/vfx/melee_slash_steel_cyan.png",
+    vfx_arcane_beam: "assets/generated/vfx_mage/vfx_arcane_beam.png",
+    vfx_arcane_orb: "assets/generated/vfx_mage/vfx_arcane_orb.png",
+    vfx_blink_dash: "assets/generated/vfx_mage/vfx_blink_dash.png",
+    vfx_mana_shield: "assets/generated/vfx_mage/vfx_mana_shield.png",
+    vfx_fireball_impact: "assets/generated/vfx_mage/vfx_fireball_impact.png",
+    vfx_meteor_strike: "assets/generated/vfx_mage/vfx_meteor_strike.png",
+    vfx_chain_lightning: "assets/generated/vfx_mage/vfx_chain_lightning.png",
+    vfx_fireball_flight: "assets/generated/vfx_mage/vfx_fireball_flight.png",
+    vfx_ice_shard: "assets/generated/vfx_mage/vfx_ice_shard.png",
+    vfx_lightning_bolt: "assets/generated/vfx_mage/vfx_lightning_bolt.png",
+    vfx_holy_lance: "assets/generated/vfx_mage/vfx_holy_lance.png",
+    vfx_magic_missile: "assets/generated/vfx_mage/vfx_magic_missile.png",
+    vfx_arcane_burst: "assets/generated/vfx_mage/vfx_arcane_burst.png",
+    vfx_fire_explosion: "assets/generated/Fire Effect 2/Explosion SpriteSheet.png",
   };
 
   const list = Object.entries(manifest);

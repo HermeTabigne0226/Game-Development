@@ -2,6 +2,7 @@ import { sfx } from "./audio.js";
 import { drawSheetFrame } from "./assets.js";
 import { combatHooks, grantXP, healPlayer, unlockCodex, upgradeSkillById } from "./combat.js";
 import {
+  CLASS_DEFAULT_LOADOUTS,
   DEFAULT_LOADOUT,
   ENEMIES,
   GAME_VERSION,
@@ -1336,18 +1337,18 @@ export function markPatchNotesSeen() {
 
 export function openHeroDialog(onSelectHero, onBack = null) {
   const dlg = document.getElementById("hero-dialog");
-  const paladinBtn = document.getElementById("btn-hero-paladin");
+  const mageBtn = document.getElementById("btn-hero-mage");
   const gildedBtn = document.getElementById("btn-hero-gilded");
   const rangerBtn = document.getElementById("btn-hero-ranger");
   const nextBtn = document.getElementById("btn-hero-next");
   const backBtn = document.getElementById("btn-hero-back");
 
-  const paladinCtx = document.getElementById("hero-preview-paladin")?.getContext("2d");
+  const mageCtx = document.getElementById("hero-preview-mage")?.getContext("2d");
   const gildedCtx = document.getElementById("hero-preview-gilded")?.getContext("2d");
   const rangerCtx = document.getElementById("hero-preview-ranger")?.getContext("2d");
 
   let selectedHero = null;
-  const attackFlash = { paladin: 0, gilded: 0, ranger: 0 };
+  const attackFlash = { mage: 0, gilded: 0, ranger: 0 };
   let frame = 0;
   let lastTick = performance.now();
   let rafId = 0;
@@ -1378,24 +1379,24 @@ export function openHeroDialog(onSelectHero, onBack = null) {
     if (now - lastTick >= 110) {
       lastTick = now;
       frame = (frame + 1) % 24;
-      if (attackFlash.paladin > 0) attackFlash.paladin -= 1;
+      if (attackFlash.mage > 0) attackFlash.mage -= 1;
       if (attackFlash.gilded > 0) attackFlash.gilded -= 1;
       if (attackFlash.ranger > 0) attackFlash.ranger -= 1;
     }
-    drawPreview(paladinCtx, "paladin", selectedHero === "paladin", now);
+    drawPreview(mageCtx, "mage", selectedHero === "mage", now);
     drawPreview(gildedCtx, "gilded", selectedHero === "gilded", now);
     drawPreview(rangerCtx, "ranger", selectedHero === "ranger", now);
     rafId = requestAnimationFrame(tickPreview);
   }
 
   function updateSelection() {
-    paladinBtn.classList.toggle("selected", selectedHero === "paladin");
+    mageBtn?.classList.toggle("selected", selectedHero === "mage");
     gildedBtn.classList.toggle("selected", selectedHero === "gilded");
     rangerBtn?.classList.toggle("selected", selectedHero === "ranger");
     nextBtn.disabled = !selectedHero;
   }
 
-  paladinBtn.onclick = () => { selectedHero = "paladin"; attackFlash.paladin = 5; frame = 0; sfx.slash(); updateSelection(); };
+  if (mageBtn) mageBtn.onclick = () => { selectedHero = "mage"; attackFlash.mage = 5; frame = 0; sfx.magicOrb(); updateSelection(); };
   gildedBtn.onclick = () => { selectedHero = "gilded"; attackFlash.gilded = 5; frame = 0; sfx.slash(); updateSelection(); };
   if (rangerBtn) rangerBtn.onclick = () => { selectedHero = "ranger"; attackFlash.ranger = 5; frame = 0; sfx.arrow(); updateSelection(); };
 
@@ -1525,8 +1526,8 @@ export function openPvpDialog() {
   const startBtn = document.getElementById("btn-pvp-start");
 
   let selectedMapId = 0;
-  let pvpHeroClass = "paladin";
-  let pvpLoadout = [...DEFAULT_LOADOUT.paladin];
+  let pvpHeroClass = "mage";
+  let pvpLoadout = [...(CLASS_DEFAULT_LOADOUTS.mage || DEFAULT_LOADOUT)];
   let readyState = false;
   let activeMode = getPvpMode();
   let activeLanHostIp = "";
@@ -1761,8 +1762,8 @@ export function openPvpDialog() {
 
   for (const hBtn of document.querySelectorAll(".pvp-hero-btn")) {
     hBtn.onclick = () => {
-      pvpHeroClass = hBtn.dataset.pvpHero || "paladin";
-      pvpLoadout = [...DEFAULT_LOADOUT[pvpHeroClass]];
+      pvpHeroClass = hBtn.dataset.pvpHero || "mage";
+      pvpLoadout = [...(CLASS_DEFAULT_LOADOUTS[pvpHeroClass] || DEFAULT_LOADOUT)];
       for (const b of document.querySelectorAll(".pvp-hero-btn")) b.classList.toggle("active", b === hBtn);
     };
   }

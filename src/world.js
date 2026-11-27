@@ -26,6 +26,7 @@ import {
   spawnBurst,
   spawnGroundDecal,
   spawnRing,
+  spawnVfxAnim,
   TILE_SIZE,
   touchAim,
   touchMove,
@@ -65,10 +66,10 @@ export function isBossRoomUnlocked(lvl) {
   return Boolean(door && !door.locked);
 }
 
-export function createNewRun(heroName, difficultyId, loadout = DEFAULT_LOADOUT, heroClass = "paladin", skipSave = false) {
+export function createNewRun(heroName, difficultyId, loadout = DEFAULT_LOADOUT, heroClass = "gilded", skipSave = false) {
   clearSavedRun();
-  const normalizedClass = heroClass === "soldier" ? "ranger" : heroClass;
-  const cls = HERO_CLASSES[normalizedClass] || HERO_CLASSES.paladin;
+  const normalizedClass = heroClass === "soldier" ? "ranger" : heroClass === "paladin" ? "gilded" : heroClass;
+  const cls = HERO_CLASSES[normalizedClass] || HERO_CLASSES.gilded;
 
   const vit = runtime.meta.upgrades.vitality || 0;
   const might = runtime.meta.upgrades.might || 0;
@@ -92,6 +93,7 @@ export function createNewRun(heroName, difficultyId, loadout = DEFAULT_LOADOUT, 
   }
 
   const startWeapon = ITEMS[cls.startWeapon] ? { ...ITEMS[cls.startWeapon] } : { ...ITEMS.iron_sword };
+  const startSubweapon = cls.startSubweapon && ITEMS[cls.startSubweapon] ? { ...ITEMS[cls.startSubweapon] } : null;
 
   const player = {
     name: heroName,
@@ -145,7 +147,7 @@ export function createNewRun(heroName, difficultyId, loadout = DEFAULT_LOADOUT, 
     gold: 15 + sfGold,
     equipment: {
       weapon: startWeapon,
-      subweapon: null,
+      subweapon: startSubweapon,
       armor: null,
       helmet: null,
       boots: null,
@@ -194,6 +196,7 @@ export function createNewRun(heroName, difficultyId, loadout = DEFAULT_LOADOUT, 
     slashes: [],
     rings: [],
     groundDecals: [],
+    vfxAnims: [],
     beams: [],
     arrowStorms: [],
     frostZones: [],
@@ -297,6 +300,8 @@ export function restoreRun(saved) {
   }
   if (saved.player.heroClass === "soldier") {
     saved.player.heroClass = "ranger";
+  } else if (saved.player.heroClass === "paladin") {
+    saved.player.heroClass = "gilded";
   }
   if (!Array.isArray(saved.player.relics)) {
     saved.player.relics = [];
@@ -401,6 +406,7 @@ export function restoreRun(saved) {
     slashes: [],
     rings: [],
     groundDecals: [],
+    vfxAnims: [],
     beams: [],
     arrowStorms: [],
     frostZones: [],
@@ -463,6 +469,7 @@ export function descendFloor() {
   s.slashes = [];
   s.rings = [];
   s.groundDecals = [];
+  s.vfxAnims = [];
   s.beams = [];
   s.arrowStorms = [];
   s.frostZones = [];
@@ -520,15 +527,15 @@ export function interactProp(prop) {
     const gold = 12 + s.floor * 5;
     p.gold += gold;
     const gearPool = [
-      ITEMS.oak_shortbow, ITEMS.apprentice_wand, ITEMS.frost_wand, ITEMS.hunter_arrows, ITEMS.apprentice_tome,
+      ITEMS.oak_shortbow, ITEMS.apprentice_staff, ITEMS.apprentice_wand, ITEMS.frost_wand, ITEMS.hunter_arrows, ITEMS.apprentice_tome,
       ITEMS.vanguard_blade, ITEMS.oak_shield, ITEMS.plate_armor, ITEMS.steel_helm,
       ITEMS.ranger_bow, ITEMS.ranger_quiver, ITEMS.ranger_tunic, ITEMS.scroll_smite, ITEMS.health_potion,
     ];
     if (s.floor >= 2) {
-      gearPool.push(ITEMS.ranger_hood, ITEMS.ranger_boots, ITEMS.emerald_recurve, ITEMS.battle_axe, ITEMS.crimson_buckler, ITEMS.crimson_coat, ITEMS.swift_boots, ITEMS.ember_ring, ITEMS.astral_wand, ITEMS.astral_focus);
+      gearPool.push(ITEMS.ranger_hood, ITEMS.ranger_boots, ITEMS.emerald_recurve, ITEMS.frost_staff, ITEMS.frost_tome, ITEMS.pyro_tome, ITEMS.battle_axe, ITEMS.crimson_buckler, ITEMS.crimson_coat, ITEMS.swift_boots, ITEMS.ember_ring, ITEMS.astral_wand, ITEMS.astral_focus);
     }
     if (s.floor >= 4) {
-      gearPool.push(ITEMS.astral_robes, ITEMS.astral_circlet, ITEMS.astral_ring, ITEMS.sun_staff, ITEMS.aegis_shield, ITEMS.sunfire_vestments, ITEMS.sunfire_crown, ITEMS.sunfire_ring);
+      gearPool.push(ITEMS.trident_staff, ITEMS.fire_staff, ITEMS.solar_tome, ITEMS.astral_robes, ITEMS.astral_circlet, ITEMS.astral_ring, ITEMS.sun_staff, ITEMS.aegis_shield, ITEMS.sunfire_vestments, ITEMS.sunfire_crown, ITEMS.sunfire_ring);
     }
     if (s.floor >= 6) {
       gearPool.push(ITEMS.void_reaver, ITEMS.void_bulwark, ITEMS.void_plate, ITEMS.void_helm, ITEMS.void_greaves, ITEMS.void_ring, ITEMS.void_tome, ITEMS.sovereign_crossbow, ITEMS.sovereign_wand, ITEMS.sovereign_quiver, ITEMS.sovereign_plate, ITEMS.sovereign_crown, ITEMS.sovereign_greaves);
@@ -740,6 +747,7 @@ export function updateSimulation(dt) {
     if (p.tempAtkTimer <= 0) { p.tempAtk = 0; runtime.uiDirty = true; }
   }
   if (p.hasteTimer > 0) p.hasteTimer = Math.max(0, p.hasteTimer - dt);
+  if ((p.manaShieldTimer || 0) > 0) p.manaShieldTimer = Math.max(0, p.manaShieldTimer - dt);
 
   if (p.aegisBlast) {
     p.aegisBlast.timer -= dt;
@@ -1443,6 +1451,8 @@ export function updateSimulation(dt) {
     const blocked = isBlockedAt(tx, ty);
     if (pr.life <= 0 || blocked) {
       if (pr.isFrostLance) spawnFrostZone(blocked ? pr.x - pr.vx * dt * 0.6 : pr.x, blocked ? pr.y - pr.vy * dt * 0.6 : pr.y);
+      else if (pr.projKind === "fireball") spawnVfxAnim(pr.x, pr.y, "vfx_fireball_impact", 72, 0.36);
+      else if (pr.projKind === "arcane_orb") spawnVfxAnim(pr.x, pr.y, "vfx_arcane_burst", 68, 0.32);
       else spawnBurst(pr.x, pr.y, pr.color, 6, 0.7);
       s.projectiles.splice(i, 1);
       continue;
@@ -1473,6 +1483,17 @@ export function updateSimulation(dt) {
             sunderDur: pr.sunderDur || 0,
           });
           if (pr.isSlashWave) spawnBurst(e.x, e.y, "#fb923c", 8, 1.0);
+          if (pr.projKind === "fireball") {
+            spawnVfxAnim(pr.x, pr.y, "vfx_fireball_impact", 72, 0.36);
+            const splashDmg = Math.max(1, Math.round(pr.dmg * 0.35));
+            for (const other of [...s.level.enemies]) {
+              if (other !== e && Math.hypot(other.x - pr.x, other.y - pr.y) <= 1.2) {
+                damageEnemy(other, splashDmg, false, "Fireball Blast", 0, 0, { isAoe: true });
+              }
+            }
+          } else if (pr.projKind === "arcane_orb") {
+            spawnVfxAnim(e.x, e.y, "vfx_arcane_burst", 64, 0.3);
+          }
           if (pr.isFrostLance) spawnFrostZone(pr.x, pr.y);
           if (pr.pierce) pr.hitIds?.add(e.uid);
           else { hit = true; break; }
@@ -1596,6 +1617,12 @@ export function updateSimulation(dt) {
       dc.life -= dt;
       dc.angle += (dc.spin || 0) * dt;
       if (dc.life <= 0) s.groundDecals.splice(i, 1);
+    }
+  }
+  if (Array.isArray(s.vfxAnims)) {
+    for (let i = s.vfxAnims.length - 1; i >= 0; i--) {
+      s.vfxAnims[i].life -= dt;
+      if (s.vfxAnims[i].life <= 0) s.vfxAnims.splice(i, 1);
     }
   }
   for (let i = s.beams.length - 1; i >= 0; i--) {

@@ -5,7 +5,9 @@ import { MAP_H, MAP_W, TILE } from "./dungeon.js";
 import {
   addFloat,
   addLog,
+  canOccupy,
   clearSavedRun,
+  distPointToSegment,
   getActiveSpells,
   getPlayerStats,
   getRarityInfo,
@@ -20,6 +22,7 @@ import {
   spawnGroundDecal,
   spawnGroundItem,
   spawnRing,
+  spawnVfxAnim,
   TILE_SIZE,
   touchAim,
   touchMove,
@@ -131,8 +134,7 @@ export function healPlayer(amount, sourceLabel = null) {
   if (!s) return 0;
   const p = s.player;
   const stats = getPlayerStats();
-  const mult = p.heroClass === "paladin" ? 1.25 : 1.0;
-  const finalHeal = Math.max(1, Math.round(amount * mult));
+  const finalHeal = Math.max(1, Math.round(amount));
   const before = p.hp;
   p.hp = Math.min(stats.maxHp, p.hp + finalHeal);
   const gained = Math.max(0, Math.round(p.hp - before));
@@ -457,6 +459,7 @@ export function performMeleeAttack() {
 
   p.basicShotCount = (p.basicShotCount || 0) + 1;
   const isKeenShot = p.heroClass === "ranger" && p.basicShotCount % 3 === 0;
+  const isResonanceShot = p.heroClass === "mage" && p.basicShotCount % 3 === 0;
 
   if (isRanged) {
     const isBow = weapon.weaponType === "bow" || weapon.projectileKind === "arrow" || weapon.projectileKind === "fire_arrow";
@@ -465,15 +468,27 @@ export function performMeleeAttack() {
     p.attackCd = weapon.attackCd || 0.36;
 
     const isCrit = Math.random() * 100 < stats.crit;
-    const baseDmg = Math.round(stats.atk * (isCrit ? 1.65 : 1) * (isKeenShot ? 1.35 : 1));
-    const speed = (weapon.projSpeed || (isBow ? 13.0 : 11.5)) * (isKeenShot ? 1.2 : 1);
-    const color = isKeenShot ? "#4ade80" : weapon.projColor || (isBow ? "#fde047" : "#38bdf8");
+    const bonusShotMult = (isKeenShot || isResonanceShot) ? 1.35 : 1;
+    const baseDmg = Math.round(stats.atk * (isCrit ? 1.65 : 1) * bonusShotMult);
+    const speed = (weapon.projSpeed || (isBow ? 13.0 : 12.0)) * ((isKeenShot || isResonanceShot) ? 1.18 : 1);
+    const projKind = isResonanceShot
+      ? "arcane_orb"
+      : weapon.projectileKind || (isBow ? "arrow" : "magic_missile");
+    const color = isKeenShot
+      ? "#4ade80"
+      : isResonanceShot
+        ? "#c084fc"
+        : weapon.projColor || (isBow ? "#fde047" : "#38bdf8");
 
     if (isBow) sfx.arrow();
     else sfx.magicOrb();
 
     if (isKeenShot) {
       addFloat(p.x, p.y - 0.5, "KEEN SHOT!", "#4ade80");
+    } else if (isResonanceShot) {
+      p.mp = Math.min(stats.maxMp, p.mp + 2);
+      runtime.uiDirty = true;
+      addFloat(p.x, p.y - 0.5, "RESONANCE +2 MP!", "#c084fc");
     }
 
     const pushShot = (shotAng, dmgVal, radScale = 1, pierce = false) => {
@@ -482,19 +497,20 @@ export function performMeleeAttack() {
         y: p.y + Math.sin(shotAng) * 0.42,
         vx: Math.cos(shotAng) * speed,
         vy: Math.sin(shotAng) * speed,
-        radius: (isBow ? 0.22 : 0.25) * radScale,
+        radius: (isBow ? 0.22 : isResonanceShot ? 0.32 : 0.26) * radScale,
         color,
         dmg: dmgVal,
         isCrit,
         isEnemy: false,
         isArrow: isBow,
         isMagicOrb: !isBow,
+        projKind,
         pierce,
         hitIds: pierce ? new Set() : null,
         fireTrail: weapon.projectileKind === "fire_arrow",
         chill: weapon.chill || 0,
         life: 0.92,
-        label: isKeenShot ? "Keen Quiver" : weapon.name,
+        label: isKeenShot ? "Keen Quiver" : isResonanceShot ? "Arcane Resonance" : weapon.name,
       });
       if (s.isPvp) {
         broadcastPvpAction({
@@ -503,17 +519,18 @@ export function performMeleeAttack() {
           y: p.y + Math.sin(shotAng) * 0.42,
           vx: Math.cos(shotAng) * speed,
           vy: Math.sin(shotAng) * speed,
-          radius: (isBow ? 0.22 : 0.25) * radScale,
+          radius: (isBow ? 0.22 : isResonanceShot ? 0.32 : 0.26) * radScale,
           color,
           isArrow: isBow,
           isMagicOrb: !isBow,
+          projKind,
           pierce,
           life: 0.92,
         });
       }
     };
 
-    pushShot(angle, baseDmg, isKeenShot ? 1.15 : 1, isKeenShot);
+    pushShot(angle, baseDmg, (isKeenShot || isResonanceShot) ? 1.15 : 1, isKeenShot || isResonanceShot);
 
     if (hasRelic("twin_fletch", p) && Math.random() < 0.35) {
       const side = Math.random() < 0.5 ? 0.14 : -0.14;
@@ -529,7 +546,7 @@ export function performMeleeAttack() {
   p.attackCd = 0.34;
   p._slashFlip = !p._slashFlip;
   p._comboCount = ((p._comboCount || 0) + 1) % 3;
-  const slashVariant = (weapon?.chill || isKeenShot || (p.heroClass === "paladin" && p._comboCount === 2)) ? "steel_cyan" : "gold";
+  const slashVariant = (weapon?.chill || isKeenShot || (p.heroClass === "gilded" && p._comboCount === 2)) ? "steel_cyan" : "gold";
   const slashColor = slashVariant === "steel_cyan" ? "#38bdf8" : (isKeenShot ? "#4ade80" : "#fde047");
   moveWithSlide(p, Math.cos(angle) * 0.18, Math.sin(angle) * 0.18, 0.28);
 
@@ -624,18 +641,39 @@ export function performDash() {
   sfx.dash();
 
   const stats = getPlayerStats();
-  if (p.heroClass === "paladin") {
-    spawnBurst(p.x, p.y, "#fde047", 12, 1.0);
-    spawnRing(p.x, p.y, 64, "#fde047", 0.28);
-    const dmg = Math.max(2, Math.round(stats.atk * 0.55));
+  if (p.heroClass === "mage") {
+    const startX = p.x;
+    const startY = p.y;
+    spawnVfxAnim(startX, startY, "vfx_blink_dash", 84, 0.48, { angle: Math.atan2(dy, dx) });
+    spawnBurst(startX, startY, "#a855f7", 10, 0.95);
+    const blinkDist = 3.2;
+    let bx = p.x;
+    let by = p.y;
+    for (let step = 0.2; step <= blinkDist; step += 0.2) {
+      const nx = p.x + dx * step;
+      const ny = p.y + dy * step;
+      if (canOccupy(nx, ny, 0.28)) {
+        bx = nx;
+        by = ny;
+      } else {
+        break;
+      }
+    }
+    p.x = bx;
+    p.y = by;
+    p.dashTimer = 0.04;
+    spawnVfxAnim(bx, by, "vfx_arcane_burst", 96, 0.45);
+    spawnRing(bx, by, 60, "#38bdf8", 0.3);
+    if (s.isPvp) broadcastPvpAction({ kind: "vfx", x: bx, y: by, sheetKey: "vfx_arcane_burst", sizePx: 96, duration: 0.45 });
+    const dmg = Math.max(2, Math.round(stats.atk * 0.7));
     for (const e of [...s.level.enemies]) {
-      const ex = e.x - p.x;
-      const ey = e.y - p.y;
+      const ex = e.x - bx;
+      const ey = e.y - by;
       const dist = Math.hypot(ex, ey);
-      if (dist <= 2.0) {
+      if (dist <= 1.95) {
         const nx = dist > 0.01 ? ex / dist : dx;
         const ny = dist > 0.01 ? ey / dist : dy;
-        damageEnemy(e, dmg, false, "Sanctum Shockwave", nx * 5.2, ny * 5.2, { isAoe: true });
+        damageEnemy(e, dmg, false, "Blink Step", nx * 4.2, ny * 4.2, { isAoe: true });
       }
     }
   } else if (p.heroClass === "gilded") {
@@ -710,11 +748,154 @@ export function castSpell(spellId) {
   const rIdx = Math.min(rank - 1, spell.cooldowns.length - 1);
   p.mp -= mpCost;
   s.spellCooldowns[spell.id] = spell.cooldowns[rIdx];
+  if (p.heroClass === "mage") {
+    p.basicShotCount = (p.basicShotCount || 0) + 1;
+    if (p.basicShotCount % 3 === 0) {
+      p.mp = Math.min(stats.maxMp, p.mp + 2);
+      addFloat(p.x, p.y - 0.55, "RESONANCE +2 MP!", "#c084fc");
+    }
+  }
   runtime.uiDirty = true;
 
   const angle = getAimAngle();
   p.aimAngle = angle;
   p.facingLeft = Math.cos(angle) < 0;
+
+  if (spell.type === "arcane_beam") {
+    sfx.smite();
+    p.anim = "attack";
+    p.animTimer = 0.24;
+    const maxRange = spell.range || 6.5;
+    const dirX = Math.cos(angle);
+    const dirY = Math.sin(angle);
+    let endDist = maxRange;
+    for (let d = 0.25; d <= maxRange; d += 0.25) {
+      const tx = Math.floor(p.x + dirX * d);
+      const ty = Math.floor(p.y + dirY * d);
+      if (tx < 0 || ty < 0 || tx >= MAP_W || ty >= MAP_H || s.level.grid[ty][tx] === TILE.WALL) {
+        endDist = Math.max(1.0, d - 0.1);
+        break;
+      }
+    }
+    const endX = p.x + dirX * endDist;
+    const endY = p.y + dirY * endDist;
+    const beamPx = Math.max(96, Math.round(endDist * TILE_SIZE));
+    spawnVfxAnim(p.x + dirX * 0.35, p.y + dirY * 0.35, "vfx_arcane_beam", beamPx, 0.45, { angle, anchorX: 0, anchorY: 0.5 });
+    spawnBurst(endX, endY, "#38bdf8", 14, 1.1);
+    if (s.isPvp) broadcastPvpAction({ kind: "vfx", x: p.x + dirX * 0.35, y: p.y + dirY * 0.35, sheetKey: "vfx_arcane_beam", sizePx: beamPx, duration: 0.45, angle, anchorX: 0, anchorY: 0.5 });
+    s.shake = Math.max(s.shake, 4.5);
+
+    const dmg = Math.round(stats.atk * spell.mults[rIdx]) + spell.flats[rIdx];
+    for (const e of [...s.level.enemies]) {
+      if (distPointToSegment(e.x, e.y, p.x, p.y, endX, endY) <= 0.72) {
+        damageEnemy(e, dmg, false, spell.name, dirX * 3.0, dirY * 3.0, { isSkill: true, pierce: true, canInterrupt: true });
+        spawnBurst(e.x, e.y, "#c084fc", 10, 0.9);
+      }
+    }
+    return;
+  }
+
+  if (spell.type === "chain_lightning") {
+    sfx.nova();
+    p.anim = "attack";
+    p.animTimer = 0.22;
+    const maxBounces = spell.bounces?.[rIdx] || 3;
+    const dmg = Math.round(stats.atk * spell.mults[rIdx]) + spell.flats[rIdx];
+    const hitUids = new Set();
+    let curX = p.x;
+    let curY = p.y;
+    let hitCount = 0;
+
+    for (let b = 0; b < maxBounces; b++) {
+      let best = null;
+      let bestDist = b === 0 ? (spell.range || 7.5) : 3.8;
+      for (const e of s.level.enemies) {
+        if (hitUids.has(e.uid) || e.hp <= 0) continue;
+        if (e.isBoss && !s.bossFightStarted) continue;
+        if (b === 0 && !s.level.visible[Math.floor(e.y)]?.[Math.floor(e.x)]) continue;
+        const d = Math.hypot(e.x - curX, e.y - curY);
+        if (d <= bestDist) {
+          bestDist = d;
+          best = e;
+        }
+      }
+      if (!best) break;
+      hitUids.add(best.uid);
+      hitCount += 1;
+      const dx = best.x - curX;
+      const dy = best.y - curY;
+      const segAngle = Math.atan2(dy, dx);
+      const segPx = Math.max(76, Math.round(Math.hypot(dx, dy) * TILE_SIZE * 1.15));
+      spawnVfxAnim(curX, curY, "vfx_chain_lightning", segPx, 0.42, { angle: segAngle, anchorX: 0, anchorY: 0.5 });
+      if (s.isPvp) broadcastPvpAction({ kind: "vfx", x: curX, y: curY, sheetKey: "vfx_chain_lightning", sizePx: segPx, duration: 0.42, angle: segAngle, anchorX: 0, anchorY: 0.5 });
+      spawnBurst(best.x, best.y, "#7dd3fc", 10, 1.0);
+      damageEnemy(best, dmg, false, spell.name, 0, 0, { isSkill: true, isAoe: true, canInterrupt: true });
+      curX = best.x;
+      curY = best.y;
+    }
+    if (hitCount === 0) {
+      const tx = p.x + Math.cos(angle) * 4.0;
+      const ty = p.y + Math.sin(angle) * 4.0;
+      spawnVfxAnim(p.x, p.y, "vfx_chain_lightning", 128, 0.38, { angle, anchorX: 0, anchorY: 0.5 });
+      spawnBurst(tx, ty, "#7dd3fc", 8, 0.8);
+      addLog(`${spell.name} fizzled with no nearby targets.`, "info");
+    }
+    return;
+  }
+
+  if (spell.type === "mana_shield") {
+    sfx.heal();
+    const bonus = spell.defBonuses[rIdx];
+    const gained = healPlayer(spell.heals[rIdx]);
+    p.tempDef = bonus;
+    p.tempDefTimer = spell.duration;
+    p.manaShieldTimer = spell.duration;
+    spawnVfxAnim(p.x, p.y, "vfx_mana_shield", 84, 0.72);
+    if (s.isPvp) broadcastPvpAction({ kind: "vfx", x: p.x, y: p.y, sheetKey: "vfx_mana_shield", sizePx: 84, duration: 0.72 });
+    spawnRing(p.x, p.y, 40, "#818cf8", 0.38);
+    addFloat(p.x, p.y - 0.4, `SHIELD +${bonus} DEF · +${gained} HP`, "#818cf8");
+    addLog(`${spell.name}: Arcane Barrier active (+${bonus} DEF, +${gained} HP for ${spell.duration}s).`, "heal");
+    return;
+  }
+
+  if (spell.type === "meteor_strike") {
+    sfx.ultSlam();
+    p.anim = "attack";
+    p.animTimer = 0.32;
+    let bestEnemy = null;
+    let bestDist = spell.range || 6.2;
+    for (const e of s.level.enemies) {
+      if (e.isBoss && !s.bossFightStarted) continue;
+      if (!s.level.visible[Math.floor(e.y)]?.[Math.floor(e.x)]) continue;
+      const d = Math.hypot(e.x - p.x, e.y - p.y);
+      if (d <= bestDist) {
+        bestDist = d;
+        bestEnemy = e;
+      }
+    }
+    const tx = bestEnemy ? bestEnemy.x : p.x + Math.cos(angle) * 3.4;
+    const ty = bestEnemy ? bestEnemy.y : p.y + Math.sin(angle) * 3.4;
+    const rad = spell.radii[rIdx];
+    const dmg = Math.round(stats.atk * spell.mults[rIdx]) + spell.flats[rIdx];
+    const stun = spell.stuns?.[rIdx] || 1.6;
+    spawnVfxAnim(tx, ty, "vfx_meteor_strike", rad * TILE_SIZE * 1.9, 0.75);
+    spawnVfxAnim(tx, ty, "vfx_fire_explosion", rad * TILE_SIZE * 1.75, 0.62);
+    if (s.isPvp) broadcastPvpAction({ kind: "vfx", x: tx, y: ty, sheetKey: "vfx_meteor_strike", sizePx: rad * TILE_SIZE * 1.9, duration: 0.75 });
+    spawnRing(tx, ty, rad * TILE_SIZE, "#f97316", 0.42);
+    spawnBurst(tx, ty, "#facc15", 24, 1.45);
+    s.shake = Math.max(s.shake, 9);
+    for (const e of [...s.level.enemies]) {
+      const dx = e.x - tx;
+      const dy = e.y - ty;
+      const dist = Math.hypot(dx, dy);
+      if (dist <= rad + 0.45) {
+        const nx = dist > 0.01 ? dx / dist : 0;
+        const ny = dist > 0.01 ? dy / dist : 0;
+        damageEnemy(e, dmg, true, spell.name, nx * 5.2, ny * 5.2, { isSkill: true, isAoe: true, canInterrupt: true, stunDur: stun });
+      }
+    }
+    return;
+  }
 
   if (spell.type === "aoe_self") {
     sfx.nova();
@@ -1219,7 +1400,7 @@ export function endRun(victory) {
   if (s.isEndless && s.floor > (runtime.meta.endlessBestFloor || 0)) runtime.meta.endlessBestFloor = s.floor;
 
   const heroName = s.player.name || "Sir Aldric";
-  const clsName = HERO_CLASSES[s.player.heroClass]?.name || "Paladin Knight";
+  const clsName = HERO_CLASSES[s.player.heroClass === "paladin" ? "gilded" : s.player.heroClass]?.name || "Gilded Knight";
   const secs = Math.floor(s.elapsed);
   const mins = Math.floor(secs / 60);
   const rem = String(secs % 60).padStart(2, "0");
