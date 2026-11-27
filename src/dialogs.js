@@ -19,6 +19,7 @@ import {
   getItemPrice,
 } from "./data.js";
 import {
+  buildPvpArenaLevel,
   DEFAULT_PVP_SERVER_URL,
   getDefaultLanUrl,
   getPvpMode,
@@ -1542,7 +1543,7 @@ export function openPvpDialog() {
   const roomSkillsPreviewEl = document.getElementById("pvp-room-skills-preview");
   const vsRowEl = document.getElementById("pvp-vs-row");
   const hostMapBar = document.getElementById("pvp-host-map-bar");
-  const hostMapSelect = document.getElementById("pvp-room-map-select");
+  const hostMapGrid = document.getElementById("pvp-room-map-grid");
   const leaveBtn = document.getElementById("btn-pvp-leave");
   const loadoutBtn = document.getElementById("btn-pvp-loadout");
   const readyBtn = document.getElementById("btn-pvp-ready");
@@ -1690,6 +1691,64 @@ export function openPvpDialog() {
     previewRafId = requestAnimationFrame(tickHeroPreviews);
   }
 
+  const PVP_MAP_THEMES = [
+    { wall: "#2f384d", floor: "#141a26", accent: "#334155", torch: "#fb923c" },
+    { wall: "#523a28", floor: "#1c1614", accent: "#78350f", torch: "#facc15" },
+    { wall: "#2d1f47", floor: "#110d1c", accent: "#4c1d95", torch: "#c084fc" },
+    { wall: "#4c222a", floor: "#1b1116", accent: "#7f1d1d", torch: "#f87171" },
+  ];
+
+  function drawPvpMapThumbnail(cvs, mapId) {
+    if (!cvs) return;
+    const ctx = cvs.getContext("2d");
+    if (!ctx) return;
+    const lvl = buildPvpArenaLevel(mapId);
+    const theme = PVP_MAP_THEMES[mapId] || PVP_MAP_THEMES[0];
+    const grid = lvl.grid;
+    const h = grid.length;
+    const w = grid[0]?.length || 1;
+    const cw = cvs.width;
+    const ch = cvs.height;
+    ctx.fillStyle = "#080a10";
+    ctx.fillRect(0, 0, cw, ch);
+
+    const tileW = cw / w;
+    const tileH = ch / h;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const isWall = grid[y][x] === TILE.WALL;
+        ctx.fillStyle = isWall ? theme.wall : ((x + y) % 2 === 0 ? theme.floor : theme.accent);
+        ctx.fillRect(Math.floor(x * tileW), Math.floor(y * tileH), Math.ceil(tileW), Math.ceil(tileH));
+      }
+    }
+    for (const pr of lvl.props || []) {
+      if (pr.kind === "torch") {
+        ctx.fillStyle = theme.torch;
+        ctx.fillRect(Math.floor(pr.x * tileW), Math.floor(pr.y * tileH), Math.max(2, Math.ceil(tileW)), Math.max(2, Math.ceil(tileH)));
+      }
+    }
+    for (const spot of lvl.pvpPowerupSpots || []) {
+      ctx.fillStyle = "#facc15";
+      ctx.beginPath();
+      ctx.arc((spot.x + 0.5) * tileW, (spot.y + 0.5) * tileH, Math.max(2, tileW * 0.45), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    const sp0 = lvl.pvpSpawns?.[0];
+    const sp1 = lvl.pvpSpawns?.[1];
+    if (sp0) {
+      ctx.fillStyle = "#38bdf8";
+      ctx.beginPath();
+      ctx.arc((sp0.x + 0.5) * tileW, (sp0.y + 0.5) * tileH, Math.max(2.4, tileW * 0.55), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (sp1) {
+      ctx.fillStyle = "#ef4444";
+      ctx.beginPath();
+      ctx.arc((sp1.x + 0.5) * tileW, (sp1.y + 0.5) * tileH, Math.max(2.4, tileW * 0.55), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
   function renderMapPicker() {
     if (mapGridEl) {
       mapGridEl.innerHTML = "";
@@ -1697,7 +1756,20 @@ export function openPvpDialog() {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = `pvp-map-card ${m.id === selectedMapId ? "selected" : ""}`;
-        btn.innerHTML = `<strong>${m.name}</strong><span>${m.subtitle}</span>`;
+        const thumb = document.createElement("canvas");
+        thumb.width = 76;
+        thumb.height = 48;
+        thumb.className = "pvp-map-thumb";
+        thumb.setAttribute("aria-hidden", "true");
+        drawPvpMapThumbnail(thumb, m.id);
+        const meta = document.createElement("div");
+        meta.className = "pvp-map-card-meta";
+        const strong = document.createElement("strong");
+        strong.textContent = m.name;
+        const span = document.createElement("span");
+        span.textContent = m.subtitle;
+        meta.append(strong, span);
+        btn.append(thumb, meta);
         btn.addEventListener("click", () => {
           selectedMapId = m.id;
           renderMapPicker();
@@ -1705,14 +1777,30 @@ export function openPvpDialog() {
         mapGridEl.appendChild(btn);
       }
     }
-    if (hostMapSelect && hostMapSelect.options.length !== PVP_MAPS.length) {
-      hostMapSelect.innerHTML = "";
-      for (const m of PVP_MAPS) {
-        const opt = document.createElement("option");
-        opt.value = String(m.id);
-        opt.textContent = `${m.name} (${m.subtitle})`;
-        hostMapSelect.appendChild(opt);
-      }
+  }
+
+  function renderHostRoomMapGrid(activeMapId) {
+    if (!hostMapGrid) return;
+    hostMapGrid.innerHTML = "";
+    for (const m of PVP_MAPS) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `pvp-room-map-card ${m.id === Number(activeMapId) ? "selected" : ""}`;
+      btn.title = `${m.name} — ${m.subtitle}`;
+      const thumb = document.createElement("canvas");
+      thumb.width = 72;
+      thumb.height = 44;
+      thumb.className = "pvp-map-thumb";
+      thumb.setAttribute("aria-hidden", "true");
+      drawPvpMapThumbnail(thumb, m.id);
+      const label = document.createElement("span");
+      label.className = "pvp-room-map-name";
+      label.textContent = m.name;
+      btn.append(thumb, label);
+      btn.addEventListener("click", () => {
+        pvpNet.send({ type: "update_player", mapId: m.id });
+      });
+      hostMapGrid.appendChild(btn);
     }
   }
 
@@ -1847,7 +1935,7 @@ export function openPvpDialog() {
       if (roomMetaEl) roomMetaEl.textContent = `Map: ${m.name} — ${m.desc}`;
 
       if (hostMapBar) hostMapBar.hidden = pvpNet.mySlot !== 0;
-      if (hostMapSelect) hostMapSelect.value = String(rm.mapId);
+      if (pvpNet.mySlot === 0) renderHostRoomMapGrid(rm.mapId);
 
       if (vsRowEl) {
         vsRowEl.innerHTML = "";
@@ -2130,11 +2218,6 @@ export function openPvpDialog() {
     });
   };
   leaveBtn.onclick = () => pvpNet.send({ type: "leave_lobby" });
-  if (hostMapSelect) {
-    hostMapSelect.onchange = () => {
-      pvpNet.send({ type: "update_player", mapId: Number(hostMapSelect.value) || 0 });
-    };
-  }
   readyBtn.onclick = () => {
     pvpNet.send({
       type: "update_player",

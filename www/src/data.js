@@ -1,8 +1,16 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.0.2.1 Beta";
+export const GAME_VERSION = "v.1.0.3 Beta";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.0.3 Beta",
+    title: "Visual Arena Map Picture Selection in PvP Lobby",
+    notes: [
+      "Arena Map Picture Cards: Replaced the Host Room map dropdown and text-only Create Lobby buttons with live pixel-art arena thumbnail previews showing each map's theme, pillars/lanes, spawn markers, and power-up spots.",
+      "Compact Mobile Room Fit: Styled the 4-card map preview strip cleanly for mobile landscape screens without extra scrolling.",
+    ],
+  },
   {
     version: "v.1.0.2.1 Beta",
     title: "In-Modal Update Refresh, Menu Update Highlight & 4-Part Version Support",

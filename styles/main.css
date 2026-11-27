@@ -3050,9 +3050,79 @@ body.pvp-active .canvas-frame {
 
 .pvp-host-map-bar {
   display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 0.8rem;
+}
+
+.pvp-host-map-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pvp-room-map-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.pvp-room-map-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 6px;
+  border-radius: 8px;
+  border: 1.5px solid #2e374d;
+  background: #141a29;
+  color: var(--text);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.14s ease, background 0.14s ease, box-shadow 0.14s ease;
+}
+
+.pvp-room-map-card:hover {
+  border-color: #64748b;
+  background: #1a2236;
+}
+
+.pvp-room-map-card.selected {
+  border-color: #facc15;
+  background: linear-gradient(180deg, rgba(250, 204, 21, 0.18), rgba(18, 24, 38, 0.96));
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.22);
+}
+
+.pvp-room-map-name {
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: #e2e8f0;
+}
+
+.pvp-map-thumb {
+  width: 100%;
+  max-width: 76px;
+  height: auto;
+  border-radius: 4px;
+  border: 1px solid #2c354d;
+  image-rendering: pixelated;
+  display: block;
+}
+
+.pvp-map-card {
+  display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.8rem;
+}
+
+.pvp-map-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
 }
 
 .pvp-room-actions {
@@ -3151,6 +3221,19 @@ body.pvp-active .canvas-frame {
   .pvp-room-actions .btn {
     padding: 6px 12px;
     font-size: 0.78rem;
+  }
+  .pvp-room-map-grid {
+    gap: 4px;
+  }
+  .pvp-room-map-card {
+    padding: 3px 4px;
+    gap: 2px;
+  }
+  .pvp-room-map-name {
+    font-size: 0.62rem;
+  }
+  .pvp-map-thumb {
+    max-width: 56px;
   }
 }
 
