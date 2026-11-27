@@ -1,8 +1,16 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.0.1 Beta";
+export const GAME_VERSION = "v.1.0.2 Beta";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.0.2 Beta",
+    title: "5s VS Matchup Screen, Side-Accurate Badges & Compact Mobile PvP Lobby",
+    notes: [
+      "5-Second VS Matchup Screen & Side Badges: Fixed YOUR HERO / OPPONENT badges and blue/red card highlights to match each player's actual spawn side (including PC Guest vs Mobile Host) and extended the VS loading screen to 5 seconds.",
+      "Compact Mobile PvP Lobby: Adjusted PvP room layout spacing, hero card previews, and breakpoints so the entire lobby (VS cards, hero picker, skills, and Ready Up) fits cleanly on mobile landscape screens without scrolling.",
+    ],
+  },
   {
     version: "v.1.0.1 Beta",
     title: "Mobile Touch Button Size, Centered PvP Winner Overlay & Side-Matched HUD",
