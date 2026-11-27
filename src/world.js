@@ -353,7 +353,10 @@ export function restoreRun(saved) {
   if (Array.isArray(saved.level.groundItems)) saved.level.groundItems.forEach((g) => migrateEquipItem(g.item));
 
   if (Array.isArray(saved.level.props)) {
-    saved.level.props = saved.level.props.filter((pr) => !(pr.kind === "shrine" && pr.used));
+    saved.level.props = saved.level.props.filter((pr) => !((pr.kind === "shrine" || pr.kind === "anvil") && pr.used));
+    for (const pr of saved.level.props) {
+      if (["shrine", "anvil", "well"].includes(pr.kind)) pr.solid = false;
+    }
   }
   const repairedCorridor = repairSavedFloorIfDisconnected(saved.level, saved.player);
   saved.player.z = 0;
@@ -559,7 +562,7 @@ export function interactProp(prop) {
     runtime.uiDirty = true;
   } else if (prop.kind === "shrine" && !prop.used && (s.shrineCooldown || 0) <= 0) {
     if (worldHooks.openShrineDialog) worldHooks.openShrineDialog(prop);
-  } else if (prop.kind === "anvil" && (s.forgeCooldown || 0) <= 0) {
+  } else if (prop.kind === "anvil" && !prop.used && (s.forgeCooldown || 0) <= 0) {
     if (worldHooks.openForgeDialog) worldHooks.openForgeDialog(prop);
   } else if (["crate", "barrel", "urn"].includes(prop.kind) && !prop.broken) {
     prop.broken = true;
@@ -798,11 +801,23 @@ export function updateSimulation(dt) {
         });
         spawnBurst(p.x + Math.cos(shotAng) * 0.4, p.y + Math.sin(shotAng) * 0.4, color, 4, 0.55);
       } else {
-        const ang = rs.angle + (rs.remaining % 2 === 0 ? -0.22 : 0.22);
+        const flipY = rs.remaining % 2 === 0;
+        const ang = rs.angle + (flipY ? -0.22 : 0.22);
         sfx.slash();
         p.anim = "attack";
         p.animTimer = 0.14;
-        s.slashes.push({ x: p.x * TILE_SIZE, y: p.y * TILE_SIZE, angle: ang, color: sp.color, life: 0.15, maxLife: 0.15 });
+        s.slashes.push({
+          x: p.x * TILE_SIZE,
+          y: p.y * TILE_SIZE,
+          angle: ang,
+          radius: 38,
+          variant: "gold",
+          flipY,
+          color: sp.color,
+          life: 0.19,
+          maxLife: 0.19,
+        });
+        if (s.isPvp) broadcastPvpAction({ kind: "slash", x: p.x, y: p.y, angle: ang, radius: 38, variant: "gold", flipY, color: sp.color, life: 0.19 });
         const dirX = Math.cos(rs.angle);
         const dirY = Math.sin(rs.angle);
         for (const e of [...s.level.enemies]) {
@@ -929,7 +944,16 @@ export function updateSimulation(dt) {
       sfx.slash();
       sfx.nova();
       s.shake = Math.max(s.shake, 5.5);
-      s.slashes.push({ x: (p.x + dirX * 0.45) * TILE_SIZE, y: (p.y + dirY * 0.45) * TILE_SIZE, angle: rc.angle, color: rc.spell.color || "#fb923c", life: 0.24, maxLife: 0.24 });
+      s.slashes.push({
+        x: (p.x + dirX * 0.45) * TILE_SIZE,
+        y: (p.y + dirY * 0.45) * TILE_SIZE,
+        angle: rc.angle,
+        radius: 44,
+        variant: "gold",
+        color: rc.spell.color || "#fb923c",
+        life: 0.24,
+        maxLife: 0.24,
+      });
       spawnBurst(p.x + dirX * 0.5, p.y + dirY * 0.5, "#fb923c", 16, 1.2);
       spawnRing(p.x, p.y, 38, "#fde047", 0.28);
       s.projectiles.push({
@@ -1018,8 +1042,8 @@ export function updateSimulation(dt) {
         s.shake = Math.max(s.shake, 10);
         s.beams.push({ x: impactX * TILE_SIZE, y: impactY * TILE_SIZE, color: "#38bdf8", life: 0.28, maxLife: 0.28 });
         s.slashes.push(
-          { x: impactX * TILE_SIZE, y: impactY * TILE_SIZE, angle: ang + 0.6, radius: 42, life: 0.18, maxLife: 0.18, color: "#38bdf8" },
-          { x: impactX * TILE_SIZE, y: impactY * TILE_SIZE, angle: ang - 0.6, radius: 42, life: 0.18, maxLife: 0.18, color: "#fde047" }
+          { x: impactX * TILE_SIZE, y: impactY * TILE_SIZE, angle: ang + 0.6, radius: 42, variant: "steel_cyan", flipY: false, life: 0.22, maxLife: 0.22, color: "#38bdf8" },
+          { x: impactX * TILE_SIZE, y: impactY * TILE_SIZE, angle: ang - 0.6, radius: 42, variant: "gold", flipY: true, life: 0.22, maxLife: 0.22, color: "#fde047" }
         );
         spawnBurst(impactX, impactY, "#facc15", 20, 1.45);
         spawnBurst(impactX, impactY, "#38bdf8", 14, 1.25);
@@ -1189,22 +1213,24 @@ export function updateSimulation(dt) {
 
   updateFOVIfNeeded(false);
 
-  // Floor Traps
+  // Floor Traps (4-state: Retracted -> Warning -> Extended -> Retracting)
   if (Array.isArray(s.level.traps)) {
     for (const tr of s.level.traps) {
       tr.phase = (tr.phase + dt) % tr.period;
       tr.hitCd = Math.max(0, (tr.hitCd || 0) - dt);
-      const isActive = tr.phase >= tr.period - 0.8;
-      if (isActive && tr.hitCd <= 0) {
+      const isExtended = tr.phase >= tr.period - 0.9 && tr.phase < tr.period - 0.22;
+      if (isExtended && tr.hitCd <= 0) {
         const tx = tr.x + 0.5;
         const ty = tr.y + 0.5;
         if (Math.hypot(p.x - tx, p.y - ty) <= 0.52 && (p.z || 0) <= 2) {
           tr.hitCd = 0.85;
+          tr.bloodied = true;
           hurtPlayer(4 + s.floor * 2, tr.kind === "void_vent" ? "Void Vent" : "Spike Trap", 0, 0);
         }
         for (const e of [...s.level.enemies]) {
           if (!e.isBoss && Math.hypot(e.x - tx, e.y - ty) <= 0.55) {
             tr.hitCd = 0.85;
+            tr.bloodied = true;
             damageEnemy(e, 5 + s.floor * 2, false, "Floor Trap", 0, 0, { noOnHit: true, isAoe: true });
           }
         }
@@ -1290,7 +1316,8 @@ export function updateSimulation(dt) {
   }
 
   for (const pr of s.level.props) {
-    if (!pr.solid) continue;
+    if (pr.used || pr.opened || pr.broken) continue;
+    if (!pr.solid && !["shrine", "anvil", "well"].includes(pr.kind)) continue;
     const dist = Math.hypot(pr.x + 0.5 - p.x, pr.y + 0.5 - p.y);
     if (dist < 1.0 && ["door", "chest", "trial_chest", "well", "shrine", "anvil", "crate", "barrel", "urn"].includes(pr.kind)) {
       interactProp(pr);

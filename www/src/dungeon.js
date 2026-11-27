@@ -390,7 +390,7 @@ function buildFloorCandidate(floor, difficultyId = "normal") {
 
     const anvilPos = freeTileInRoom(prev);
     if (anvilPos) {
-      props.push({ id: `anvil_boss_${floor}`, kind: "anvil", x: anvilPos.x, y: anvilPos.y, solid: true });
+      props.push({ id: `anvil_boss_${floor}`, kind: "anvil", x: anvilPos.x, y: anvilPos.y, solid: false, used: false });
     }
   }
 
@@ -404,7 +404,7 @@ function buildFloorCandidate(floor, difficultyId = "normal") {
   if (([2, 4, 5, 7, 10].includes(floor) || (floor > 12 && floor % 2 === 0)) && rooms.length > 2) {
     const wPos = freeTileInRoom(rooms[1]);
     if (wPos) {
-      props.push({ id: "well", kind: "well", x: wPos.x, y: wPos.y, solid: true, used: false });
+      props.push({ id: "well", kind: "well", x: wPos.x, y: wPos.y, solid: false, used: false });
     }
   }
 
@@ -419,7 +419,7 @@ function buildFloorCandidate(floor, difficultyId = "normal") {
         shrineId: shrinePool[Math.floor(Math.random() * shrinePool.length)],
         x: sPos.x,
         y: sPos.y,
-        solid: true,
+        solid: false,
         used: false,
       });
     }
@@ -429,7 +429,7 @@ function buildFloorCandidate(floor, difficultyId = "normal") {
   if (!isBossFloor && floor >= 3 && rooms.length > 4 && Math.random() < 0.45) {
     const aPos = freeTileInRoom(rooms[3]);
     if (aPos) {
-      props.push({ id: `anvil_${floor}`, kind: "anvil", x: aPos.x, y: aPos.y, solid: true });
+      props.push({ id: `anvil_${floor}`, kind: "anvil", x: aPos.x, y: aPos.y, solid: false, used: false });
     }
   }
 

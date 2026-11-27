@@ -527,18 +527,24 @@ export function performMeleeAttack() {
   p.anim = "attack";
   p.animTimer = 0.24;
   p.attackCd = 0.34;
+  p._slashFlip = !p._slashFlip;
+  p._comboCount = ((p._comboCount || 0) + 1) % 3;
+  const slashVariant = (weapon?.chill || isKeenShot || (p.heroClass === "paladin" && p._comboCount === 2)) ? "steel_cyan" : "gold";
+  const slashColor = slashVariant === "steel_cyan" ? "#38bdf8" : (isKeenShot ? "#4ade80" : "#fde047");
   moveWithSlide(p, Math.cos(angle) * 0.18, Math.sin(angle) * 0.18, 0.28);
 
   s.slashes.push({
     x: p.x * TILE_SIZE,
     y: p.y * TILE_SIZE,
     angle,
-    radius: 36,
-    life: 0.16,
-    maxLife: 0.16,
-    color: isKeenShot ? "#4ade80" : "#fde047",
+    radius: 38,
+    life: 0.21,
+    maxLife: 0.21,
+    variant: slashVariant,
+    flipY: p._slashFlip,
+    color: slashColor,
   });
-  if (s.isPvp) broadcastPvpAction({ kind: "slash", x: p.x, y: p.y, angle, radius: 36, color: "#fde047", life: 0.16 });
+  if (s.isPvp) broadcastPvpAction({ kind: "slash", x: p.x, y: p.y, angle, radius: 38, variant: slashVariant, flipY: p._slashFlip, color: slashColor, life: 0.21 });
   sfx.slash();
 
   const reach = 1.55;
@@ -953,7 +959,8 @@ export function castSpell(spellId) {
     sfx.slash();
     p.anim = "attack";
     p.animTimer = 0.25;
-    s.slashes.push({ x: p.x * TILE_SIZE, y: p.y * TILE_SIZE, angle, color: spell.color, life: 0.24, maxLife: 0.24 });
+    s.slashes.push({ x: p.x * TILE_SIZE, y: p.y * TILE_SIZE, angle, radius: 44, variant: "gold", color: spell.color, life: 0.24, maxLife: 0.24 });
+    if (s.isPvp) broadcastPvpAction({ kind: "slash", x: p.x, y: p.y, angle, radius: 44, variant: "gold", color: spell.color, life: 0.24 });
     spawnGroundDecal(p.x, p.y, "vfx_damage_aoe_field", spell.range * TILE_SIZE * 1.45, 0.3, { scaleStart: 0.55, scaleEnd: 1.05, spin: 1.4 });
     const dmg = Math.round(stats.atk * spell.mults[rIdx]);
     const dirX = Math.cos(angle);

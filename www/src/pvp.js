@@ -148,7 +148,7 @@ export function buildPvpArenaLevel(mapId = 0) {
       setWall(cx + ox, cy + oy + 1);
       setWall(cx + ox + 1, cy + oy + 1);
     }
-    addProp({ id: "pvp_well", kind: "well", x: cx, y: cy, solid: true, used: false });
+    addProp({ id: "pvp_well", kind: "well", x: cx, y: cy, solid: false, used: false });
     addProp({ kind: "crate", x: cx, y: y0 + 2, solid: true, broken: false });
     addProp({ kind: "barrel", x: cx, y: y1 - 2, solid: true, broken: false });
   } else if (cfg.id === 1) {
@@ -158,8 +158,8 @@ export function buildPvpArenaLevel(mapId = 0) {
     }
     setWall(cx - 1, cy - 4);
     setWall(cx + 1, cy + 4);
-    addProp({ id: "pvp_shrine_top", kind: "shrine", shrineId: "aegis", x: cx, y: y0 + 2, solid: true, used: false });
-    addProp({ id: "pvp_shrine_bot", kind: "shrine", shrineId: "sanctum", x: cx, y: y1 - 2, solid: true, used: false });
+    addProp({ id: "pvp_shrine_top", kind: "shrine", shrineId: "aegis", x: cx, y: y0 + 2, solid: false, used: false });
+    addProp({ id: "pvp_shrine_bot", kind: "shrine", shrineId: "sanctum", x: cx, y: y1 - 2, solid: false, used: false });
     addProp({ kind: "barrel", x: cx - 2, y: cy, solid: true, broken: false });
     addProp({ kind: "barrel", x: cx + 2, y: cy, solid: true, broken: false });
   } else if (cfg.id === 2) {
@@ -167,7 +167,7 @@ export function buildPvpArenaLevel(mapId = 0) {
     for (const [ox, oy] of [[-6, -4], [6, -4], [-6, 4], [6, 4], [-3, 0], [3, 0], [0, -4], [0, 4]]) {
       setWall(cx + ox, cy + oy);
     }
-    addProp({ id: "pvp_well", kind: "well", x: cx, y: cy, solid: true, used: false });
+    addProp({ id: "pvp_well", kind: "well", x: cx, y: cy, solid: false, used: false });
     addProp({ kind: "urn", x: cx - 5, y: cy, solid: true, broken: false });
     addProp({ kind: "urn", x: cx + 5, y: cy, solid: true, broken: false });
   } else {
@@ -180,7 +180,7 @@ export function buildPvpArenaLevel(mapId = 0) {
       setWall(cx + dx, cy - 3);
       setWall(cx + dx, cy + 3);
     }
-    addProp({ id: "pvp_shrine_blood", kind: "shrine", shrineId: "blood", x: cx, y: cy, solid: true, used: false });
+    addProp({ id: "pvp_shrine_blood", kind: "shrine", shrineId: "blood", x: cx, y: cy, solid: false, used: false });
     addProp({ kind: "crate", x: cx - 6, y: cy - 1, solid: true, broken: false });
     addProp({ kind: "crate", x: cx + 6, y: cy + 1, solid: true, broken: false });
   }
@@ -721,10 +721,12 @@ function applyRemoteOpponentAction(msg) {
       x: act.x * TILE_SIZE,
       y: act.y * TILE_SIZE,
       angle: act.angle || 0,
-      radius: act.radius || 36,
+      radius: act.radius || 38,
+      variant: act.variant || (act.color === "#38bdf8" ? "steel_cyan" : "gold"),
+      flipY: Boolean(act.flipY),
       color: act.color || "#f87171",
-      life: act.life || 0.18,
-      maxLife: act.life || 0.18,
+      life: act.life || 0.21,
+      maxLife: act.life || 0.21,
     });
     sfx.slash();
   } else if (act.kind === "projectile") {

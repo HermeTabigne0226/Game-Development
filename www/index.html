@@ -678,7 +678,7 @@
   </dialog>
 
   <!-- Blacksmith / Anvil Forge Modal -->
-  <dialog id="forge-dialog" closedby="any" aria-labelledby="forge-dialog-title">
+  <dialog id="forge-dialog" aria-labelledby="forge-dialog-title">
     <div class="dialog-card shop-card">
       <div class="dialog-header">
         <div>
@@ -687,9 +687,7 @@
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <span class="shop-gold-pill">Gold: <strong id="forge-gold">0</strong></span>
-          <form method="dialog">
-            <button value="close" class="btn btn-secondary">Close</button>
-          </form>
+          <button type="button" id="btn-forge-close" class="btn btn-secondary">Close</button>
         </div>
       </div>
       <p class="hint-text" style="margin:0">Tempers equipped gear (+ATK/DEF/CRIT) or salvages satchel items for instant Gold &amp; HP/MP orbs.</p>
@@ -786,6 +784,23 @@
             <button type="button" id="btn-pvp-start" class="btn btn-primary" hidden>Start PvP Match</button>
           </div>
         </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Generic Confirmation Modal -->
+  <dialog id="confirm-dialog" aria-labelledby="confirm-dialog-title">
+    <div class="dialog-card">
+      <div class="dialog-header">
+        <div>
+          <span id="confirm-dialog-eyebrow" class="eyebrow">Confirm Action</span>
+          <h1 id="confirm-dialog-title">Are you sure?</h1>
+        </div>
+      </div>
+      <p id="confirm-dialog-text" class="story-lead"></p>
+      <div class="dialog-actions">
+        <button type="button" id="btn-confirm-cancel" class="btn btn-secondary">Stay</button>
+        <button type="button" id="btn-confirm-ok" class="btn btn-primary" autofocus>Confirm</button>
       </div>
     </div>
   </dialog>

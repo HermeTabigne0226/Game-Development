@@ -1,8 +1,18 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.3.0";
+export const GAME_VERSION = "v.1.3.1";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.3.1",
+    title: "Spike Trap & Slash Sprites, Non-Blocking Forge/Shrines",
+    notes: [
+      "Non-Blocking Forges, Shrines & Wells: Foundry Forges, Ancient Shrines, and Wells no longer block dungeon movement or doorways.",
+      "Close Confirmation & Clean Removal: Closing an unclaimed Forge, Shrine, or Buff NPC now asks to confirm first and removes it from the floor once dismissed.",
+      "4-State Spike Trap Sprites: Added custom Retracted, Warning (Amber Hazard), Extended (Faceted Steel), and Retracting pixel-art trap frames with bloodied tip marks on hit.",
+      "3-Frame Holy Gold & Steel/Cyan Sword Slashes: Upgraded melee swings and Valiant Charge with tapered 3-frame Holy Gold slash sprites plus a Steel/Cyan blade-match variant.",
+    ],
+  },
   {
     version: "v.1.3.0",
     title: "Multiplayer 1v1 PvP Dungeon Arena & 4 Arenas",

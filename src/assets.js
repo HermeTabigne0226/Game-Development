@@ -115,6 +115,14 @@ export async function loadAllAssets(onProgress = null) {
     vfx_skyfall_stage2: "assets/generated/vfx/vfx_skyfall_stage2.png",
     vfx_skyfall_stage3: "assets/generated/vfx/vfx_skyfall_stage3.png",
     vfx_skyfall_impact: "assets/generated/vfx/vfx_skyfall_impact.png",
+    spike_trap_retracted: "assets/generated/vfx/spike_trap_retracted.png",
+    spike_trap_warning: "assets/generated/vfx/spike_trap_warning.png",
+    spike_trap_extended: "assets/generated/vfx/spike_trap_extended.png",
+    spike_trap_retracting: "assets/generated/vfx/spike_trap_retracting.png",
+    melee_slash_frame1: "assets/generated/vfx/melee_slash_frame1.png",
+    melee_slash_gold: "assets/generated/vfx/melee_slash_gold.png",
+    melee_slash_frame3: "assets/generated/vfx/melee_slash_frame3.png",
+    melee_slash_steel_cyan: "assets/generated/vfx/melee_slash_steel_cyan.png",
   };
 
   const list = Object.entries(manifest);

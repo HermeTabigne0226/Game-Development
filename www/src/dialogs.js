@@ -627,7 +627,44 @@ export function openShopDialog(shop) {
   }
 }
 
-export function openForgeDialog() {
+function openConfirmDialog({ eyebrow = "Confirm", title = "Are you sure?", message = "", confirmLabel = "Confirm", cancelLabel = "Stay" }) {
+  return new Promise((resolve) => {
+    const dlg = document.getElementById("confirm-dialog");
+    if (!dlg) {
+      resolve(window.confirm(message || title));
+      return;
+    }
+    const eyebrowEl = document.getElementById("confirm-dialog-eyebrow");
+    const titleEl = document.getElementById("confirm-dialog-title");
+    const textEl = document.getElementById("confirm-dialog-text");
+    const okBtn = document.getElementById("btn-confirm-ok");
+    const cancelBtn = document.getElementById("btn-confirm-cancel");
+    if (eyebrowEl) eyebrowEl.textContent = eyebrow;
+    if (titleEl) titleEl.textContent = title;
+    if (textEl) textEl.textContent = message;
+    if (okBtn) okBtn.textContent = confirmLabel;
+    if (cancelBtn) cancelBtn.textContent = cancelLabel;
+
+    let done = false;
+    const finish = (result) => {
+      if (done) return;
+      done = true;
+      ac.abort();
+      if (dlg.open) dlg.close(result ? "confirm" : "cancel");
+      resolve(result);
+    };
+    const ac = new AbortController();
+    okBtn?.addEventListener("click", () => finish(true), { signal: ac.signal });
+    cancelBtn?.addEventListener("click", () => finish(false), { signal: ac.signal });
+    dlg.addEventListener("cancel", (e) => { e.preventDefault(); finish(false); }, { signal: ac.signal });
+    dlg.addEventListener("close", () => finish(false), { signal: ac.signal });
+    if (!dlg.open) dlg.showModal();
+  });
+}
+
+let forgeDialogAbort = null;
+
+export function openForgeDialog(prop = null) {
   const s = runtime.state;
   if (!s || s.runEnded) return;
   const dlg = document.getElementById("forge-dialog");
@@ -728,10 +765,52 @@ export function openForgeDialog() {
   if (!dlg.open) {
     keys.clear();
     touchMove.active = false;
-    dlg.addEventListener("close", () => { s.forgeCooldown = 1.8; }, { once: true });
+    if (forgeDialogAbort) forgeDialogAbort.abort();
+    forgeDialogAbort = new AbortController();
+    let confirming = false;
+    const tryCloseForge = async () => {
+      if (confirming) return;
+      confirming = true;
+      const confirmed = await openConfirmDialog({
+        eyebrow: "Runic Anvil",
+        title: "Close Foundry Forge?",
+        message: "Once closed, this Foundry Forge will disappear from this floor. Do you want to close?",
+        confirmLabel: "Close & Dismiss",
+        cancelLabel: "Keep Using",
+      });
+      confirming = false;
+      if (!confirmed) return;
+      if (prop && !prop.used) {
+        prop.used = true;
+        prop.solid = false;
+        const idx = s.level.props.indexOf(prop);
+        if (idx >= 0) s.level.props.splice(idx, 1);
+        spawnBurst(prop.x + 0.5, prop.y + 0.5, "#fb923c", 14, 1.1);
+        spawnRing(prop.x + 0.5, prop.y + 0.5, 24, "#fb923c", 0.3);
+        addFloat(prop.x + 0.5, prop.y + 0.2, "Forge Dismissed", "#fb923c");
+        addLog("Dismissed the Runic Anvil.", "info");
+        runtime.uiDirty = true;
+        saveRun();
+      }
+      s.forgeCooldown = 1.8;
+      forgeDialogAbort?.abort();
+      if (dlg.open) dlg.close("dismissed");
+    };
+
+    document.getElementById("btn-forge-close")?.addEventListener("click", tryCloseForge, { signal: forgeDialogAbort.signal });
+    dlg.addEventListener("cancel", (e) => {
+      e.preventDefault();
+      tryCloseForge();
+    }, { signal: forgeDialogAbort.signal });
+    dlg.addEventListener("close", () => {
+      s.forgeCooldown = 1.8;
+      forgeDialogAbort?.abort();
+    }, { signal: forgeDialogAbort.signal });
     dlg.showModal();
   }
 }
+
+let storyDialogAbort = null;
 
 export function openShrineDialog(prop) {
   const s = runtime.state;
@@ -753,6 +832,36 @@ export function openShrineDialog(prop) {
 
   const choicesEl = document.getElementById("story-choices");
   choicesEl.innerHTML = "";
+  if (storyDialogAbort) storyDialogAbort.abort();
+  storyDialogAbort = new AbortController();
+  let confirming = false;
+  const dismissShrine = async () => {
+    if (confirming) return;
+    confirming = true;
+    const confirmed = await openConfirmDialog({
+      eyebrow: tpl.role || "Ancient Shrine",
+      title: `Close ${tpl.title}?`,
+      message: "Leaving without claiming a blessing will cause this Shrine to vanish from the floor. Are you sure you want to close?",
+      confirmLabel: "Close & Vanish",
+      cancelLabel: "Stay",
+    });
+    confirming = false;
+    if (!confirmed) return;
+    prop.used = true;
+    prop.solid = false;
+    const idx = s.level.props.indexOf(prop);
+    if (idx >= 0) s.level.props.splice(idx, 1);
+    const col = prop.shrineId === "blood" ? "#ef4444" : prop.shrineId === "aegis" ? "#facc15" : "#38bdf8";
+    spawnBurst(prop.x + 0.5, prop.y + 0.5, col, 14, 1.05);
+    spawnRing(prop.x + 0.5, prop.y + 0.5, 24, col, 0.3);
+    addLog(`Left ${tpl.title} behind — the altar faded away.`, "info");
+    s.shrineCooldown = 1.5;
+    runtime.uiDirty = true;
+    saveRun();
+    storyDialogAbort?.abort();
+    if (dlg.open) dlg.close("dismissed");
+  };
+
   tpl.choices.forEach((choice) => {
     const btn = document.createElement("button");
     btn.type = "button";
@@ -763,6 +872,7 @@ export function openShrineDialog(prop) {
       btn.textContent += " (Not enough Gold)";
     }
     btn.addEventListener("click", () => {
+      storyDialogAbort?.abort();
       dlg.close("chosen");
       s.shrineCooldown = 1.5;
       const p = s.player;
@@ -826,6 +936,18 @@ export function openShrineDialog(prop) {
     choicesEl.appendChild(btn);
   });
 
+  const leaveShrineBtn = document.createElement("button");
+  leaveShrineBtn.type = "button";
+  leaveShrineBtn.className = "btn btn-secondary";
+  leaveShrineBtn.textContent = "Leave Shrine (Close)";
+  leaveShrineBtn.addEventListener("click", dismissShrine, { signal: storyDialogAbort.signal });
+  choicesEl.appendChild(leaveShrineBtn);
+
+  dlg.addEventListener("cancel", (e) => {
+    e.preventDefault();
+    dismissShrine();
+  }, { signal: storyDialogAbort.signal });
+
   dlg.showModal();
 }
 
@@ -845,6 +967,34 @@ export function openStoryDialog(npc) {
 
   const choicesEl = document.getElementById("story-choices");
   choicesEl.innerHTML = "";
+  if (storyDialogAbort) storyDialogAbort.abort();
+  storyDialogAbort = new AbortController();
+  let confirming = false;
+  const dismissNpc = async () => {
+    if (confirming) return;
+    confirming = true;
+    const confirmed = await openConfirmDialog({
+      eyebrow: tpl.role || "Traveler",
+      title: `Close ${tpl.speaker}?`,
+      message: `Leaving without choosing a favor will cause ${tpl.speaker} to disappear from this floor. Do you want to close?`,
+      confirmLabel: "Close & Depart",
+      cancelLabel: "Stay",
+    });
+    confirming = false;
+    if (!confirmed) return;
+    npc.talked = true;
+    const s = runtime.state;
+    if (s?.level?.npcs) s.level.npcs = s.level.npcs.filter((n) => n !== npc);
+    spawnBurst(npc.x + 0.5, npc.y + 0.5, "#94a3b8", 12, 1.0);
+    addFloat(npc.x + 0.5, npc.y + 0.2, "Departed", "#94a3b8");
+    addLog(`${tpl.speaker} departed into the shadows.`, "info");
+    if (s) s.npcCooldown = 1.5;
+    runtime.uiDirty = true;
+    saveRun();
+    storyDialogAbort?.abort();
+    if (dlg.open) dlg.close("leave");
+  };
+
   tpl.choices.forEach((choice, i) => {
     const btn = document.createElement("button");
     btn.type = "button";
@@ -856,6 +1006,7 @@ export function openStoryDialog(npc) {
       btn.textContent += " (Not enough Gold)";
     }
     btn.addEventListener("click", () => {
+      storyDialogAbort?.abort();
       dlg.close("chosen");
       runtime.state.npcCooldown = 1.5;
       applyStoryChoice(choice, npc);
@@ -866,9 +1017,14 @@ export function openStoryDialog(npc) {
   const leaveBtn = document.createElement("button");
   leaveBtn.type = "button";
   leaveBtn.className = "btn btn-secondary";
-  leaveBtn.textContent = "Farewell (Leave)";
-  leaveBtn.addEventListener("click", () => { runtime.state.npcCooldown = 1.5; dlg.close("leave"); });
+  leaveBtn.textContent = "Farewell (Close)";
+  leaveBtn.addEventListener("click", dismissNpc, { signal: storyDialogAbort.signal });
   choicesEl.appendChild(leaveBtn);
+
+  dlg.addEventListener("cancel", (e) => {
+    e.preventDefault();
+    dismissNpc();
+  }, { signal: storyDialogAbort.signal });
 
   dlg.showModal();
 }
@@ -956,6 +1112,7 @@ function applyStoryChoice(choice, npc) {
   npc.talked = true;
   s.level.npcs = s.level.npcs.filter((n) => n !== npc);
   runtime.uiDirty = true;
+  saveRun();
 }
 
 export function openStairsDialog() {
