@@ -351,6 +351,9 @@ export function restoreRun(saved) {
   if (Array.isArray(saved.player.inventory)) saved.player.inventory.forEach(migrateEquipItem);
   if (Array.isArray(saved.level.groundItems)) saved.level.groundItems.forEach((g) => migrateEquipItem(g.item));
 
+  if (Array.isArray(saved.level.props)) {
+    saved.level.props = saved.level.props.filter((pr) => !(pr.kind === "shrine" && pr.used));
+  }
   const repairedCorridor = repairSavedFloorIfDisconnected(saved.level, saved.player);
   saved.player.z = 0;
   saved.player.leap = null;

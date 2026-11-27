@@ -1,8 +1,16 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.2.4.2";
+export const GAME_VERSION = "v.1.2.4.3";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.2.4.3",
+    title: "Hotfix — Shrine Removal, Smooth Skyfall & New Icon",
+    notes: [
+      "Claimed Shrines Unblock Path: Claiming an Ancient Shrine now cleanly removes the altar with a burst of shrine sparks so corridors never stay blocked.",
+      "Smooth Skyfall Growth & New Icon: Replaced Skyfall Judgment's icon with the new celestial greatsword artwork and made its landing zone grow smoothly from center to max radius.",
+    ],
+  },
   {
     version: "v.1.2.4.2",
     title: "Hotfix — Live FPS & Ping HUD Monitor",
@@ -230,7 +238,7 @@ export const SPELLS = [
     radii: [3.6, 4.0, 4.5],
     range: 5.0,
     type: "ultimate_leap",
-    icon: "spritecook-spell-icon-set/icon_68.png",
+    icon: "assets/generated/skill_skyfall_judgment.jpg",
     desc: "ULTIMATE (Lv 5, 10, 15): Leap into a 1.25s skyfall arc while steering your landing, then slam down in a massive concentric shockwave!",
     color: "#f97316",
   },

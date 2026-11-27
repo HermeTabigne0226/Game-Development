@@ -35,6 +35,7 @@ import {
   saveRun,
   spawnBurst,
   spawnGroundItem,
+  spawnRing,
   storyPortraitCtx,
   touchMove,
 } from "./state.js";
@@ -807,6 +808,14 @@ export function openShrineDialog(prop) {
           addLog("All Relics claimed — Shrine grants +3 ATK instead!", "loot");
         }
         prop.used = true;
+      }
+      if (prop.used) {
+        prop.solid = false;
+        const idx = s.level.props.indexOf(prop);
+        if (idx >= 0) s.level.props.splice(idx, 1);
+        const col = prop.shrineId === "blood" ? "#ef4444" : prop.shrineId === "aegis" ? "#facc15" : "#38bdf8";
+        spawnBurst(prop.x + 0.5, prop.y + 0.5, col, 16, 1.15);
+        spawnRing(prop.x + 0.5, prop.y + 0.5, 28, col, 0.35);
       }
       runtime.uiDirty = true;
       saveRun();

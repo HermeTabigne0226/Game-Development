@@ -1134,16 +1134,18 @@ export function renderFrame(ts) {
     }
   }
 
-  // Skyfall Judgment airborne landing AOE reticle & progressive 3-stage expansion
+  // Skyfall Judgment airborne landing AOE reticle & smooth continuous expansion
   if (p.leap) {
     const radPx = p.leap.spell.radii[p.leap.rankIdx] * TILE_SIZE;
     const lx = p.x * TILE_SIZE;
     const ly = p.y * TILE_SIZE;
     const prog = Math.min(1, p.leap.progress || 0);
+    const eased = 1 - Math.pow(1 - prog, 1.75);
+    const curRadPx = Math.max(10, radPx * eased);
     ctx.save();
-    ctx.fillStyle = `rgba(249, 115, 22, ${0.07 + prog * 0.14})`;
+    ctx.fillStyle = `rgba(249, 115, 22, ${0.08 + eased * 0.14})`;
     ctx.beginPath();
-    ctx.arc(lx, ly, Math.max(8, radPx * prog), 0, Math.PI * 2);
+    ctx.arc(lx, ly, curRadPx, 0, Math.PI * 2);
     ctx.fill();
 
     // Outer dashed landing range guide
@@ -1154,24 +1156,23 @@ export function renderFrame(ts) {
     ctx.arc(lx, ly, radPx, 0, Math.PI * 2);
     ctx.stroke();
 
-    const stageKey = prog < 0.34 ? "vfx_skyfall_stage1" : prog < 0.68 ? "vfx_skyfall_stage2" : "vfx_skyfall_stage3";
-    const stageImg = assets[stageKey] || assets.vfx_skyfall_reticle;
-    if (stageImg) {
+    const reticleImg = assets.vfx_skyfall_stage3 || assets.vfx_skyfall_reticle;
+    if (reticleImg) {
       ctx.save();
       ctx.imageSmoothingEnabled = false;
-      ctx.globalAlpha = 0.92;
+      ctx.globalAlpha = 0.72 + eased * 0.28;
       ctx.translate(lx, ly);
-      ctx.rotate(ts * 0.0012);
-      const sz = radPx * 2.24;
-      ctx.drawImage(stageImg, -sz / 2, -sz / 2, sz, sz);
+      ctx.rotate(ts * 0.0014);
+      const sz = Math.max(24, radPx * 2.24 * (0.28 + 0.72 * eased));
+      ctx.drawImage(reticleImg, -sz / 2, -sz / 2, sz, sz);
       ctx.restore();
     }
 
     ctx.setLineDash([]);
-    ctx.strokeStyle = "rgba(253, 224, 71, 0.85)";
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(253, 224, 71, 0.9)";
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
-    ctx.arc(lx, ly, Math.max(8, radPx * prog), 0, Math.PI * 2);
+    ctx.arc(lx, ly, curRadPx, 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
   }

@@ -1,4 +1,4 @@
-const CACHE_NAME = "shattered-crown-v48";
+const CACHE_NAME = "shattered-crown-v49";
 
 const PRECACHE_URLS = [
   "./",
@@ -73,6 +73,7 @@ const PRECACHE_URLS = [
   "./assets/audio/new audio/snes_shattered_crown_boss.wav",
   "./assets/generated/game_logo.png",
   "./assets/generated/skill_holy_smite.jpg",
+  "./assets/generated/skill_skyfall_judgment.jpg",
   "./assets/generated/skill_frost_lance.jpg",
   "./assets/generated/skill_sanctum_nova.jpg",
   "./assets/generated/skill_aegis_bulwark.jpg",
