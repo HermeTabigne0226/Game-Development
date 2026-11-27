@@ -473,7 +473,14 @@ class PvpNetworkClient {
       };
       ws.onerror = () => {
         if (this.ws !== ws) return;
-        this.lastError = "Connection failed — check Server URL and ensure host/relay is awake.";
+        const isNative = Boolean(window.Capacitor || window.AndroidApp);
+        if (isNative && /^ws:\/\/(localhost|127\.0\.0\.1)(:|\/)/i.test(url)) {
+          this.lastError = "Phone cannot join PC via localhost — enter PC's Wi-Fi IP (e.g. 192.168.x.x) or tap Scan Wi-Fi.";
+        } else if (url.startsWith("ws://") && !url.includes("localhost") && !url.includes("127.0.0.1")) {
+          this.lastError = "Cannot reach LAN Host — verify same Wi-Fi, allow port 8080 in Firewall, or Host LAN on Phone.";
+        } else {
+          this.lastError = "Connection failed — check Server URL and ensure host/relay is awake.";
+        }
         this.emitUI("error", { message: this.lastError });
       };
       ws.onclose = () => {
@@ -832,6 +839,9 @@ function applyRemoteOpponentAction(msg) {
       isSlashWave: Boolean(act.isSlashWave),
       isFrostLance: Boolean(act.isFrostLance),
       projKind: act.projKind || null,
+      bouncesLeft: Number(act.bouncesLeft) || 0,
+      rehitCd: 0,
+      lastHitUid: null,
       pierce: Boolean(act.pierce),
       hitIds: new Set(),
       life: act.life || 0.7,

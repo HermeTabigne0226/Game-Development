@@ -221,7 +221,7 @@ function handleClientMessage(client, msg) {
           id: client.id,
           client,
           heroName: String(msg.heroName || "Sir Aldric").trim().slice(0, 20) || "Sir Aldric",
-          heroClass: ["paladin", "gilded", "ranger"].includes(msg.heroClass) ? msg.heroClass : "paladin",
+          heroClass: ["mage", "gilded", "ranger"].includes(msg.heroClass) ? msg.heroClass : "gilded",
           loadout: Array.isArray(msg.loadout) ? msg.loadout.slice(0, 4) : null,
           ready: false,
         },
@@ -253,7 +253,7 @@ function handleClientMessage(client, msg) {
       id: client.id,
       client,
       heroName: String(msg.heroName || "Challenger").trim().slice(0, 20) || "Challenger",
-      heroClass: ["paladin", "gilded", "ranger"].includes(msg.heroClass) ? msg.heroClass : "paladin",
+      heroClass: ["mage", "gilded", "ranger"].includes(msg.heroClass) ? msg.heroClass : "gilded",
       loadout: Array.isArray(msg.loadout) ? msg.loadout.slice(0, 4) : null,
       ready: false,
     });
@@ -278,7 +278,7 @@ function handleClientMessage(client, msg) {
   if (msg.type === "update_player") {
     const pl = room.players[pIdx];
     if (typeof msg.heroName === "string") pl.heroName = msg.heroName.trim().slice(0, 20) || pl.heroName;
-    if (["paladin", "gilded", "ranger"].includes(msg.heroClass)) pl.heroClass = msg.heroClass;
+    if (["mage", "gilded", "ranger"].includes(msg.heroClass)) pl.heroClass = msg.heroClass;
     if (Array.isArray(msg.loadout)) pl.loadout = msg.loadout.slice(0, 4);
     if (typeof msg.ready === "boolean") pl.ready = msg.ready;
     if (pIdx === 0 && msg.mapId !== undefined) {
@@ -376,6 +376,17 @@ const server = http.createServer(async (req, res) => {
   if (urlClean === "/health") {
     res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
     res.end(JSON.stringify({ ok: true, clients: clients.size, lobbies: rooms.size }));
+    return;
+  }
+  if (urlClean === "/api/lan-info") {
+    const ips = [];
+    for (const list of Object.values(os.networkInterfaces())) {
+      for (const addr of list || []) {
+        if (addr.family === "IPv4" && !addr.internal) ips.push(addr.address);
+      }
+    }
+    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify({ ok: true, port: PORT, hostname: os.hostname(), ips, urls: ips.map((ip) => `ws://${ip}:${PORT}/ws`) }));
     return;
   }
 

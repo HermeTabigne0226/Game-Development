@@ -1167,10 +1167,25 @@ export function updateSimulation(dt) {
     }
   } else if (p.dashTimer > 0) {
     p.dashTimer -= dt;
-    const dashSpeed = 13.5;
+    const dashSpeed = p.shieldDashHitIds ? 14.2 : 13.5;
     moveWithSlide(p, p.dashDirX * dashSpeed * dt, p.dashDirY * dashSpeed * dt, 0.28);
     s.afterimages.push({ x: p.x, y: p.y, facingLeft: p.facingLeft, frame: runtime.animFrame, life: 0.18, maxLife: 0.18 });
-    if (p.heroClass === "gilded" && p.gildedDashHitIds) {
+    if (p.shieldDashHitIds) {
+      const bashDmg = Math.max(3, Math.round(stats.atk * 0.8 + stats.def * 0.5));
+      for (const e of [...s.level.enemies]) {
+        if (!p.shieldDashHitIds.has(e.uid) && Math.hypot(e.x - p.x, e.y - p.y) <= 1.35) {
+          p.shieldDashHitIds.add(e.uid);
+          damageEnemy(e, bashDmg, false, "Shield Bash", p.dashDirX * 4.6, p.dashDirY * 4.6, { pierce: true, canInterrupt: true, stunDur: 0.55 });
+          spawnRing(e.x, e.y, 34, "#38bdf8", 0.26);
+          if (s.isPvp) broadcastPvpAction({ kind: "ring", x: e.x, y: e.y, radPx: 34, color: "#38bdf8", dur: 0.26 });
+        }
+      }
+      for (const pr of s.level.props) {
+        if (pr.solid && ["crate", "barrel", "urn"].includes(pr.kind) && Math.hypot(pr.x + 0.5 - p.x, pr.y + 0.5 - p.y) <= 1.25) {
+          interactProp(pr);
+        }
+      }
+    } else if (p.heroClass === "gilded" && p.gildedDashHitIds) {
       const dmg = Math.max(2, Math.round(stats.atk * 0.75));
       for (const e of [...s.level.enemies]) {
         if (!p.gildedDashHitIds.has(e.uid) && Math.hypot(e.x - p.x, e.y - p.y) <= 1.25) {
@@ -1416,9 +1431,12 @@ export function updateSimulation(dt) {
   // Projectiles
   for (let i = s.projectiles.length - 1; i >= 0; i--) {
     const pr = s.projectiles[i];
+    const prevX = pr.x;
+    const prevY = pr.y;
     pr.x += pr.vx * dt;
     pr.y += pr.vy * dt;
     pr.life -= dt;
+    if (pr.rehitCd > 0) pr.rehitCd = Math.max(0, pr.rehitCd - dt);
 
     if (Math.random() < 0.65) {
       s.particles.push({
@@ -1449,6 +1467,24 @@ export function updateSimulation(dt) {
     };
 
     const blocked = isBlockedAt(tx, ty);
+    if (blocked && (pr.bouncesLeft || 0) > 0 && pr.life > 0) {
+      const hitX = isBlockedAt(Math.floor(pr.x), Math.floor(prevY));
+      const hitY = isBlockedAt(Math.floor(prevX), Math.floor(pr.y));
+      if (hitX) pr.vx = -pr.vx;
+      if (hitY) pr.vy = -pr.vy;
+      if (!hitX && !hitY) {
+        pr.vx = -pr.vx;
+        pr.vy = -pr.vy;
+      }
+      pr.x = prevX;
+      pr.y = prevY;
+      pr.bouncesLeft -= 1;
+      pr.lastHitUid = null;
+      sfx.arrow();
+      spawnBurst(pr.x, pr.y, pr.color || "#4ade80", 6, 0.85);
+      continue;
+    }
+
     if (pr.life <= 0 || blocked) {
       if (pr.isFrostLance) spawnFrostZone(blocked ? pr.x - pr.vx * dt * 0.6 : pr.x, blocked ? pr.y - pr.vy * dt * 0.6 : pr.y);
       else if (pr.projKind === "fireball") spawnVfxAnim(pr.x, pr.y, "vfx_fireball_impact", 72, 0.36);
@@ -1464,12 +1500,21 @@ export function updateSimulation(dt) {
         s.projectiles.splice(i, 1);
       } else if (pr.isPvpVisual && Math.hypot(pr.x - p.x, pr.y - p.y) <= pr.radius + 0.3) {
         spawnBurst(pr.x, pr.y, pr.color || "#ef4444", 6, 0.8);
-        s.projectiles.splice(i, 1);
+        if ((pr.bouncesLeft || 0) > 0) {
+          pr.bouncesLeft -= 1;
+          pr.vx = -pr.vx;
+          pr.vy = -pr.vy;
+          pr.x = prevX;
+          pr.y = prevY;
+        } else {
+          s.projectiles.splice(i, 1);
+        }
       }
     } else {
       let hit = false;
       for (const e of [...s.level.enemies]) {
         if (pr.pierce && pr.hitIds?.has(e.uid)) continue;
+        if ((pr.bouncesLeft || 0) > 0 && pr.lastHitUid === e.uid && pr.rehitCd > 0) continue;
         if (Math.hypot(pr.x - e.x, pr.y - e.y) <= pr.radius + (e.isBoss ? 0.45 : 0.35)) {
           if (pr.chill) e.chilled = typeof pr.chill === "number" ? pr.chill : 3.0;
           if (pr.sunderDur) {
@@ -1495,8 +1540,49 @@ export function updateSimulation(dt) {
             spawnVfxAnim(e.x, e.y, "vfx_arcane_burst", 64, 0.3);
           }
           if (pr.isFrostLance) spawnFrostZone(pr.x, pr.y);
-          if (pr.pierce) pr.hitIds?.add(e.uid);
-          else { hit = true; break; }
+          if ((pr.bouncesLeft || 0) > 0) {
+            pr.bouncesLeft -= 1;
+            pr.lastHitUid = e.uid;
+            pr.rehitCd = 0.14;
+            const spd = Math.hypot(pr.vx, pr.vy) || 13.5;
+            let nextTarget = null;
+            let bestDist = 6.5;
+            for (const other of s.level.enemies) {
+              if (other.uid === e.uid || other.hp <= 0) continue;
+              const d = Math.hypot(other.x - pr.x, other.y - pr.y);
+              if (d < bestDist) {
+                bestDist = d;
+                nextTarget = other;
+              }
+            }
+            if (nextTarget) {
+              const ang = Math.atan2(nextTarget.y - pr.y, nextTarget.x - pr.x);
+              pr.vx = Math.cos(ang) * spd;
+              pr.vy = Math.sin(ang) * spd;
+            } else {
+              const nx = e.x - prevX;
+              const ny = e.y - prevY;
+              const nLen = Math.hypot(nx, ny);
+              if (nLen > 0.01) {
+                const unx = nx / nLen;
+                const uny = ny / nLen;
+                const dot = pr.vx * unx + pr.vy * uny;
+                pr.vx -= 2 * dot * unx;
+                pr.vy -= 2 * dot * uny;
+              } else {
+                pr.vx = -pr.vx;
+                pr.vy = -pr.vy;
+              }
+            }
+            sfx.arrow();
+            spawnBurst(pr.x, pr.y, pr.color || "#4ade80", 6, 0.85);
+            break;
+          } else if (pr.pierce) {
+            pr.hitIds?.add(e.uid);
+          } else {
+            hit = true;
+            break;
+          }
         }
       }
       if (hit) s.projectiles.splice(i, 1);

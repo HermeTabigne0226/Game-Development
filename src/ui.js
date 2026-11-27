@@ -183,11 +183,21 @@ export function updateCooldownUI() {
     tBtn.querySelectorAll(".ts-pip").forEach((pip, idx) => pip.classList.toggle("filled", idx < rank));
   }
 
+  const subType = p.equipment?.subweapon?.subType;
+  const dashBaseLabel =
+    subType === "shield"
+      ? "Shield Dash"
+      : subType === "arrows"
+        ? "3x Arrow Dash"
+        : subType === "book"
+          ? "Blink Dash"
+          : "Dash";
   const dashBtn = document.getElementById("btn-dash");
   if (dashBtn) {
     dashBtn.disabled = p.dashCd > 0 || p.mp < 10;
     dashBtn.classList.toggle("on-cooldown", p.dashCd > 0 || p.mp < 10);
-    dashBtn.textContent = p.dashCd > 0 ? `Dash (${p.dashCd.toFixed(1)}s)` : "Dash (10 MP)";
+    dashBtn.textContent = p.dashCd > 0 ? `${dashBaseLabel} (${p.dashCd.toFixed(1)}s)` : `${dashBaseLabel} (10 MP)`;
+    dashBtn.title = "Dash skill adapts to Sub-Weapon: Shield = Shield Bash · Arrows = 3 Ricochet Arrows · Tome/Book = Blink Teleport";
   }
   const tDash = document.getElementById("touch-btn-dash");
   const tDashCd = document.getElementById("touch-dash-cd");

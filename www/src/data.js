@@ -1,8 +1,17 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.3.6";
+export const GAME_VERSION = "v.1.3.7";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.3.7",
+    title: "Sub-Weapon Dash Skills, Menu Fix, APK In-Place Updates & PvP Guide",
+    notes: [
+      "Sub-Weapon Dash Overhaul: Dash now adapts to your equipped Sub-Weapon! Shield = Shield Bash Dash (slams & stuns enemies), Arrows/Quiver = Fires 3 Bouncing Arrows (ricochet 3 times across walls & enemies), Grimoire/Book = Blink Step Teleport.",
+      "Main Menu & APK Updates: Fixed '← Menu' returning cleanly to the Main Menu, signed APK builds with a persistent keystore + auto WebView cache clear on upgrade so future APK updates apply cleanly without uninstalling.",
+      "How to Play PvP & PC-Phone LAN Helper: Added a full 'How to Play PvP' guide right on the Main Menu & PvP Arena, fixed Archmage class sync on LAN servers, and auto-displayed PC LAN IPs inside the LAN tab.",
+    ],
+  },
   {
     version: "v.1.3.6",
     title: "Arcane Archmage Class, Magic Staves, Grimoires & Animated Spell VFX",
@@ -183,8 +192,8 @@ export const HERO_CLASSES = {
     role: "Golden Champion",
     passiveName: "Templar Reflex",
     passiveDesc: "Critical hits reduce all active skill cooldowns by 0.5s.",
-    dashName: "Golden Afterimage",
-    dashDesc: "Dashing slashes enemies along your path for 75% ATK.",
+    dashName: "Sub-Weapon Dash",
+    dashDesc: "Orb/Tome: Blink Teleport · Shield: Shield Bash · Arrows: 3× Ricochet Arrows (fallback: Golden Afterimage).",
     bonusHp: 2,
     bonusMp: 0,
     bonusAtk: 2,
@@ -192,6 +201,7 @@ export const HERO_CLASSES = {
     bonusCrit: 5,
     bonusSpeed: 0,
     startWeapon: "iron_sword",
+    startSubweapon: "wooden_buckler",
   },
   ranger: {
     id: "ranger",
@@ -199,8 +209,8 @@ export const HERO_CLASSES = {
     role: "Emerald Marksman",
     passiveName: "Keen Quiver",
     passiveDesc: "Every 3rd basic attack fires a piercing emerald shot (+35% DMG).",
-    dashName: "Parting Shot",
-    dashDesc: "Dashing fires a swift arrow (70% ATK) at the nearest visible enemy.",
+    dashName: "Sub-Weapon Dash",
+    dashDesc: "Arrows: Fire 3 bouncing arrows (3 ricochets) · Shield: Shield Bash · Tome: Blink Teleport.",
     bonusHp: 0,
     bonusMp: 0,
     bonusAtk: 1,
@@ -208,6 +218,7 @@ export const HERO_CLASSES = {
     bonusCrit: 2,
     bonusSpeed: 0.45,
     startWeapon: "oak_shortbow",
+    startSubweapon: "hunter_quiver",
   },
 };
 

@@ -641,7 +641,11 @@ export function performDash() {
   sfx.dash();
 
   const stats = getPlayerStats();
-  if (p.heroClass === "mage") {
+  const subType = p.equipment?.subweapon?.subType || null;
+  p.shieldDashHitIds = null;
+  p.gildedDashHitIds = null;
+
+  if (subType === "book") {
     const startX = p.x;
     const startY = p.y;
     spawnVfxAnim(startX, startY, "vfx_blink_dash", 84, 0.48, { angle: Math.atan2(dy, dx) });
@@ -664,8 +668,11 @@ export function performDash() {
     p.dashTimer = 0.04;
     spawnVfxAnim(bx, by, "vfx_arcane_burst", 96, 0.45);
     spawnRing(bx, by, 60, "#38bdf8", 0.3);
-    if (s.isPvp) broadcastPvpAction({ kind: "vfx", x: bx, y: by, sheetKey: "vfx_arcane_burst", sizePx: 96, duration: 0.45 });
-    const dmg = Math.max(2, Math.round(stats.atk * 0.7));
+    if (s.isPvp) {
+      broadcastPvpAction({ kind: "vfx", x: startX, y: startY, sheetKey: "vfx_blink_dash", sizePx: 84, duration: 0.48, angle: Math.atan2(dy, dx) });
+      broadcastPvpAction({ kind: "vfx", x: bx, y: by, sheetKey: "vfx_arcane_burst", sizePx: 96, duration: 0.45 });
+    }
+    const dmg = Math.max(2, Math.round(stats.atk * 0.75));
     for (const e of [...s.level.enemies]) {
       const ex = e.x - bx;
       const ey = e.y - by;
@@ -676,37 +683,57 @@ export function performDash() {
         damageEnemy(e, dmg, false, "Blink Step", nx * 4.2, ny * 4.2, { isAoe: true });
       }
     }
+  } else if (subType === "shield") {
+    p.shieldDashHitIds = new Set();
+    p.dashTimer = 0.18;
+    p.iFrames = Math.max(p.iFrames, 0.28);
+    spawnBurst(p.x, p.y, "#38bdf8", 12, 1.05);
+    spawnRing(p.x, p.y, 44, "#facc15", 0.26);
+    if (s.isPvp) broadcastPvpAction({ kind: "ring", x: p.x, y: p.y, radPx: 44, color: "#facc15", dur: 0.26 });
+  } else if (subType === "arrows") {
+    spawnBurst(p.x, p.y, "#4ade80", 12, 0.95);
+    const aimAng = getAimAngle();
+    sfx.arrow();
+    const arrowDmg = Math.max(2, Math.round(stats.atk * 0.65));
+    for (const offset of [-0.24, 0, 0.24]) {
+      const ang = aimAng + offset;
+      const vx = Math.cos(ang) * 13.5;
+      const vy = Math.sin(ang) * 13.5;
+      s.projectiles.push({
+        x: p.x,
+        y: p.y,
+        vx,
+        vy,
+        radius: 0.24,
+        color: "#4ade80",
+        dmg: arrowDmg,
+        isEnemy: false,
+        isArrow: true,
+        bouncesLeft: 3,
+        rehitCd: 0,
+        lastHitUid: null,
+        life: 1.85,
+        maxLife: 1.85,
+        label: "Ricochet Arrow",
+      });
+      if (s.isPvp) {
+        broadcastPvpAction({
+          kind: "projectile",
+          x: p.x,
+          y: p.y,
+          vx,
+          vy,
+          radius: 0.24,
+          color: "#4ade80",
+          isArrow: true,
+          bouncesLeft: 3,
+          life: 1.85,
+        });
+      }
+    }
   } else if (p.heroClass === "gilded") {
     p.gildedDashHitIds = new Set();
     spawnBurst(p.x, p.y, "#facc15", 10, 0.95);
-  } else if (p.heroClass === "ranger") {
-    spawnBurst(p.x, p.y, "#4ade80", 10, 0.9);
-    let nearest = null;
-    let bestDist = 8.0;
-    for (const e of s.level.enemies) {
-      if (e.isBoss && !s.bossFightStarted) continue;
-      if (!s.level.visible[Math.floor(e.y)]?.[Math.floor(e.x)]) continue;
-      const d = Math.hypot(e.x - p.x, e.y - p.y);
-      if (d < bestDist) {
-        bestDist = d;
-        nearest = e;
-      }
-    }
-    const shotAng = nearest ? Math.atan2(nearest.y - p.y, nearest.x - p.x) : Math.atan2(-dy, -dx);
-    sfx.arrow();
-    s.projectiles.push({
-      x: p.x,
-      y: p.y,
-      vx: Math.cos(shotAng) * 14.0,
-      vy: Math.sin(shotAng) * 14.0,
-      radius: 0.22,
-      color: "#4ade80",
-      dmg: Math.max(2, Math.round(stats.atk * 0.7)),
-      isEnemy: false,
-      isArrow: true,
-      life: 0.75,
-      label: "Parting Shot",
-    });
   } else {
     spawnBurst(p.x, p.y, "#38bdf8", 8, 0.9);
   }

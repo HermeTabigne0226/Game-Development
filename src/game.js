@@ -326,6 +326,10 @@ function setupControls() {
     openPvpDialog();
   });
 
+  document.getElementById("menu-btn-pvp-guide")?.addEventListener("click", () => {
+    document.getElementById("pvp-guide-dialog")?.showModal();
+  });
+
   document.getElementById("menu-btn-resume").addEventListener("click", () => {
     const saved = loadSavedRun();
     if (saved) {
@@ -372,9 +376,10 @@ function setupControls() {
   });
   document.getElementById("btn-title-back")?.addEventListener("click", () => {
     document.getElementById("title-dialog").close("back");
-    if (!runtime.state?.startedByUser || runtime.state?.runEnded) {
-      showMainMenu();
+    if (runtime.state?.startedByUser && !runtime.state?.runEnded && !runtime.state?.isPvp) {
+      saveRun();
     }
+    showMainMenu();
   });
   document.getElementById("btn-stairs-stay").addEventListener("click", () => {
     runtime.state.stairsCooldown = 2.0;

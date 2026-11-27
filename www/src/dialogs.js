@@ -1591,7 +1591,21 @@ export function openPvpDialog() {
         lanHostDesc.innerHTML = `HTTPS pages (Vercel) block <code>ws://</code> LAN sockets. For offline Wi-Fi LAN, open <code>http://&lt;Host-PC-or-Phone-IP&gt;:8080</code> directly in browser, or use <b>Network</b> tab.`;
       } else {
         lanHostTitle.textContent = "Local PC / LAN Server";
-        lanHostDesc.innerHTML = `Run <code>node server.js</code> on PC (or host from Android APK), then join <code>localhost</code> or Host IP (<code>192.168.x.x</code>).`;
+        lanHostDesc.innerHTML = `Run <code>node server.js</code> on PC. PC uses <code>localhost</code>; Phone APK must enter PC Wi-Fi IP (<code>192.168.x.x</code>) or tap <b>Scan Wi-Fi</b>.`;
+        if (proto === "http:" && !syncModeAndLanHostUI._fetchedLan) {
+          syncModeAndLanHostUI._fetchedLan = true;
+          fetch("/api/lan-info")
+            .then((r) => (r.ok ? r.json() : null))
+            .then((info) => {
+              if (info?.ips?.length) {
+                activeLanHostIp = info.ips[0];
+                lanHostTitle.textContent = `PC LAN IP: ${info.ips.join(" / ")} : ${info.port || 8080}`;
+                lanHostDesc.innerHTML = `Tell your <b>Phone APK</b> to enter <code>${activeLanHostIp}</code> (or tap <b>Scan Wi-Fi</b>) in the LAN tab. Do <b>not</b> use <code>localhost</code> on the phone.`;
+                if (lanCopyIpBtn) lanCopyIpBtn.hidden = false;
+              }
+            })
+            .catch(() => {});
+        }
       }
     }
     if (lanScanBtn) {
@@ -1758,6 +1772,11 @@ export function openPvpDialog() {
     if (evt === "error" && pvpNet.lastError && statusEl) {
       statusEl.textContent = pvpNet.lastError;
     }
+  }
+
+  const guideOpenBtn = document.getElementById("btn-pvp-guide-open");
+  if (guideOpenBtn) {
+    guideOpenBtn.onclick = () => document.getElementById("pvp-guide-dialog")?.showModal();
   }
 
   for (const hBtn of document.querySelectorAll(".pvp-hero-btn")) {

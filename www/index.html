@@ -52,6 +52,7 @@
           <div class="menu-buttons">
             <button type="button" id="menu-btn-play" class="btn btn-primary btn-lg medieval-btn">New Quest</button>
             <button type="button" id="menu-btn-pvp" class="btn btn-secondary btn-lg medieval-btn pvp-menu-btn">PvP Arena (1v1)</button>
+            <button type="button" id="menu-btn-pvp-guide" class="btn btn-secondary btn-lg medieval-btn">How to Play PvP</button>
             <button type="button" id="menu-btn-resume" class="btn btn-secondary btn-lg medieval-btn" hidden>Resume</button>
             <button type="button" id="menu-btn-settings" class="btn btn-secondary btn-lg medieval-btn">Settings</button>
             <button type="button" id="menu-btn-patch-notes" class="btn btn-secondary btn-lg medieval-btn patch-btn has-new-patch">
@@ -506,7 +507,7 @@
         <ul>
           <li><strong>Move:</strong> Hold <kbd>WASD</kbd> or Arrow keys for smooth real-time movement. Walk into chests, wells, shrines, anvils, stairs, and NPCs to interact!</li>
           <li><strong>Attack:</strong> Press <kbd>J</kbd> or <strong>Left Click</strong> on the map to strike or fire toward your cursor and smash crates/barrels.</li>
-          <li><strong>Class Dash:</strong> Press <kbd>Space</kbd> to dash with brief invulnerability frames plus your hero's class Dash perk!</li>
+          <li><strong>Sub-Weapon Dash:</strong> Press <kbd>Space</kbd> to Dash (10 MP): <strong>Shield</strong> = Shield Bash slam &amp; stun · <strong>Arrows/Quiver</strong> = Fires 3 Arrows (3 wall/enemy bounces) · <strong>Grimoire/Book</strong> = Blink Teleport + Arcane Burst!</li>
           <li><strong>Spells:</strong> Press <kbd>1</kbd>–<kbd>4</kbd> or click a spell icon to cast immediately toward your cursor.</li>
           <li><strong>Quick Potions:</strong> Press <kbd>Q</kbd> for Health Potion, <kbd>E</kbd> for Mana Potion.</li>
           <li><strong>Victory &amp; Endless:</strong> Defeat the 3 Act Bosses (Floors 4, 8, and 12) to reforge the Crown, then continue into the Endless Abyss (Floors 13+) if you dare!</li>
@@ -559,7 +560,7 @@
           <div class="hero-class-info">
             <strong>Arcane Archmage</strong>
             <span class="hero-class-role">Celestial Spellcaster</span>
-            <p>+6 MP, +1 ATK · 3rd cast fires Arcane Orb (+2 MP) · Dash: Blink Step.</p>
+            <p>+10 MP, +2 ATK · 3rd cast fires Arcane Orb (+2 MP) · Tome Dash: Blink Teleport.</p>
           </div>
         </button>
         <button type="button" id="btn-hero-gilded" class="hero-class-card" data-hero="gilded">
@@ -567,7 +568,7 @@
           <div class="hero-class-info">
             <strong>Gilded Knight</strong>
             <span class="hero-class-role">Golden Champion</span>
-            <p>+2 HP, +2 ATK, +1 DEF, +5% CRIT · Crits trim CDs · Dash: Golden Slash.</p>
+            <p>+2 HP, +2 ATK, +1 DEF, +5% CRIT · Crits trim CDs · Shield Dash: Bash &amp; Stun.</p>
           </div>
         </button>
         <button type="button" id="btn-hero-ranger" class="hero-class-card" data-hero="ranger">
@@ -575,7 +576,7 @@
           <div class="hero-class-info">
             <strong>Sylvan Ranger</strong>
             <span class="hero-class-role">Emerald Marksman</span>
-            <p>+1 ATK, +1 DEF, +Speed · 3rd shot pierces · Dash: Parting Arrow.</p>
+            <p>+1 ATK, +1 DEF, +Speed · 3rd shot pierces · Quiver Dash: 3 Bouncing Arrows.</p>
           </div>
         </button>
       </div>
@@ -755,6 +756,7 @@
         </div>
         <div class="pvp-header-right">
           <span id="pvp-conn-pill" class="pvp-conn-pill offline">Offline</span>
+          <button type="button" id="btn-pvp-guide-open" class="btn btn-secondary btn-sm">How to Play (?)</button>
           <form method="dialog">
             <button id="btn-pvp-close" value="close" class="btn btn-secondary">Close</button>
           </form>
@@ -861,6 +863,42 @@
             <button type="button" id="btn-pvp-start" class="btn btn-primary" hidden>Start PvP Match</button>
           </div>
         </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- How to Play PvP Modal -->
+  <dialog id="pvp-guide-dialog" closedby="any" aria-labelledby="pvp-guide-title">
+    <div class="dialog-card">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">Multiplayer Guide</span>
+          <h1 id="pvp-guide-title">How to Play 1v1 PvP (Online &amp; LAN)</h1>
+        </div>
+        <form method="dialog">
+          <button value="close" class="btn btn-secondary" autofocus>Close</button>
+        </form>
+      </div>
+      <div class="help-content">
+        <p><strong>Option 1 — Online Network PvP (Easiest: Phone APK, Vercel Web, PC):</strong></p>
+        <ul>
+          <li>Open <strong>PvP Arena (1v1)</strong> and stay on the <strong>Network</strong> tab (auto-connects to the Cloud Relay; wait up to ~30s if the free server is waking up).</li>
+          <li>One player creates a Lobby; the 2nd player clicks <strong>Refresh</strong> and joins, then both pick Hero/Skills and click <strong>Ready Up</strong>!</li>
+        </ul>
+
+        <p><strong>Option 2 — PC &harr; Phone LAN PvP (Same Wi-Fi / Router):</strong></p>
+        <ul>
+          <li><strong>Step 1 (On PC):</strong> Run <code>node server.js</code> (or <code>npm run serve</code>). Open <code>http://localhost:8080</code> on your PC browser. Check the PC console (or the LAN box) for your PC's Wi-Fi IP (e.g. <code>192.168.1.12</code>).</li>
+          <li><strong>Step 2 (Important!):</strong> Do <strong>NOT</strong> type <code>localhost</code> on your Phone — on a phone, <code>localhost</code> means the phone itself! Instead, open the <strong>LAN</strong> tab in your Phone APK and tap <strong>Scan Wi-Fi</strong>, or type your PC's Wi-Fi IP (<code>192.168.x.x</code>) and tap <strong>Join IP</strong>.</li>
+          <li><strong>Firewall Check:</strong> If your Phone cannot connect to your PC IP, allow <strong>Node.js</strong> (TCP port <code>8080</code> &amp; UDP port <code>8081</code>) through Windows Defender Firewall on Private networks, or switch to Option 3 below!</li>
+        </ul>
+
+        <p><strong>Option 3 — Phone &harr; Phone LAN PvP (Zero PC / No Internet):</strong></p>
+        <ul>
+          <li>Turn on Mobile Hotspot on Phone A (and connect Phone B to it), or put both phones on the same Wi-Fi.</li>
+          <li><strong>Phone A (Host APK):</strong> Open <strong>PvP Arena</strong> &rarr; <strong>LAN</strong> tab &rarr; tap <strong>Host LAN on Phone</strong> &rarr; Create Lobby.</li>
+          <li><strong>Phone B (Joiner APK or Browser):</strong> Open <strong>LAN</strong> tab &rarr; tap <strong>Scan Wi-Fi</strong> (or enter Phone A's shown IP, e.g. <code>192.168.43.1</code>) &rarr; Join Lobby!</li>
+        </ul>
       </div>
     </div>
   </dialog>

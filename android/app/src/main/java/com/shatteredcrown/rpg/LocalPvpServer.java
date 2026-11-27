@@ -403,6 +403,25 @@ public final class LocalPvpServer {
             writeHttpResponse(out, 200, "OK", "application/json; charset=utf-8", body, "HEAD".equals(method));
             return;
         }
+        if ("/api/lan-info".equals(cleanUrl)) {
+            JSONObject obj = new JSONObject();
+            try {
+                String ip = getLocalLanIp();
+                JSONArray ips = new JSONArray();
+                JSONArray urls = new JSONArray();
+                if (ip != null && !ip.isEmpty() && !"127.0.0.1".equals(ip)) {
+                    ips.put(ip);
+                    urls.put("ws://" + ip + ":" + boundPort + "/ws");
+                }
+                obj.put("ok", true);
+                obj.put("port", boundPort);
+                obj.put("ips", ips);
+                obj.put("urls", urls);
+            } catch (Exception ignored) {}
+            byte[] body = obj.toString().getBytes(StandardCharsets.UTF_8);
+            writeHttpResponse(out, 200, "OK", "application/json; charset=utf-8", body, "HEAD".equals(method));
+            return;
+        }
 
         if (!"GET".equals(method) && !"HEAD".equals(method)) {
             writeHttpResponse(out, 405, "Method Not Allowed", "text/plain; charset=utf-8", "Method Not Allowed".getBytes(StandardCharsets.UTF_8), false);
@@ -703,8 +722,8 @@ public final class LocalPvpServer {
             if (name.length() > 28) name = name.substring(0, 28);
             int mapId = Math.max(0, Math.min(3, msg.optInt("mapId", 0)));
             String pwHash = hashPassword(msg.optString("password", ""));
-            String heroClass = msg.optString("heroClass", "paladin");
-            if (!"gilded".equals(heroClass) && !"ranger".equals(heroClass)) heroClass = "paladin";
+            String heroClass = msg.optString("heroClass", "gilded");
+            if (!"mage".equals(heroClass) && !"gilded".equals(heroClass) && !"ranger".equals(heroClass)) heroClass = "gilded";
             JSONArray loadout = msg.optJSONArray("loadout");
 
             Room r = new Room(id, name, mapId, pwHash, client.ip);
@@ -741,8 +760,8 @@ public final class LocalPvpServer {
                 String heroName = msg.optString("heroName", "Challenger").trim();
                 if (heroName.isEmpty()) heroName = "Challenger";
                 if (heroName.length() > 20) heroName = heroName.substring(0, 20);
-                String heroClass = msg.optString("heroClass", "paladin");
-                if (!"gilded".equals(heroClass) && !"ranger".equals(heroClass)) heroClass = "paladin";
+                String heroClass = msg.optString("heroClass", "gilded");
+                if (!"mage".equals(heroClass) && !"gilded".equals(heroClass) && !"ranger".equals(heroClass)) heroClass = "gilded";
                 JSONArray loadout = msg.optJSONArray("loadout");
                 r.players.add(new PlayerSlot(client.id, client, heroName, heroClass, loadout));
                 client.roomId = r.id;
@@ -789,7 +808,7 @@ public final class LocalPvpServer {
                 }
                 if (msg.has("heroClass")) {
                     String hc = msg.optString("heroClass", pl.heroClass);
-                    if ("paladin".equals(hc) || "gilded".equals(hc) || "ranger".equals(hc)) pl.heroClass = hc;
+                    if ("mage".equals(hc) || "gilded".equals(hc) || "ranger".equals(hc)) pl.heroClass = hc;
                 }
                 if (msg.has("loadout")) pl.loadout = msg.optJSONArray("loadout");
                 if (msg.has("ready")) pl.ready = msg.optBoolean("ready", pl.ready);
