@@ -835,6 +835,20 @@ export function updateSimulation(dt) {
     p.ultCharge.timer -= dt;
     p.anim = "attack";
     p.animTimer = 0.2;
+    if (Math.random() < 0.55) {
+      const ang = Math.random() * Math.PI * 2;
+      const rad = 10 + Math.random() * 24;
+      s.particles.push({
+        x: p.x * TILE_SIZE + Math.cos(ang) * rad,
+        y: p.y * TILE_SIZE + Math.sin(ang) * rad - 10,
+        vx: -Math.cos(ang) * 18,
+        vy: -24 - Math.random() * 18,
+        color: Math.random() < 0.5 ? "#fde047" : "#f59e0b",
+        size: 3,
+        life: 0.28,
+        maxLife: 0.28,
+      });
+    }
     if (p.ultCharge.timer <= 0) {
       const { rankIdx, spell } = p.ultCharge;
       p.ultCharge = null;
@@ -869,10 +883,28 @@ export function updateSimulation(dt) {
     rc.timer -= dt;
     p.anim = "attack";
     p.animTimer = 0.18;
-    if (mouse.inside && mouse.x !== null) {
+    if (touchAim.active && (Math.abs(touchAim.x) > 0.1 || Math.abs(touchAim.y) > 0.1)) {
+      rc.angle = Math.atan2(touchAim.y, touchAim.x);
+      p.aimAngle = rc.angle;
+      p.facingLeft = Math.cos(rc.angle) < 0;
+    } else if (mouse.inside && mouse.x !== null) {
       rc.angle = Math.atan2(mouse.y - p.y, mouse.x - p.x);
       p.aimAngle = rc.angle;
       p.facingLeft = Math.cos(rc.angle) < 0;
+    }
+    if (Math.random() < 0.7) {
+      const ang = rc.angle + (Math.random() - 0.5) * 1.4;
+      const distPx = 18 + Math.random() * 20;
+      s.particles.push({
+        x: p.x * TILE_SIZE + Math.cos(ang) * distPx,
+        y: p.y * TILE_SIZE + Math.sin(ang) * distPx,
+        vx: -Math.cos(ang) * 26,
+        vy: -Math.sin(ang) * 26,
+        color: Math.random() < 0.55 ? "#fb923c" : "#fde047",
+        size: 3,
+        life: 0.22,
+        maxLife: 0.22,
+      });
     }
     if (rc.timer <= 0) {
       p.radiantCharge = null;
@@ -930,6 +962,18 @@ export function updateSimulation(dt) {
 
       s.afterimages.push({ x: p.x, y: p.y, facingLeft: p.facingLeft, frame: runtime.animFrame, life: 0.2, maxLife: 0.2 });
       if (s.afterimages.length > 10) s.afterimages.shift();
+      for (let k = 0; k < 2; k++) {
+        s.particles.push({
+          x: p.x * TILE_SIZE + (Math.random() - 0.5) * 12,
+          y: p.y * TILE_SIZE + (Math.random() - 0.5) * 12,
+          vx: -vc.dirX * 55 + (Math.random() - 0.5) * 28,
+          vy: -vc.dirY * 55 + (Math.random() - 0.5) * 28,
+          color: Math.random() < 0.55 ? "#38bdf8" : "#facc15",
+          size: 3.5,
+          life: 0.24,
+          maxLife: 0.24,
+        });
+      }
 
       const headTipX = p.x + vc.dirX * 1.15;
       const headTipY = p.y + vc.dirY * 1.15;
@@ -942,6 +986,8 @@ export function updateSimulation(dt) {
           const wallPinned = Math.hypot(e.x - prevX, e.y - prevY) < 0.45;
           const finalDmg = wallPinned ? Math.round(vc.baseDmg * (1 + vc.wallBonus)) : vc.baseDmg;
           damageEnemy(e, finalDmg, wallPinned, vc.spell.name, vc.dirX * 4.0, vc.dirY * 4.0, { isSkill: true, pierce: true });
+          spawnBurst(e.x, e.y, "#38bdf8", 14, 1.3);
+          spawnRing(e.x, e.y, wallPinned ? 44 : 32, "#facc15", 0.32);
           if (wallPinned) addFloat(e.x, e.y - 0.45, "WALL SLAM!", "#facc15");
         }
       }
@@ -962,7 +1008,9 @@ export function updateSimulation(dt) {
           { x: impactX * TILE_SIZE, y: impactY * TILE_SIZE, angle: ang - 0.6, radius: 42, life: 0.18, maxLife: 0.18, color: "#fde047" }
         );
         spawnBurst(impactX, impactY, "#facc15", 20, 1.45);
+        spawnBurst(impactX, impactY, "#38bdf8", 14, 1.25);
         spawnRing(impactX, impactY, 1.75 * TILE_SIZE, "#38bdf8", 0.3, { delay: 0, lineWidth: 3 });
+        spawnRing(impactX, impactY, 2.05 * TILE_SIZE, "#fde047", 0.38, { delay: 0.06, lineWidth: 2.5 });
         for (const e of [...s.level.enemies]) {
           if (Math.hypot(e.x - impactX, e.y - impactY) <= 1.75 || Math.hypot(e.x - p.x, e.y - p.y) <= 1.35) {
             damageEnemy(e, finDmg, false, `${vc.spell.name} Burst`, vc.dirX * 3.5, vc.dirY * 3.5, { isSkill: true, isAoe: true });
@@ -1000,6 +1048,19 @@ export function updateSimulation(dt) {
       moveWithSlide(p, p.leap.dirX * 2.2 * dt, p.leap.dirY * 2.2 * dt, 0.28);
     }
 
+    if (Math.random() < 0.6) {
+      s.particles.push({
+        x: p.x * TILE_SIZE + (Math.random() - 0.5) * 14,
+        y: p.y * TILE_SIZE - p.z * 0.65,
+        vx: (Math.random() - 0.5) * 24,
+        vy: 18 + Math.random() * 24,
+        color: Math.random() < 0.5 ? "#fde047" : "#f97316",
+        size: 3,
+        life: 0.24,
+        maxLife: 0.24,
+      });
+    }
+
     if (t >= 1) {
       p.z = 0;
       p.leap = null;
@@ -1013,8 +1074,11 @@ export function updateSimulation(dt) {
       spawnRing(p.x, p.y, radPx * 0.88, "#ffffff", 0.36, { delay: 0, lineWidth: 3.5 });
       spawnRing(p.x, p.y, radPx * 1.0, "#fde047", 0.44, { delay: 0.07, lineWidth: 3 });
       spawnRing(p.x, p.y, radPx * 1.12, "#f97316", 0.52, { delay: 0.14, lineWidth: 2.8 });
+      spawnRing(p.x, p.y, radPx * 0.72, "#38bdf8", 0.44, { delay: 0.21, lineWidth: 2.4 });
+      spawnRing(p.x, p.y, radPx * 1.24, "#fef08a", 0.56, { delay: 0.28, lineWidth: 2 });
       s.beams.push({ x: p.x * TILE_SIZE, y: p.y * TILE_SIZE, color: "#fde047", life: 0.38, maxLife: 0.38 });
       spawnBurst(p.x, p.y, "#f97316", 32, 1.7);
+      spawnBurst(p.x, p.y, "#fde047", 20, 1.35);
 
       for (const e of [...s.level.enemies]) {
         const dx = e.x - p.x;

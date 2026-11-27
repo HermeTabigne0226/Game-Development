@@ -722,6 +722,11 @@ export function renderFrame(ts) {
         ctx.beginPath();
         ctx.arc(-6, 0, rad, -1.0, 1.0);
         ctx.stroke();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(-3, 0, rad, -0.92, 0.92);
+        ctx.stroke();
       } else if (pr.isMagicOrb) {
         const rad = pr.radius * TILE_SIZE;
         ctx.globalAlpha = 0.32;
@@ -773,6 +778,19 @@ export function renderFrame(ts) {
       ctx.arc(zx, zy, radPx, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
+      ctx.strokeStyle = "rgba(125, 211, 252, 0.38)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(zx, zy, radPx * 0.58, 0, Math.PI * 2);
+      ctx.stroke();
+      const rot = ts * 0.0012;
+      for (let k = 0; k < 3; k++) {
+        const a = rot + (k * Math.PI) / 3;
+        ctx.beginPath();
+        ctx.moveTo(zx + Math.cos(a) * radPx * 0.85, zy + Math.sin(a) * radPx * 0.85);
+        ctx.lineTo(zx - Math.cos(a) * radPx * 0.85, zy - Math.sin(a) * radPx * 0.85);
+        ctx.stroke();
+      }
       ctx.restore();
     }
   }
@@ -820,21 +838,215 @@ export function renderFrame(ts) {
     ctx.restore();
   }
 
+  if (p.radiantCharge) {
+    const rc = p.radiantCharge;
+    const prog = Math.min(1, 1 - rc.timer / rc.duration);
+    const pxCenter = p.x * TILE_SIZE;
+    const pyCenter = p.y * TILE_SIZE;
+    const arcRad = 22 + prog * 14;
+    ctx.save();
+    ctx.strokeStyle = `rgba(251, 146, 60, ${0.4 + prog * 0.45})`;
+    ctx.fillStyle = `rgba(250, 204, 21, ${0.08 + prog * 0.14})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(pxCenter, pyCenter, 28 - prog * 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.translate(pxCenter, pyCenter);
+    ctx.rotate(rc.angle);
+    ctx.strokeStyle = `rgba(249, 115, 22, ${0.5 + prog * 0.5})`;
+    ctx.lineWidth = 5 + prog * 5;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.arc(6, 0, arcRad, -1.05, 1.05);
+    ctx.stroke();
+    ctx.strokeStyle = `rgba(254, 240, 138, ${0.45 + prog * 0.55})`;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(9, 0, arcRad, -0.95 * prog, 0.95 * prog);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   if (p.ultCharge) {
     const uc = p.ultCharge;
     const prog = Math.min(1, 1 - uc.timer / uc.duration);
     const radPx = uc.spell.radii[uc.rankIdx] * TILE_SIZE;
+    const pxCenter = p.x * TILE_SIZE;
+    const pyCenter = p.y * TILE_SIZE;
     ctx.save();
     ctx.strokeStyle = `rgba(251, 191, 36, ${0.45 + Math.sin(ts * 0.015) * 0.25})`;
     ctx.fillStyle = `rgba(251, 191, 36, ${0.08 + prog * 0.14})`;
     ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.arc(p.x * TILE_SIZE, p.y * TILE_SIZE, radPx, 0, Math.PI * 2);
+    ctx.arc(pxCenter, pyCenter, radPx, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+    ctx.strokeStyle = "#fef08a";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(pxCenter, pyCenter, radPx * prog, 0, Math.PI * 2);
+    ctx.stroke();
+    const lift = 24 + Math.sin(prog * Math.PI * 0.5) * 10;
+    const sy = pyCenter - lift - pz;
+    ctx.translate(pxCenter + (p.facingLeft ? -4 : 4), sy);
+    ctx.fillStyle = "#fef9c3";
+    ctx.strokeStyle = "#f59e0b";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, -28);
+    ctx.lineTo(4, -6);
+    ctx.lineTo(-4, -6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#eab308";
+    ctx.fillRect(-8, -6, 16, 4);
+    ctx.fillStyle = "#78350f";
+    ctx.fillRect(-2, -2, 4, 8);
     ctx.restore();
   }
 
+  // Valiant Charge extending spear thrust (windup) & dynamic war-lance surge (dash)
+  if (p.valiantCharge) {
+    const vc = p.valiantCharge;
+    const ang = Math.atan2(vc.dirY, vc.dirX);
+    const sx = vc.startX * TILE_SIZE;
+    const sy = vc.startY * TILE_SIZE;
+    const spearMaxPx = (vc.spearDistMax || 1.35) * TILE_SIZE;
+    const spearEx = sx + Math.cos(ang) * spearMaxPx;
+    const spearEy = sy + Math.sin(ang) * spearMaxPx;
+
+    if (vc.phase === "windup") {
+      const prog = Math.min(1, 1 - vc.timer / vc.windupDur);
+      const eased = 1 - Math.pow(1 - prog, 2.2);
+      const spearLen = (0.55 + ((vc.spearDistMax || 1.35) - 0.55) * eased) * TILE_SIZE;
+      const tipX = sx + Math.cos(ang) * spearLen;
+      const tipY = sy + Math.sin(ang) * spearLen;
+
+      ctx.save();
+      ctx.strokeStyle = `rgba(56, 189, 248, ${0.28 + prog * 0.25})`;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(spearEx, spearEy);
+      ctx.stroke();
+
+      ctx.setLineDash([]);
+      ctx.strokeStyle = `rgba(250, 204, 21, ${0.5 + prog * 0.45})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(spearEx, spearEy, 11 + (1 - eased) * 10, 0, Math.PI * 2);
+      ctx.stroke();
+
+      const grad = ctx.createLinearGradient(sx, sy, tipX, tipY);
+      grad.addColorStop(0, "rgba(56, 189, 248, 0.25)");
+      grad.addColorStop(0.55, "rgba(250, 204, 21, 0.85)");
+      grad.addColorStop(1, "#ffffff");
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 7;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(tipX, tipY);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#e0f2fe";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(tipX, tipY);
+      ctx.stroke();
+
+      ctx.translate(tipX, tipY);
+      ctx.rotate(ang);
+      ctx.strokeStyle = "rgba(56, 189, 248, 0.8)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-14, -13);
+      ctx.lineTo(6, 0);
+      ctx.lineTo(-14, 13);
+      ctx.stroke();
+
+      ctx.fillStyle = "#fde047";
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(16, 0);
+      ctx.lineTo(-10, -8);
+      ctx.lineTo(-5, 0);
+      ctx.lineTo(-10, 8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#38bdf8";
+      ctx.beginPath();
+      ctx.moveTo(10, 0);
+      ctx.lineTo(-4, -3.5);
+      ctx.lineTo(-4, 3.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    } else {
+      const hx = p.x * TILE_SIZE;
+      const hy = p.y * TILE_SIZE;
+      const wakeGrad = ctx.createLinearGradient(sx, sy, hx, hy);
+      wakeGrad.addColorStop(0, "rgba(56, 189, 248, 0.15)");
+      wakeGrad.addColorStop(0.5, "rgba(56, 189, 248, 0.65)");
+      wakeGrad.addColorStop(1, "rgba(250, 204, 21, 0.95)");
+
+      ctx.save();
+      ctx.strokeStyle = wakeGrad;
+      ctx.lineWidth = 14;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(hx, hy);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(hx, hy);
+      ctx.stroke();
+
+      ctx.translate(hx, hy - pz * 0.5);
+      ctx.rotate(ang);
+      ctx.strokeStyle = "rgba(56, 189, 248, 0.9)";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(-4, -18);
+      ctx.lineTo(24, 0);
+      ctx.lineTo(-4, 18);
+      ctx.stroke();
+
+      ctx.fillStyle = "#fde047";
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(38, 0);
+      ctx.lineTo(6, -13);
+      ctx.lineTo(12, 0);
+      ctx.lineTo(6, 13);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#38bdf8";
+      ctx.beginPath();
+      ctx.moveTo(30, 0);
+      ctx.lineTo(13, -5);
+      ctx.lineTo(13, 5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  // Skyfall Judgment airborne landing AOE reticle & countdown indicator
   if (p.leap) {
     const radPx = p.leap.spell.radii[p.leap.rankIdx] * TILE_SIZE;
     const lx = p.x * TILE_SIZE;
@@ -845,10 +1057,25 @@ export function renderFrame(ts) {
     ctx.beginPath();
     ctx.arc(lx, ly, radPx, 0, Math.PI * 2);
     ctx.fill();
+
+    ctx.strokeStyle = "rgba(249, 115, 22, 0.85)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([7, 5]);
+    ctx.beginPath();
+    ctx.arc(lx, ly, radPx, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.setLineDash([]);
     ctx.strokeStyle = "rgba(253, 224, 71, 0.9)";
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(lx, ly, Math.max(8, radPx * frac), 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
+    ctx.lineWidth = 1.25;
+    ctx.beginPath();
+    ctx.arc(lx, ly, radPx * 0.45, 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
   }
