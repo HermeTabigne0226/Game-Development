@@ -1,15 +1,8 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.0.3.5 Beta";
+export const GAME_VERSION = "v.1.0.3.4 Beta";
 
 export const PATCH_NOTES = [
-  {
-    version: "v.1.0.3.5 Beta",
-    title: "Pixel-Art RPG Menu & Pause Buttons",
-    notes: [
-      "Custom Pixel-Art Button Sprites: Applied ornate gold, wood-and-bronze, steel arena, riveted iron, gold-trimmed stone, weathered stone, and rusted iron button artwork to both the Main Menu and In-Game Pause Menu.",
-    ],
-  },
   {
     version: "v.1.0.3.4 Beta",
     title: "Restructured RPG Main Menu",
