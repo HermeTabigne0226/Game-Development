@@ -1,8 +1,16 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.3.4";
+export const GAME_VERSION = "v.1.3.5";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.3.5",
+    title: "Pixel-Art 1-Screen Quest Setup Wizard",
+    notes: [
+      "Pixel-Art Quest Setup Theme: Styled the Quest Details, Hero Select, and Skill Loadout screens with crisp pixel stone/gold borders, beveled pixel buttons, and a step-by-step progress bar (1. Details -> 2. Hero -> 3. Skills -> Play).",
+      "One-Screen No-Scroll Sanctum Layout: Reorganized Quest Details, Hero Name/Difficulty, and tabbed Soul Blessings / Soul Forge side-by-side so Next: Select Hero is always visible without scrolling.",
+    ],
+  },
   {
     version: "v.1.3.4",
     title: "Network vs LAN Mode Tabs & Phone-to-Phone LAN Hosting",

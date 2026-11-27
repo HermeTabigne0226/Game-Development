@@ -3146,6 +3146,360 @@ dialog::backdrop {
   gap: 14px;
 }
 
+/* ==========================================================================
+   Pixel-Art Quest Setup Wizard (#title-dialog, #hero-dialog, #loadout-dialog)
+   ========================================================================== */
+dialog.pixel-dialog {
+  max-width: min(900px, calc(100vw - 16px));
+  max-height: calc(100dvh - 16px);
+  overflow: hidden;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+}
+
+.pixel-quest-card {
+  position: relative;
+  border-radius: 0 !important;
+  border: 3px solid #ca8a04;
+  background-color: #101522;
+  background-image:
+    linear-gradient(rgba(250, 204, 21, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(250, 204, 21, 0.03) 1px, transparent 1px);
+  background-size: 8px 8px;
+  box-shadow:
+    inset 0 0 0 2px #090b12,
+    inset 0 0 0 4px #475569,
+    0 0 0 3px #05070c,
+    0 18px 40px rgba(0, 0, 0, 0.85);
+  padding: 12px 14px;
+  gap: 10px;
+  max-height: calc(100dvh - 18px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pixel-quest-card::before,
+.pixel-quest-card::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  pointer-events: none;
+  border: 1px dashed rgba(250, 204, 21, 0.22);
+}
+
+.pixel-quest-card .btn,
+.pixel-quest-card input,
+.pixel-quest-card select,
+.pixel-quest-card .meta-card,
+.pixel-quest-card .hero-class-card,
+.pixel-quest-card .loadout-card {
+  border-radius: 0;
+}
+
+.pixel-quest-card .btn {
+  border-width: 2px;
+  box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.45), inset 2px 2px 0 rgba(255, 255, 255, 0.18);
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.pixel-quest-card .btn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.45);
+}
+
+.quest-wizard-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 6px 8px;
+  background: #0a0d16;
+  border: 2px solid #2e374d;
+  box-shadow: inset 0 0 0 1px #05070c;
+  flex-shrink: 0;
+}
+
+.wizard-step {
+  padding: 3px 9px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  background: #141a29;
+  border: 1px solid #28324a;
+}
+
+.wizard-step.active {
+  color: #1c1202;
+  background: #facc15;
+  border-color: #fef08a;
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.45);
+}
+
+.wizard-step.done {
+  color: #bbf7d0;
+  background: rgba(22, 101, 52, 0.45);
+  border-color: #4ade80;
+}
+
+.wizard-arrow {
+  font-size: 0.65rem;
+  color: #64748b;
+}
+
+.title-card.pixel-quest-card {
+  width: min(860px, 100%);
+  padding: 12px 14px;
+  overflow: hidden;
+}
+
+.title-hero-banner.pixel-banner {
+  position: relative;
+  height: auto;
+  padding: 8px 12px;
+  background: linear-gradient(90deg, #0d1323 0%, #1c1936 55%, #0d1323 100%);
+  border: 2px solid #475569;
+  box-shadow: inset 0 0 0 1px #090b12;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.title-hero-banner.pixel-banner .bastion-img {
+  width: 62px;
+  height: 62px;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+  border: 2px solid #856422;
+  background: #0a0e18;
+  padding: 2px;
+  filter: none;
+}
+
+.title-hero-banner.pixel-banner .title-overlay {
+  position: static;
+  background: none;
+  padding: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.title-hero-banner.pixel-banner .title-overlay h1 {
+  margin: 2px 0 0;
+  font-size: 1.15rem;
+  color: #fde047;
+  text-shadow: 2px 2px 0 #05070c;
+}
+
+.pixel-shard-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: #171226;
+  border: 2px solid #a855f7;
+  color: #e9d5ff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pixel-shard-pill span {
+  color: #c084fc;
+}
+
+.title-setup-grid {
+  display: grid;
+  grid-template-columns: 0.95fr 1.25fr;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pixel-subbox {
+  background: rgba(11, 15, 25, 0.92);
+  border: 2px solid #334155;
+  box-shadow: inset 0 0 0 1px #06080f;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.title-col-details .story-lead {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: #cbd5e1;
+}
+
+.title-col-details .hero-name-field label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #facc15;
+}
+
+.title-col-details input,
+.title-col-details select {
+  padding: 7px 9px;
+  font-size: 0.82rem;
+  background: #080b12;
+  border: 2px solid #334155;
+}
+
+.sanctum-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.sanctum-tab {
+  padding: 6px 8px;
+  border: 2px solid #334155;
+  background: #131929;
+  color: #94a3b8;
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.sanctum-tab.active {
+  background: #1f1708;
+  border-color: #facc15;
+  color: #fde047;
+  box-shadow: inset 0 0 8px rgba(250, 204, 21, 0.18);
+}
+
+.sanctum-pane {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.sanctum-pane .meta-grid {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.sanctum-pane .meta-card {
+  padding: 7px 8px;
+  gap: 4px;
+  font-size: 0.73rem;
+  background: #131929;
+  border: 1.5px solid #2b354b;
+}
+
+.sanctum-pane .meta-card .btn {
+  padding: 5px 8px;
+  font-size: 0.72rem;
+}
+
+.quest-wizard-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+  border-top: 2px solid #232b40;
+  flex-shrink: 0;
+}
+
+.title-card .quest-wizard-actions {
+  padding: 8px 0 0;
+}
+
+.loadout-scroll-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 3px;
+}
+
+@media (max-width: 720px), (max-height: 540px) {
+  .pixel-quest-card {
+    padding: 8px 10px;
+    gap: 7px;
+  }
+  .quest-wizard-steps {
+    padding: 4px 6px;
+    gap: 4px;
+  }
+  .wizard-step {
+    padding: 2px 6px;
+    font-size: 0.65rem;
+  }
+  .title-hero-banner.pixel-banner {
+    padding: 6px 9px;
+  }
+  .title-hero-banner.pixel-banner .bastion-img {
+    width: 44px;
+    height: 44px;
+  }
+  .title-hero-banner.pixel-banner .title-overlay h1 {
+    font-size: 0.96rem;
+  }
+  .title-setup-grid {
+    gap: 7px;
+  }
+  .pixel-subbox {
+    padding: 7px;
+    gap: 5px;
+  }
+  .title-col-details .story-lead {
+    font-size: 0.7rem;
+    line-height: 1.3;
+  }
+  .sanctum-pane .meta-grid {
+    grid-template-columns: 1fr;
+  }
+  .hero-class-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 7px;
+  }
+  .hero-class-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 8px;
+    gap: 6px;
+  }
+  .hero-class-card canvas {
+    width: 54px;
+    height: 54px;
+  }
+  .hero-class-info p {
+    font-size: 0.68rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .title-setup-grid {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+  .hero-class-grid {
+    grid-template-columns: 1fr;
+  }
+  .hero-class-card {
+    flex-direction: row;
+    text-align: left;
+  }
+}
+
 .title-card {
   padding: 0 0 20px;
   overflow: hidden;

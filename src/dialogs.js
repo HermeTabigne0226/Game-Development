@@ -1149,6 +1149,28 @@ export function renderTitleSanctum() {
   if (diffSel) diffSel.value = m.difficulty || "normal";
   document.getElementById("sanctum-shards").textContent = m.soulShards;
 
+  const tabBlessings = document.getElementById("btn-sanctum-tab-blessings");
+  const tabForge = document.getElementById("btn-sanctum-tab-forge");
+  const paneBlessings = document.getElementById("sanctum-pane-blessings");
+  const paneForge = document.getElementById("sanctum-pane-forge");
+  const setSanctumTab = (tab) => {
+    const isForge = tab === "forge";
+    tabBlessings?.classList.toggle("active", !isForge);
+    tabBlessings?.setAttribute("aria-selected", String(!isForge));
+    tabForge?.classList.toggle("active", isForge);
+    tabForge?.setAttribute("aria-selected", String(isForge));
+    if (paneBlessings) paneBlessings.hidden = isForge;
+    if (paneForge) paneForge.hidden = !isForge;
+  };
+  if (tabBlessings && !tabBlessings.dataset.bound) {
+    tabBlessings.dataset.bound = "1";
+    tabBlessings.addEventListener("click", () => setSanctumTab("blessings"));
+  }
+  if (tabForge && !tabForge.dataset.bound) {
+    tabForge.dataset.bound = "1";
+    tabForge.addEventListener("click", () => setSanctumTab("forge"));
+  }
+
   const list = document.getElementById("meta-upgrades-list");
   list.innerHTML = "";
   for (const upg of META_UPGRADES) {

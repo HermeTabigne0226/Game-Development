@@ -370,6 +370,12 @@ function setupControls() {
     renderTitleSanctum();
     document.getElementById("title-dialog").showModal();
   });
+  document.getElementById("btn-title-back")?.addEventListener("click", () => {
+    document.getElementById("title-dialog").close("back");
+    if (!runtime.state?.startedByUser || runtime.state?.runEnded) {
+      showMainMenu();
+    }
+  });
   document.getElementById("btn-stairs-stay").addEventListener("click", () => {
     runtime.state.stairsCooldown = 2.0;
     document.getElementById("stairs-dialog").close("stay");
