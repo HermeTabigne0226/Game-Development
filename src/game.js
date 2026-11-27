@@ -525,44 +525,60 @@ function setupControls() {
       updDlg.showModal();
 
       try {
-        const relRes = await fetch("https://api.github.com/repos/HermeTabigne0226/Game-Development/releases/tags/latest-apk", { cache: "no-store" });
-        let latestVer = null;
+        const [relOut, pkgOut] = await Promise.allSettled([
+          fetch("https://api.github.com/repos/HermeTabigne0226/Game-Development/releases/tags/latest-apk", { cache: "no-store" }),
+          fetch("https://raw.githubusercontent.com/HermeTabigne0226/Game-Development/main/package.json", { cache: "no-store" }),
+        ]);
+
+        let apkVer = null;
+        let pkgVer = null;
         let sizeText = "";
-        if (relRes.ok) {
-          const rel = await relRes.json();
+        if (relOut.status === "fulfilled" && relOut.value.ok) {
+          const rel = await relOut.value.json();
           const m = String(rel.body || "").match(/Version:\s*(v?\.?\d+\.\d+(?:\.\d+)?(?:-[\w.]+)?)/i);
-          if (m) latestVer = m[1];
+          if (m) apkVer = m[1];
           const apkAsset = Array.isArray(rel.assets)
             ? rel.assets.find((a) => String(a.name || "").endsWith(".apk"))
             : null;
           if (apkAsset?.browser_download_url) pendingApkUrl = apkAsset.browser_download_url;
           if (apkAsset?.size) sizeText = ` (${(apkAsset.size / 1048576).toFixed(1)} MB)`;
         }
-        if (!latestVer) {
-          const pkgRes = await fetch("https://raw.githubusercontent.com/HermeTabigne0226/Game-Development/main/package.json", { cache: "no-store" });
-          if (pkgRes.ok) {
-            const pkg = await pkgRes.json();
-            if (pkg?.version) latestVer = `v.${pkg.version}`;
-          }
+        if (pkgOut.status === "fulfilled" && pkgOut.value.ok) {
+          const pkg = await pkgOut.value.json();
+          if (pkg?.version) pkgVer = `v.${pkg.version}`;
         }
 
-        if (!latestVer) {
+        const latestRaw = apkVer && (!pkgVer || !isNewerVersion(pkgVer, apkVer)) ? apkVer : (pkgVer || apkVer);
+        if (!latestRaw) {
           if (latestBadgeEl) latestBadgeEl.textContent = "Unavailable";
           if (statusEl) statusEl.textContent = "Could not verify version from GitHub right now. Check your connection and try again.";
           return;
         }
 
-        const normLatest = formatDisplayVer(latestVer);
+        const normApk = apkVer ? formatDisplayVer(apkVer) : null;
+        const normLatest = formatDisplayVer(latestRaw);
         if (latestBadgeEl) latestBadgeEl.textContent = normLatest;
 
-        if (isNewerVersion(normLatest, installedVer)) {
+        if (normApk && isNewerVersion(normApk, installedVer)) {
           if (statusEl) {
             statusEl.textContent = isNative
-              ? `New APK update ${normLatest}${sizeText} is ready! Tap Download & Update to install and restart.`
-              : `New update ${normLatest}${sizeText} is available! Tap Download & Update to get the latest build.`;
+              ? `New APK update ${normApk}${sizeText} is ready! Tap Download & Update to install and restart.`
+              : `New update ${normApk}${sizeText} is available! Tap Download & Update to get the latest build.`;
           }
           pendingWebReload = !isNative;
           if (dlBtn) dlBtn.hidden = false;
+        } else if (isNewerVersion(normLatest, installedVer)) {
+          if (isNative) {
+            if (statusEl) {
+              statusEl.textContent = `Update ${normLatest} is building on GitHub right now — check again in 2–3 minutes to download the APK.`;
+            }
+          } else {
+            if (statusEl) {
+              statusEl.textContent = `New update ${normLatest} is available! Tap Download & Update to refresh.`;
+            }
+            pendingWebReload = true;
+            if (dlBtn) dlBtn.hidden = false;
+          }
         } else {
           if (statusEl) statusEl.textContent = `You already have the latest version (${installedVer})!`;
           if (dlBtn && !isNative) {

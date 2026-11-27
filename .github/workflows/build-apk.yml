@@ -41,14 +41,7 @@ jobs:
           npm ci
           npx cap sync android
 
-      - name: Build Debug APK
-        run: |
-          chmod +x android/gradlew
-          cd android
-          ./gradlew assembleDebug --no-daemon
-
-      - name: Build Signed Release AAB (if keystore secret is set)
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      - name: Build Debug APK & Optional Release AAB
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -56,9 +49,13 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/android/app/release.keystore
         run: |
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$ANDROID_KEYSTORE_PATH"
+          chmod +x android/gradlew
           cd android
-          ./gradlew bundleRelease --no-daemon
+          ./gradlew assembleDebug --no-daemon
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$ANDROID_KEYSTORE_PATH"
+            ./gradlew bundleRelease --no-daemon
+          fi
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -67,11 +64,11 @@ jobs:
           path: android/app/build/outputs/apk/debug/Chronicles-of-the-Shattered-Crown.apk
 
       - name: Upload Play Store AAB artifact
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: Chronicles-of-the-Shattered-Crown-aab
           path: android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: ignore
 
       - name: Read app version from package.json
         id: pkg
