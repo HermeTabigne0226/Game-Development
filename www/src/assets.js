@@ -2,11 +2,22 @@
 
 function loadImage(src) {
   return new Promise((resolve) => {
+    let done = false;
+    const finish = (val) => {
+      if (done) return;
+      done = true;
+      clearTimeout(t);
+      resolve(val);
+    };
+    const t = setTimeout(() => {
+      console.warn("Timed out loading asset:", src);
+      finish(null);
+    }, 10000);
     const img = new Image();
-    img.onload = () => resolve(img);
+    img.onload = () => finish(img);
     img.onerror = () => {
       console.warn("Failed to load asset:", src);
-      resolve(null);
+      finish(null);
     };
     img.src = src;
   });

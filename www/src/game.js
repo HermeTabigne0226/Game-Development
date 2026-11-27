@@ -751,11 +751,16 @@ async function init() {
     return res;
   });
 
-  const minLoadMs = 3800;
+  const minLoadMs = 1100;
   const loadStart = performance.now();
   await new Promise((resolve) => {
-    function step(now) {
-      const timeProgress = Math.min(1, (now - loadStart) / minLoadMs);
+    let settled = false;
+    let fallbackTimer = null;
+    let rafId = 0;
+    const step = () => {
+      if (settled) return;
+      const elapsed = performance.now() - loadStart;
+      const timeProgress = Math.min(1, elapsed / minLoadMs);
       const displayPct = Math.round(Math.min(timeProgress, assetProgress || timeProgress * 0.9) * 100);
       if (barFill) barFill.style.width = `${displayPct}%`;
       if (statusEl) {
@@ -764,14 +769,21 @@ async function init() {
             ? `Loading realms & sprites... (${loadedCount}/${totalCount}) ${displayPct}%`
             : "Entering Oakhaven Bastion...";
       }
-      if (timeProgress >= 1 && assetsReady) {
+      if ((timeProgress >= 1 && assetsReady) || elapsed >= 15000) {
+        settled = true;
+        if (fallbackTimer) clearInterval(fallbackTimer);
+        if (rafId) cancelAnimationFrame(rafId);
         if (barFill) barFill.style.width = "100%";
+        if (statusEl) statusEl.textContent = "Entering Oakhaven Bastion...";
         resolve();
-      } else {
-        requestAnimationFrame(step);
       }
-    }
-    requestAnimationFrame(step);
+    };
+    const onRaf = () => {
+      step();
+      if (!settled) rafId = requestAnimationFrame(onRaf);
+    };
+    fallbackTimer = setInterval(step, 80);
+    rafId = requestAnimationFrame(onRaf);
   });
 
   runtime.assets = await assetsPromise;
