@@ -479,10 +479,20 @@ export function renderFrame(ts) {
     const cx = e.x * TILE_SIZE;
     const cy = e.y * TILE_SIZE;
     const ez = e.z || 0;
-    const size = e.isBoss ? TILE_SIZE + 10 : e.isElite ? TILE_SIZE + 5 : TILE_SIZE;
+    const size = e.isPvpPlayer ? 40 : e.isBoss ? TILE_SIZE + 10 : e.isElite ? TILE_SIZE + 5 : TILE_SIZE;
     const speedAnim = e.id === "bat" ? 0.014 : 0.008;
     const bob = e.isSheet || ez > 0 ? 0 : Math.sin(ts * speedAnim + e.bobPhase) * (e.id === "bat" ? 4 : 2.2);
     const squash = e.id === "slime" ? 1 + Math.sin(ts * 0.01 + e.bobPhase) * 0.1 : 1;
+
+    if (e.isPvpPlayer) {
+      ctx.save();
+      ctx.strokeStyle = "rgba(239, 68, 68, 0.78)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + 12, 13, 6, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
 
     if (e.isElite && e.eliteColor) {
       ctx.save();
@@ -609,11 +619,21 @@ export function renderFrame(ts) {
     }
 
     const hpPct = Math.max(0, e.hp / e.maxHp);
-    const barW = e.isBoss ? 36 : e.isElite ? 30 : 26;
+    const barW = e.isPvpPlayer ? 36 : e.isBoss ? 36 : e.isElite ? 30 : 26;
     ctx.fillStyle = "#111";
     ctx.fillRect(cx - barW / 2, cy - size / 2 - 6, barW, 4);
-    ctx.fillStyle = e.isBoss ? "#facc15" : e.isElite ? e.eliteColor : "#ef4444";
+    ctx.fillStyle = e.isPvpPlayer ? "#f87171" : e.isBoss ? "#facc15" : e.isElite ? e.eliteColor : "#ef4444";
     ctx.fillRect(cx - barW / 2, cy - size / 2 - 6, barW * hpPct, 4);
+    if (e.isPvpPlayer) {
+      ctx.save();
+      ctx.font = "bold 9px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#000";
+      ctx.fillText(e.name || "Rival", cx + 1, cy - size / 2 - 9);
+      ctx.fillStyle = "#fca5a5";
+      ctx.fillText(e.name || "Rival", cx, cy - size / 2 - 10);
+      ctx.restore();
+    }
   }
 
   // Hero Rendering (Paladin, Gilded Knight, and Sylvan Ranger all matched at heroDrawSize = 40)
@@ -665,6 +685,14 @@ export function renderFrame(ts) {
     p.facingLeft
   );
   ctx.restore();
+
+  if ((p.frozenTimer || 0) > 0 && assets.vfx_frozen_crystal) {
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.globalAlpha = 0.88;
+    ctx.drawImage(assets.vfx_frozen_crystal, p.x * TILE_SIZE - 22, p.y * TILE_SIZE - 22 - pz, 44, 44);
+    ctx.restore();
+  }
 
   if ((p.stunTimer || 0) > 0) {
     const spin = ts * 0.01;

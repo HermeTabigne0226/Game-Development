@@ -1987,8 +1987,20 @@ body {
 }
 
 .menu-buttons #menu-btn-play,
+.menu-buttons #menu-btn-pvp,
 .menu-buttons #menu-btn-resume {
   grid-column: 1 / -1;
+}
+
+.pvp-menu-btn {
+  border-color: #38bdf8;
+  background: linear-gradient(135deg, rgba(14, 116, 144, 0.45), rgba(20, 24, 36, 0.95));
+  color: #bae6fd;
+}
+
+.pvp-menu-btn:hover {
+  border-color: #7dd3fc;
+  color: #ffffff;
 }
 
 .menu-buttons #menu-btn-exit {
@@ -2444,6 +2456,330 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-right: 4px;
+}
+
+.pvp-card {
+  max-width: 760px;
+}
+
+.pvp-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pvp-conn-pill {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  border: 1px solid var(--border);
+}
+
+.pvp-conn-pill.online { background: rgba(22, 163, 74, 0.22); border-color: #4ade80; color: #86efac; }
+.pvp-conn-pill.pending { background: rgba(234, 179, 8, 0.2); border-color: #facc15; color: #fef08a; }
+.pvp-conn-pill.offline { background: rgba(239, 68, 68, 0.16); border-color: #f87171; color: #fca5a5; }
+
+.pvp-server-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.pvp-server-bar input,
+.pvp-fighter-name input,
+.pvp-create-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #0b0e16;
+  color: var(--text);
+  font-size: 0.82rem;
+}
+
+.pvp-status-msg {
+  font-size: 0.75rem;
+  color: var(--muted);
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid var(--border);
+}
+
+.pvp-status-msg.ok { color: #86efac; border-color: rgba(74, 222, 128, 0.4); }
+.pvp-status-msg.error { color: #fca5a5; border-color: rgba(248, 113, 113, 0.55); }
+
+.pvp-fighter-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border);
+}
+
+.pvp-fighter-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 220px;
+}
+
+.pvp-fighter-name label {
+  font-size: 0.76rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.pvp-class-pills {
+  display: flex;
+  gap: 6px;
+}
+
+.pvp-hero-btn.active {
+  border-color: var(--accent);
+  background: rgba(234, 179, 8, 0.22);
+  color: #fde047;
+}
+
+.pvp-split {
+  display: grid;
+  grid-template-columns: 1fr 1.05fr;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.pvp-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+}
+
+.pvp-pane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pvp-pane-head h3 {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.pvp-lobby-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.pvp-lobby-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #0d111b;
+  border: 1px solid var(--border);
+}
+
+.pvp-lobby-item.same-net {
+  border-color: #4ade80;
+}
+
+.pvp-lobby-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pvp-lobby-meta strong {
+  font-size: 0.8rem;
+  color: #f8fafc;
+}
+
+.pvp-lobby-meta span {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.pvp-net-pill,
+.pvp-lock-pill {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  margin-left: 4px;
+}
+
+.pvp-net-pill {
+  background: rgba(22, 163, 74, 0.25);
+  border: 1px solid #4ade80;
+  color: #86efac;
+}
+
+.pvp-lock-pill {
+  background: rgba(250, 204, 21, 0.16);
+  border: 1px solid #facc15;
+  color: #fde047;
+}
+
+.pvp-create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pvp-map-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.pvp-map-card {
+  text-align: left;
+  padding: 7px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #0d111b;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pvp-map-card strong {
+  font-size: 0.74rem;
+  color: #facc15;
+}
+
+.pvp-map-card span {
+  font-size: 0.64rem;
+  color: var(--muted);
+}
+
+.pvp-map-card.selected {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+}
+
+.pvp-room-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid var(--border);
+}
+
+.pvp-room-banner h3 {
+  margin: 0 0 2px;
+  font-size: 0.96rem;
+  color: #fde047;
+}
+
+.pvp-vs-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.pvp-vs-card {
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--panel-2);
+  border: 1.5px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  text-align: center;
+}
+
+.pvp-vs-card.ready {
+  border-color: #4ade80;
+  box-shadow: 0 0 12px rgba(74, 222, 128, 0.25);
+}
+
+.pvp-slot-tag {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--accent-2);
+}
+
+.pvp-hero-role {
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+
+.pvp-ready-pill {
+  margin-top: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  background: rgba(71, 85, 105, 0.4);
+  color: #cbd5e1;
+}
+
+.pvp-ready-pill.is-ready {
+  background: rgba(22, 163, 74, 0.3);
+  border: 1px solid #4ade80;
+  color: #86efac;
+}
+
+.pvp-room-config {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pvp-host-map-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
+.pvp-room-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 680px) {
+  .pvp-split,
+  .pvp-vs-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
 }
 
 .shop-card {

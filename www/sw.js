@@ -1,4 +1,4 @@
-const CACHE_NAME = "shattered-crown-v50";
+const CACHE_NAME = "shattered-crown-v51";
 
 const PRECACHE_URLS = [
   "./",
@@ -12,6 +12,7 @@ const PRECACHE_URLS = [
   "./src/audio.js",
   "./src/state.js",
   "./src/combat.js",
+  "./src/pvp.js",
   "./src/enemyAI.js",
   "./src/world.js",
   "./src/renderer.js",

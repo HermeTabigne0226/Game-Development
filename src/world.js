@@ -3,6 +3,7 @@ import { combatHooks, damageEnemy, hurtPlayer, performMeleeAttack, unlockCodex }
 import { DEFAULT_LOADOUT, ELITE_AFFIXES, HERO_CLASSES, ITEMS, RELICS, SPELLS } from "./data.js";
 import { MAP_H, MAP_W, TILE, computeFOV, createScaledEnemy, generateFloor } from "./dungeon.js";
 import { checkBossSpotted, revealBossRoom, startBossMatch, updateEnemiesAndBosses } from "./enemyAI.js";
+import { broadcastPvpAction, updatePvpFrame } from "./pvp.js";
 import {
   addFloat,
   addLog,
@@ -668,9 +669,10 @@ export function updateSimulation(dt) {
   s.saveTimer = (s.saveTimer || 0) + dt;
   if (s.saveTimer >= 5.0) {
     s.saveTimer = 0;
-    saveRun();
+    if (!s.isPvp) saveRun();
   }
 
+  if (s.isPvp) updatePvpFrame(dt);
   if (worldHooks.updateRoomAndBossHUD) worldHooks.updateRoomAndBossHUD();
 
   if (s.camReveal) {
@@ -703,6 +705,8 @@ export function updateSimulation(dt) {
   p.dashCd = Math.max(0, p.dashCd - dt);
   p.iFrames = Math.max(0, p.iFrames - dt);
   p.stunTimer = Math.max(0, (p.stunTimer || 0) - dt);
+  p.frozenTimer = Math.max(0, (p.frozenTimer || 0) - dt);
+  p.sunderTimer = Math.max(0, (p.sunderTimer || 0) - dt);
   p.aegisHeartCd = Math.max(0, (p.aegisHeartCd || 0) - dt);
 
   if (p.tempDefTimer > 0) {
@@ -734,7 +738,7 @@ export function updateSimulation(dt) {
           e.windupTimer = 0;
           const nx = dist > 0.01 ? dx / dist : 0;
           const ny = dist > 0.01 ? dy / dist : 0;
-          damageEnemy(e, Math.round(stats.atk * 0.9), false, ab.spell.name, nx * 5.8, ny * 5.8, { isSkill: true, isAoe: true });
+          damageEnemy(e, Math.round(stats.atk * 0.9), false, ab.spell.name, nx * 5.8, ny * 5.8, { isSkill: true, isAoe: true, stunDur: ab.stun });
           addFloat(e.x, e.y - 0.4, "STUNNED!", "#38bdf8");
         }
       }
@@ -883,7 +887,7 @@ export function updateSimulation(dt) {
           e.windupTimer = 0;
           const nx = dist > 0.01 ? dx / dist : 0;
           const ny = dist > 0.01 ? dy / dist : 0;
-          damageEnemy(e, dmg, true, spell.name, nx * 4.5, ny * 4.5, { isSkill: true, isAoe: true, canInterrupt: true });
+          damageEnemy(e, dmg, true, spell.name, nx * 4.5, ny * 4.5, { isSkill: true, isAoe: true, canInterrupt: true, stunDur });
           addFloat(e.x, e.y - 0.45, "STUNNED!", "#fde047");
         }
       }
@@ -1124,7 +1128,7 @@ export function updateSimulation(dt) {
         }
       }
     }
-  } else if ((p.stunTimer || 0) > 0) {
+  } else if ((p.stunTimer || 0) > 0 || (p.frozenTimer || 0) > 0) {
     p.vx = 0;
     p.vy = 0;
     if (p.animTimer <= 0) p.anim = "idle";
@@ -1372,8 +1376,11 @@ export function updateSimulation(dt) {
     }
 
     if (pr.isEnemy) {
-      if (Math.hypot(pr.x - p.x, pr.y - p.y) <= pr.radius + 0.3) {
+      if (!pr.isPvpVisual && Math.hypot(pr.x - p.x, pr.y - p.y) <= pr.radius + 0.3) {
         hurtPlayer(pr.dmg, pr.sourceName || "Void Orb", pr.vx * 0.4, pr.vy * 0.4);
+        s.projectiles.splice(i, 1);
+      } else if (pr.isPvpVisual && Math.hypot(pr.x - p.x, pr.y - p.y) <= pr.radius + 0.3) {
+        spawnBurst(pr.x, pr.y, pr.color || "#ef4444", 6, 0.8);
         s.projectiles.splice(i, 1);
       }
     } else {
@@ -1390,6 +1397,7 @@ export function updateSimulation(dt) {
             isSkill: Boolean(pr.isSkill),
             pierce: Boolean(pr.pierce),
             canInterrupt: Boolean(pr.isSkill),
+            sunderDur: pr.sunderDur || 0,
           });
           if (pr.isSlashWave) spawnBurst(e.x, e.y, "#fb923c", 8, 1.0);
           if (pr.isFrostLance) spawnFrostZone(pr.x, pr.y);
@@ -1432,7 +1440,7 @@ export function updateSimulation(dt) {
             spawnBurst(e.x, e.y, "#e0f2fe", 14, 1.15);
             spawnRing(e.x, e.y, 28, "#7dd3fc", 0.3);
             addFloat(e.x, e.y - 0.5, "FROZEN!", "#bae6fd");
-            damageEnemy(e, z.shatterDmg, false, "Frost Lance (Freeze)", 0, 0, { isSkill: true, isAoe: true });
+            damageEnemy(e, z.shatterDmg, false, "Frost Lance (Freeze)", 0, 0, { isSkill: true, isAoe: true, freezeDur: z.freezeDur });
           }
         } else {
           z.dwell.delete(e.uid);

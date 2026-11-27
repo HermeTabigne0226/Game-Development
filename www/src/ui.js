@@ -1,6 +1,7 @@
 import { bgm, sfx } from "./audio.js";
 import { castSpell, combatHooks, upgradeSkillById } from "./combat.js";
 import { HERO_CLASSES, RELICS, SPELLS } from "./data.js";
+import { pvpHooks } from "./pvp.js";
 import { renderHooks } from "./renderer.js";
 import {
   getActiveSetBonuses,
@@ -413,6 +414,30 @@ export function updateUI() {
 export function updateRoomAndBossHUD() {
   const s = runtime.state;
   if (!s) return;
+
+  if (s.isPvp) {
+    const opp = s.pvpOpponent;
+    const mySc = s.pvpScores?.[s.pvpMySlot] || 0;
+    const oppSc = s.pvpScores?.[s.pvpMySlot === 0 ? 1 : 0] || 0;
+    const badge = document.getElementById("room-enemy-badge");
+    if (badge) {
+      badge.textContent = `PvP Rnd ${s.pvpRound || 1}/3 · ${mySc} - ${oppSc}`;
+      badge.className = "room-enemy-badge has-enemies";
+    }
+    const bossBar = document.getElementById("boss-hud-bar");
+    if (bossBar && opp) {
+      bossBar.hidden = false;
+      const clsName = HERO_CLASSES[opp.heroClass]?.name || opp.heroClass;
+      document.getElementById("boss-hud-name").textContent = `Rival: ${opp.name} (${clsName})`;
+      document.getElementById("boss-hud-hp-text").textContent = `${Math.max(0, Math.ceil(opp.hp))} / ${opp.maxHp}`;
+      document.getElementById("boss-hud-fill").style.width = `${Math.max(0, (opp.hp / opp.maxHp) * 100)}%`;
+    } else if (bossBar) {
+      bossBar.hidden = true;
+    }
+    bgm.play("boss");
+    return;
+  }
+
   const nonBossLeft = s.level.enemies.filter((e) => !e.isBoss && !e.isClone).length;
   const boss = s.level.enemies.find((e) => e.isBoss);
 
@@ -555,3 +580,7 @@ worldHooks.updateRoomAndBossHUD = updateRoomAndBossHUD;
 renderHooks.updateCooldownUI = updateCooldownUI;
 renderHooks.updateUI = updateUI;
 renderHooks.updatePerfHUD = updatePerfHUD;
+pvpHooks.buildSpellButtons = buildSpellButtons;
+pvpHooks.updateUI = updateUI;
+pvpHooks.hideMainMenu = hideMainMenu;
+pvpHooks.showMainMenu = showMainMenu;

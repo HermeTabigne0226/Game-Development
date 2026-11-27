@@ -6,12 +6,14 @@ import {
   markPatchNotesSeen,
   openHeroDialog,
   openLoadoutDialog,
+  openPvpDialog,
   openSkillDialog,
   quickPotion,
   renderCodex,
   renderPatchNotes,
   renderTitleSanctum,
 } from "./dialogs.js";
+import { pvpNet } from "./pvp.js";
 import { render } from "./renderer.js";
 import {
   canvas,
@@ -311,6 +313,10 @@ function setupControls() {
     document.getElementById("title-dialog").showModal();
   });
 
+  document.getElementById("menu-btn-pvp")?.addEventListener("click", () => {
+    openPvpDialog();
+  });
+
   document.getElementById("menu-btn-resume").addEventListener("click", () => {
     const saved = loadSavedRun();
     if (saved) {
@@ -383,6 +389,12 @@ function setupControls() {
 
   document.getElementById("btn-end-sanctum").addEventListener("click", () => {
     document.getElementById("end-dialog").close("sanctum");
+    if (runtime.state?.isPvp) {
+      runtime.state.isPvp = false;
+      showMainMenu();
+      if (pvpNet.connected) openPvpDialog();
+      return;
+    }
     renderTitleSanctum();
     document.getElementById("title-dialog").showModal();
   });

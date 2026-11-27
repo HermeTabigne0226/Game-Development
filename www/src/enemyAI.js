@@ -181,6 +181,7 @@ export function updateEnemiesAndBosses(dt) {
   }
 
   for (const e of [...s.level.enemies]) {
+    if (e.isPvpPlayer) continue;
     if (e.isBoss && !s.bossFightStarted) continue;
     if (e.falling) {
       e.z = Math.max(0, (e.z || 0) - 270 * dt);

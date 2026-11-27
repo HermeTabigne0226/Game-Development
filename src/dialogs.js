@@ -2,8 +2,10 @@ import { sfx } from "./audio.js";
 import { drawSheetFrame } from "./assets.js";
 import { combatHooks, grantXP, healPlayer, unlockCodex, upgradeSkillById } from "./combat.js";
 import {
+  DEFAULT_LOADOUT,
   ENEMIES,
   GAME_VERSION,
+  HERO_CLASSES,
   ITEMS,
   LORE_CODEX,
   META_UPGRADES,
@@ -15,6 +17,7 @@ import {
   SPELLS,
   getItemPrice,
 } from "./data.js";
+import { getSavedPvpServerUrl, PVP_MAPS, pvpHooks, pvpNet } from "./pvp.js";
 import { TILE } from "./dungeon.js";
 import {
   addFloat,
@@ -1140,7 +1143,7 @@ export function markPatchNotesSeen() {
   renderPatchNotes();
 }
 
-export function openHeroDialog(onSelectHero) {
+export function openHeroDialog(onSelectHero, onBack = null) {
   const dlg = document.getElementById("hero-dialog");
   const paladinBtn = document.getElementById("btn-hero-paladin");
   const gildedBtn = document.getElementById("btn-hero-gilded");
@@ -1214,7 +1217,8 @@ export function openHeroDialog(onSelectHero) {
   backBtn.onclick = () => {
     cancelAnimationFrame(rafId);
     dlg.close("back");
-    document.getElementById("title-dialog").showModal();
+    if (onBack) onBack();
+    else document.getElementById("title-dialog").showModal();
   };
   dlg.addEventListener("close", () => { if (rafId) cancelAnimationFrame(rafId); }, { once: true });
 
@@ -1280,6 +1284,285 @@ export function openLoadoutDialog(onConfirm, onBack) {
   };
 
   renderLoadout();
+  dlg.showModal();
+}
+
+export function openPvpDialog() {
+  const dlg = document.getElementById("pvp-dialog");
+  if (!dlg) return;
+
+  const urlInput = document.getElementById("pvp-server-url");
+  const connectBtn = document.getElementById("btn-pvp-connect");
+  const lanPresetBtn = document.getElementById("btn-pvp-lan-preset");
+  const connPill = document.getElementById("pvp-conn-pill");
+  const statusEl = document.getElementById("pvp-status-msg");
+  const browserView = document.getElementById("pvp-browser-view");
+  const roomView = document.getElementById("pvp-room-view");
+
+  const heroNameInput = document.getElementById("pvp-hero-name");
+  const lobbyListEl = document.getElementById("pvp-lobby-list");
+  const roomNameInput = document.getElementById("pvp-room-name");
+  const roomPassInput = document.getElementById("pvp-room-pass");
+  const mapGridEl = document.getElementById("pvp-map-grid");
+  const createBtn = document.getElementById("btn-pvp-create");
+  const refreshBtn = document.getElementById("btn-pvp-refresh");
+
+  const roomTitleEl = document.getElementById("pvp-room-title");
+  const roomMetaEl = document.getElementById("pvp-room-meta");
+  const vsRowEl = document.getElementById("pvp-vs-row");
+  const hostMapBar = document.getElementById("pvp-host-map-bar");
+  const hostMapSelect = document.getElementById("pvp-room-map-select");
+  const leaveBtn = document.getElementById("btn-pvp-leave");
+  const loadoutBtn = document.getElementById("btn-pvp-loadout");
+  const readyBtn = document.getElementById("btn-pvp-ready");
+  const startBtn = document.getElementById("btn-pvp-start");
+
+  let selectedMapId = 0;
+  let pvpHeroClass = "paladin";
+  let pvpLoadout = [...DEFAULT_LOADOUT.paladin];
+  let readyState = false;
+
+  if (heroNameInput && !heroNameInput.value) {
+    heroNameInput.value = runtime.meta?.heroName || "Sir Aldric";
+  }
+  if (urlInput && !urlInput.value) {
+    urlInput.value = getSavedPvpServerUrl();
+  }
+
+  const getFighterName = () => heroNameInput?.value.trim() || runtime.meta?.heroName || "Sir Aldric";
+
+  function renderMapPicker() {
+    if (mapGridEl) {
+      mapGridEl.innerHTML = "";
+      for (const m of PVP_MAPS) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `pvp-map-card ${m.id === selectedMapId ? "selected" : ""}`;
+        btn.innerHTML = `<strong>${m.name}</strong><span>${m.subtitle}</span>`;
+        btn.addEventListener("click", () => {
+          selectedMapId = m.id;
+          renderMapPicker();
+        });
+        mapGridEl.appendChild(btn);
+      }
+    }
+    if (hostMapSelect && hostMapSelect.options.length !== PVP_MAPS.length) {
+      hostMapSelect.innerHTML = "";
+      for (const m of PVP_MAPS) {
+        const opt = document.createElement("option");
+        opt.value = String(m.id);
+        opt.textContent = `${m.name} (${m.subtitle})`;
+        hostMapSelect.appendChild(opt);
+      }
+    }
+  }
+
+  function renderPvpUI(evt) {
+    if (connPill) {
+      if (pvpNet.connected) {
+        const pingTxt = typeof runtime.netPingMs === "number" ? ` · ${Math.round(runtime.netPingMs)} ms` : "";
+        connPill.textContent = `Connected${pingTxt}`;
+        connPill.className = "pvp-conn-pill online";
+      } else if (pvpNet.connecting) {
+        connPill.textContent = "Connecting...";
+        connPill.className = "pvp-conn-pill pending";
+      } else {
+        connPill.textContent = "Offline";
+        connPill.className = "pvp-conn-pill offline";
+      }
+    }
+
+    if (statusEl) {
+      if (pvpNet.lastError) {
+        statusEl.textContent = pvpNet.lastError;
+        statusEl.className = "pvp-status-msg error";
+      } else if (pvpNet.connected) {
+        statusEl.textContent = `Connected (${pvpNet.clientIp || "Network"}). Same-Wi-Fi lobbies appear first with a Same Network badge.`;
+        statusEl.className = "pvp-status-msg ok";
+      } else {
+        statusEl.textContent = "Enter your local LAN URL (ws://<PC-IP>:8080) or free Render relay URL (wss://.../ws) and click Connect.";
+        statusEl.className = "pvp-status-msg";
+      }
+    }
+
+    if (createBtn) createBtn.disabled = !pvpNet.connected;
+    if (refreshBtn) refreshBtn.disabled = !pvpNet.connected;
+
+    const inRoom = Boolean(pvpNet.room);
+    if (browserView) browserView.hidden = inRoom;
+    if (roomView) roomView.hidden = !inRoom;
+
+    if (!inRoom && lobbyListEl) {
+      if (!pvpNet.connected) {
+        lobbyListEl.innerHTML = `<div class="hint-text">Connect to a server above to view &amp; join open lobbies.</div>`;
+      } else if (!pvpNet.lobbies.length) {
+        lobbyListEl.innerHTML = `<div class="hint-text">No open lobbies yet. Create one on the right!</div>`;
+      } else {
+        lobbyListEl.innerHTML = "";
+        for (const r of pvpNet.lobbies) {
+          const card = document.createElement("div");
+          card.className = `pvp-lobby-item ${r.sameNetwork ? "same-net" : ""}`;
+          const m = PVP_MAPS[r.mapId] || PVP_MAPS[0];
+          const lockBadge = r.hasPassword ? `<span class="pvp-lock-pill">🔒 Locked</span>` : "";
+          const netBadge = r.sameNetwork ? `<span class="pvp-net-pill">Same Network</span>` : "";
+          card.innerHTML = `
+            <div class="pvp-lobby-meta">
+              <strong>${r.name} ${lockBadge} ${netBadge}</strong>
+              <span>Host: ${r.hostName} (${HERO_CLASSES[r.hostClass]?.name || r.hostClass}) · Map: ${m.name}</span>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm">Join</button>
+          `;
+          card.querySelector("button").addEventListener("click", () => {
+            let pass = "";
+            if (r.hasPassword) {
+              pass = window.prompt(`Enter password for "${r.name}":`, "") || "";
+            }
+            pvpNet.lastError = "";
+            pvpNet.send({
+              type: "join_lobby",
+              roomId: r.id,
+              password: pass,
+              heroName: getFighterName(),
+              heroClass: pvpHeroClass,
+              loadout: pvpLoadout,
+            });
+          });
+          lobbyListEl.appendChild(card);
+        }
+      }
+    }
+
+    if (inRoom && pvpNet.room) {
+      const rm = pvpNet.room;
+      const m = PVP_MAPS[rm.mapId] || PVP_MAPS[0];
+      if (roomTitleEl) roomTitleEl.textContent = `${rm.name}${rm.hasPassword ? " 🔒" : ""}`;
+      if (roomMetaEl) roomMetaEl.textContent = `Map: ${m.name} — ${m.desc}`;
+
+      if (hostMapBar) hostMapBar.hidden = pvpNet.mySlot !== 0;
+      if (hostMapSelect) hostMapSelect.value = String(rm.mapId);
+
+      if (vsRowEl) {
+        vsRowEl.innerHTML = "";
+        for (let slot = 0; slot < 2; slot++) {
+          const pl = rm.players[slot];
+          const box = document.createElement("div");
+          box.className = `pvp-vs-card ${pl ? (pl.ready ? "ready" : "") : "waiting"}`;
+          if (pl) {
+            const cls = HERO_CLASSES[pl.heroClass] || HERO_CLASSES.paladin;
+            const youTag = slot === pvpNet.mySlot ? " (You)" : "";
+            box.innerHTML = `
+              <span class="pvp-slot-tag">${slot === 0 ? "HOST" : "CHALLENGER"}${youTag}</span>
+              <strong>${pl.heroName}</strong>
+              <span class="pvp-hero-role">${cls.name}</span>
+              <span class="pvp-ready-pill ${pl.ready ? "is-ready" : ""}">${pl.ready ? "READY" : "Not Ready"}</span>
+            `;
+          } else {
+            box.innerHTML = `
+              <span class="pvp-slot-tag">CHALLENGER</span>
+              <strong>Waiting for Player...</strong>
+              <span class="pvp-hero-role">Share your Room Name on the same network</span>
+            `;
+          }
+          vsRowEl.appendChild(box);
+        }
+      }
+
+      const myPl = rm.players[pvpNet.mySlot];
+      readyState = Boolean(myPl?.ready);
+      if (readyBtn) {
+        readyBtn.textContent = readyState ? "Unready" : "Ready Up";
+        readyBtn.className = `btn ${readyState ? "btn-primary" : "btn-secondary"}`;
+      }
+      if (startBtn) {
+        const isHost = pvpNet.mySlot === 0;
+        const canStart = isHost && rm.players.length === 2 && rm.players.every((pl) => pl.ready);
+        startBtn.hidden = !isHost;
+        startBtn.disabled = !canStart;
+      }
+    }
+
+    if (evt === "error" && pvpNet.lastError && statusEl) {
+      statusEl.textContent = pvpNet.lastError;
+    }
+  }
+
+  for (const hBtn of document.querySelectorAll(".pvp-hero-btn")) {
+    hBtn.onclick = () => {
+      pvpHeroClass = hBtn.dataset.pvpHero || "paladin";
+      pvpLoadout = [...DEFAULT_LOADOUT[pvpHeroClass]];
+      for (const b of document.querySelectorAll(".pvp-hero-btn")) b.classList.toggle("active", b === hBtn);
+    };
+  }
+
+  connectBtn.onclick = () => pvpNet.connect(urlInput?.value || "");
+  if (lanPresetBtn) {
+    lanPresetBtn.onclick = () => {
+      if (urlInput) urlInput.value = `ws://${window.location.hostname || "localhost"}:8080/ws`;
+      pvpNet.connect(urlInput.value);
+    };
+  }
+  refreshBtn.onclick = () => pvpNet.send({ type: "list_lobbies" });
+  createBtn.onclick = () => {
+    pvpNet.lastError = "";
+    pvpNet.send({
+      type: "create_lobby",
+      name: roomNameInput?.value.trim() || `${getFighterName()}'s Arena`,
+      password: roomPassInput?.value || "",
+      mapId: selectedMapId,
+      heroName: getFighterName(),
+      heroClass: pvpHeroClass,
+      loadout: pvpLoadout,
+    });
+  };
+  leaveBtn.onclick = () => pvpNet.send({ type: "leave_lobby" });
+  if (hostMapSelect) {
+    hostMapSelect.onchange = () => {
+      pvpNet.send({ type: "update_player", mapId: Number(hostMapSelect.value) || 0 });
+    };
+  }
+  readyBtn.onclick = () => {
+    pvpNet.send({
+      type: "update_player",
+      heroName: getFighterName(),
+      heroClass: pvpHeroClass,
+      loadout: pvpLoadout,
+      ready: !readyState,
+    });
+  };
+  startBtn.onclick = () => pvpNet.send({ type: "start_match" });
+
+  loadoutBtn.onclick = () => {
+    dlg.close("pick");
+    const reopen = () => openPvpDialog();
+    openHeroDialog((chosenHero) => {
+      pvpHeroClass = chosenHero;
+      openLoadoutDialog(
+        (chosenLoadout) => {
+          pvpLoadout = [...chosenLoadout];
+          pvpNet.send({
+            type: "update_player",
+            heroName: getFighterName(),
+            heroClass: pvpHeroClass,
+            loadout: pvpLoadout,
+            ready: false,
+          });
+          reopen();
+        },
+        reopen
+      );
+    }, reopen);
+  };
+
+  pvpHooks.onLobbyStateChange = renderPvpUI;
+  renderMapPicker();
+  renderPvpUI();
+
+  if (!pvpNet.connected && !pvpNet.connecting && urlInput?.value) {
+    pvpNet.connect(urlInput.value);
+  } else if (pvpNet.connected) {
+    pvpNet.send({ type: "list_lobbies" });
+  }
+
   dlg.showModal();
 }
 

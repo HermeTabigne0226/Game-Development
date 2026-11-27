@@ -1,5 +1,6 @@
 import { sfx } from "./audio.js";
 import { DIFFICULTIES, HERO_CLASSES, ITEMS, LORE_CODEX, SPELLS } from "./data.js";
+import { broadcastPvpAction, sendPvpHit } from "./pvp.js";
 import { MAP_H, MAP_W, TILE } from "./dungeon.js";
 import {
   addFloat,
@@ -193,6 +194,32 @@ export function damageEnemy(enemy, rawDmg, isCrit = false, sourceLabel = "strike
   }
   if (stats.setPassives.has("sovereign_fury") && options.isSkill) {
     modDmg *= 1.2;
+  }
+
+  if (enemy.isPvpPlayer) {
+    const outDmg = Math.max(1, Math.round(modDmg));
+    enemy.hurtTimer = 0.16;
+    s.shake = Math.max(s.shake, isCrit ? 5 : 2.5);
+    addFloat(enemy.x, enemy.y, `${outDmg}${isCrit ? "!" : ""}`, isCrit ? "#fde047" : "#f87171");
+    spawnBurst(enemy.x, enemy.y, isCrit ? "#fde047" : "#ef4444", isCrit ? 12 : 8);
+    sendPvpHit({
+      dmg: outDmg,
+      isCrit,
+      source: sourceLabel,
+      knockX,
+      knockY,
+      stunDur: options.stunDur || 0,
+      freezeDur: options.freezeDur || 0,
+      sunderDur: options.sunderDur || 0,
+    });
+    if (isCrit && p.heroClass === "gilded") {
+      for (const sp of getActiveSpells(p)) {
+        if ((s.spellCooldowns[sp.id] || 0) > 0) {
+          s.spellCooldowns[sp.id] = Math.max(0, s.spellCooldowns[sp.id] - 0.5);
+        }
+      }
+    }
+    return;
   }
 
   const baseDef = (enemy.def || 0) + (enemy.bonusDef || 0);
@@ -418,7 +445,7 @@ export function performMeleeAttack() {
   const s = runtime.state;
   if (!s || s.runEnded || s.dyingTimer > 0) return;
   const p = s.player;
-  if ((p.stunTimer || 0) > 0 || p.attackCd > 0) return;
+  if ((p.stunTimer || 0) > 0 || (p.frozenTimer || 0) > 0 || p.attackCd > 0) return;
 
   const angle = getAimAngle();
   p.aimAngle = angle;
@@ -469,6 +496,21 @@ export function performMeleeAttack() {
         life: 0.92,
         label: isKeenShot ? "Keen Quiver" : weapon.name,
       });
+      if (s.isPvp) {
+        broadcastPvpAction({
+          kind: "projectile",
+          x: p.x + Math.cos(shotAng) * 0.42,
+          y: p.y + Math.sin(shotAng) * 0.42,
+          vx: Math.cos(shotAng) * speed,
+          vy: Math.sin(shotAng) * speed,
+          radius: (isBow ? 0.22 : 0.25) * radScale,
+          color,
+          isArrow: isBow,
+          isMagicOrb: !isBow,
+          pierce,
+          life: 0.92,
+        });
+      }
     };
 
     pushShot(angle, baseDmg, isKeenShot ? 1.15 : 1, isKeenShot);
@@ -496,6 +538,7 @@ export function performMeleeAttack() {
     maxLife: 0.16,
     color: isKeenShot ? "#4ade80" : "#fde047",
   });
+  if (s.isPvp) broadcastPvpAction({ kind: "slash", x: p.x, y: p.y, angle, radius: 36, color: "#fde047", life: 0.16 });
   sfx.slash();
 
   const reach = 1.55;
@@ -642,7 +685,7 @@ export function castSpell(spellId) {
   const spell = SPELLS.find((x) => x.id === spellId);
   if (!spell) return;
   const p = s.player;
-  if ((p.stunTimer || 0) > 0 || p.leap || p.ultCharge || p.rapidSlash || p.valiantCharge || p.radiantCharge) return;
+  if ((p.stunTimer || 0) > 0 || (p.frozenTimer || 0) > 0 || p.leap || p.ultCharge || p.rapidSlash || p.valiantCharge || p.radiantCharge) return;
   const stats = getPlayerStats();
 
   const rank = p.skillRanks[spell.id] || 0;
@@ -678,6 +721,7 @@ export function castSpell(spellId) {
     spawnRing(p.x, p.y, radius * TILE_SIZE, spell.color, 0.35);
     spawnRing(p.x, p.y, radius * TILE_SIZE * 0.65, "#fde047", 0.25);
     spawnGroundDecal(p.x, p.y, "vfx_holy_ground_impact", radius * TILE_SIZE * 2.05, 0.55, { scaleStart: 0.45, scaleEnd: 1.12, spin: 0.7 });
+    if (s.isPvp) broadcastPvpAction({ kind: "ring", x: p.x, y: p.y, radPx: radius * TILE_SIZE, color: spell.color, dur: 0.38 });
 
     const hits = s.level.enemies.filter((e) => Math.hypot(e.x - p.x, e.y - p.y) <= radius + 0.35);
     for (const e of hits) {
@@ -715,6 +759,19 @@ export function castSpell(spellId) {
       life: range / speed,
       label: spell.name,
     });
+    if (s.isPvp) {
+      broadcastPvpAction({
+        kind: "projectile",
+        x: p.x + Math.cos(angle) * 0.4,
+        y: p.y + Math.sin(angle) * 0.4,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        radius: 0.25,
+        color: spell.color,
+        isFrostLance: true,
+        life: range / speed,
+      });
+    }
     return;
   }
 
@@ -743,6 +800,7 @@ export function castSpell(spellId) {
     spawnRing(targetX, targetY, 38, spell.color, 0.35);
     spawnGroundDecal(targetX, targetY, "vfx_holy_ground_impact", 84, 0.65, { scaleStart: 0.72, scaleEnd: 1.08, spin: 0.5 });
     s.beams.push({ x: targetX * TILE_SIZE, y: targetY * TILE_SIZE, color: spell.color, life: 0.36, maxLife: 0.36 });
+    if (s.isPvp) broadcastPvpAction({ kind: "beam", x: targetX, y: targetY, color: spell.color });
     s.shake = Math.max(s.shake, 4);
 
     const dmg = Math.round(stats.atk * spell.mults[rIdx]) + spell.flats[rIdx];
@@ -956,6 +1014,19 @@ export function castSpell(spellId) {
         life: 0.72,
         label: spell.name,
       });
+      if (s.isPvp) {
+        broadcastPvpAction({
+          kind: "projectile",
+          x: p.x + Math.cos(a) * 0.4,
+          y: p.y + Math.sin(a) * 0.4,
+          vx: Math.cos(a) * speed,
+          vy: Math.sin(a) * speed,
+          radius: 0.24,
+          color: spell.color,
+          isArrow: true,
+          life: 0.72,
+        });
+      }
     }
     return;
   }
@@ -981,6 +1052,20 @@ export function castSpell(spellId) {
       life: 0.8,
       label: spell.name,
     });
+    if (s.isPvp) {
+      broadcastPvpAction({
+        kind: "projectile",
+        x: p.x + Math.cos(angle) * 0.4,
+        y: p.y + Math.sin(angle) * 0.4,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        radius: 0.28,
+        color: spell.color,
+        isArrow: true,
+        pierce: true,
+        life: 0.8,
+      });
+    }
     return;
   }
 

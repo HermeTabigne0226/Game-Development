@@ -37,7 +37,7 @@
       <div class="title-hero-banner medieval-banner">
         <img src="spritecook-isometric-buildings/castle.webp" alt="Oakhaven Bastion" class="bastion-img" />
         <div class="title-overlay medieval-overlay">
-          <span id="menu-version-badge" class="menu-version-badge">v.1.2.4.4</span>
+          <span id="menu-version-badge" class="menu-version-badge">v.1.3.0</span>
           <img src="assets/generated/game_logo.png" alt="" class="menu-crest-logo" />
           <span class="eyebrow">Aethelgard Chronicles</span>
           <h1>Chronicles of the Shattered Crown</h1>
@@ -51,6 +51,7 @@
           </p>
           <div class="menu-buttons">
             <button type="button" id="menu-btn-play" class="btn btn-primary btn-lg medieval-btn">New Quest</button>
+            <button type="button" id="menu-btn-pvp" class="btn btn-secondary btn-lg medieval-btn pvp-menu-btn">PvP Arena (1v1)</button>
             <button type="button" id="menu-btn-resume" class="btn btn-secondary btn-lg medieval-btn" hidden>Resume</button>
             <button type="button" id="menu-btn-settings" class="btn btn-secondary btn-lg medieval-btn">Settings</button>
             <button type="button" id="menu-btn-patch-notes" class="btn btn-secondary btn-lg medieval-btn patch-btn has-new-patch">
@@ -696,6 +697,95 @@
       <div class="shop-sell-section">
         <h4>Salvage from Satchel (+Gold &amp; Vital Spark)</h4>
         <div id="forge-salvage-list" class="shop-list"></div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Multiplayer 1v1 PvP Arena Modal -->
+  <dialog id="pvp-dialog" aria-labelledby="pvp-dialog-title">
+    <div class="dialog-card pvp-card">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">Real-Time 1v1 Multiplayer</span>
+          <h1 id="pvp-dialog-title">PvP Dungeon Arena</h1>
+        </div>
+        <div class="pvp-header-right">
+          <span id="pvp-conn-pill" class="pvp-conn-pill offline">Offline</span>
+          <form method="dialog">
+            <button id="btn-pvp-close" value="close" class="btn btn-secondary">Close</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="pvp-server-bar">
+        <label for="pvp-server-url" class="sr-only">Multiplayer Server URL</label>
+        <input id="pvp-server-url" type="text" placeholder="wss://your-relay.onrender.com or ws://192.168.x.x:8080" />
+        <button type="button" id="btn-pvp-connect" class="btn btn-primary btn-sm">Connect</button>
+        <button type="button" id="btn-pvp-lan-preset" class="btn btn-secondary btn-sm" title="Use localhost:8080">Local</button>
+      </div>
+      <div id="pvp-status-msg" class="pvp-status-msg">Connect to your local server or Render relay to find Same-Network lobbies.</div>
+
+      <div id="pvp-browser-view" class="pvp-browser-view">
+        <div class="pvp-fighter-strip">
+          <div class="pvp-fighter-name">
+            <label for="pvp-hero-name">Fighter Name</label>
+            <input id="pvp-hero-name" type="text" maxlength="18" placeholder="Sir Aldric" />
+          </div>
+          <div class="pvp-class-pills" role="group" aria-label="Choose PvP Hero">
+            <button type="button" class="btn btn-secondary btn-sm pvp-hero-btn active" data-pvp-hero="paladin">Paladin</button>
+            <button type="button" class="btn btn-secondary btn-sm pvp-hero-btn" data-pvp-hero="gilded">Gilded</button>
+            <button type="button" class="btn btn-secondary btn-sm pvp-hero-btn" data-pvp-hero="ranger">Ranger</button>
+          </div>
+        </div>
+
+        <div class="pvp-split">
+          <section class="pvp-pane">
+            <div class="pvp-pane-head">
+              <h3>Open Lobbies</h3>
+              <button type="button" id="btn-pvp-refresh" class="btn btn-secondary btn-sm">Refresh</button>
+            </div>
+            <div id="pvp-lobby-list" class="pvp-lobby-list">
+              <div class="hint-text">Connect to view active rooms on your network.</div>
+            </div>
+          </section>
+
+          <section class="pvp-pane">
+            <div class="pvp-pane-head">
+              <h3>Create Lobby</h3>
+              <span class="hint-text">4 Maps · Optional Password</span>
+            </div>
+            <div class="pvp-create-form">
+              <input id="pvp-room-name" type="text" maxlength="26" placeholder="Room Name (e.g. Friday Duel)" />
+              <input id="pvp-room-pass" type="password" maxlength="20" placeholder="Password (optional)" />
+              <div id="pvp-map-grid" class="pvp-map-grid"></div>
+              <button type="button" id="btn-pvp-create" class="btn btn-primary">Create PvP Lobby</button>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <div id="pvp-room-view" class="pvp-room-view" hidden>
+        <div class="pvp-room-banner">
+          <div>
+            <h3 id="pvp-room-title">Arena Room</h3>
+            <span id="pvp-room-meta" class="hint-text">Map: Goblin Catacombs Pit</span>
+          </div>
+          <button type="button" id="btn-pvp-leave" class="btn btn-secondary btn-sm">Leave Lobby</button>
+        </div>
+
+        <div id="pvp-vs-row" class="pvp-vs-row"></div>
+
+        <div class="pvp-room-config">
+          <div id="pvp-host-map-bar" class="pvp-host-map-bar" hidden>
+            <label for="pvp-room-map-select">Arena Map:</label>
+            <select id="pvp-room-map-select" class="difficulty-select"></select>
+          </div>
+          <div class="pvp-room-actions">
+            <button type="button" id="btn-pvp-loadout" class="btn btn-secondary">Change Class / Skills</button>
+            <button type="button" id="btn-pvp-ready" class="btn btn-secondary">Ready Up</button>
+            <button type="button" id="btn-pvp-start" class="btn btn-primary" hidden>Start PvP Match</button>
+          </div>
+        </div>
       </div>
     </div>
   </dialog>

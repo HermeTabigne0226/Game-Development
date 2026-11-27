@@ -79,7 +79,7 @@ runtime.meta = loadMeta();
 
 export function saveRun() {
   const s = runtime.state;
-  if (!s || s.runEnded || s.dyingTimer > 0 || !s.startedByUser) return;
+  if (!s || s.isPvp || s.runEnded || s.dyingTimer > 0 || !s.startedByUser) return;
   try {
     const snapshot = {
       floor: s.floor,

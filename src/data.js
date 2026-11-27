@@ -1,8 +1,17 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.2.4.4";
+export const GAME_VERSION = "v.1.3.0";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.3.0",
+    title: "Multiplayer 1v1 PvP Dungeon Arena & 4 Arenas",
+    notes: [
+      "1v1 PvP Dungeon Arena: Real-time PvP combat with WebSocket sync across Hero classes, weapons, skills, dashes, freezes, stuns, and Best-of-3 rounds.",
+      "4 Distinct PvP Maps: Goblin Catacombs Pit, Sunken Foundry Crucible, Abyssal Sanctum Arena, and Crimson Courtyard.",
+      "Same-Network Lobby & Passwords: Create or browse rooms, auto-highlight lobbies on the same Wi-Fi network, lock rooms with optional passwords, and deploy server.js to Vercel/Render/LAN cleanly.",
+    ],
+  },
   {
     version: "v.1.2.4.4",
     title: "Hotfix — Mobile FPS & Ping Alignment",
