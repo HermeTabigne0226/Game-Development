@@ -1,8 +1,17 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.2.2";
+export const GAME_VERSION = "v.1.2.3";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.2.3",
+    title: "Shrine Sprites, Divine Sword Charge & Smart Bag Indicators",
+    notes: [
+      "Ancient Shrines Overhaul: Added custom pixel-art Shrine of Magic (Cyan), Shrine of Aegis (Gold — grants +3 DEF/+12 Max HP & relic blessings), Shrine of Blood (Crimson), and Depleted Altar sprites.",
+      "Divine Cataclysm 3-Stage Charge Sword: Added progressive Golden -> White-Gold -> Radiance Max sword sprites plus rotating Ground Energy Gathering Sigil.",
+      "Bag Count & Upgrade Alerts: Inventory and Mobile Bag now display total item count across stacks plus glowing highlights & 'Better Gear' badges whenever an upgrade is ready to equip.",
+    ],
+  },
   {
     version: "v.1.2.2",
     title: "Pixel-Art Skill VFX Upgrade & Valiant Charge Polish",
@@ -1587,9 +1596,9 @@ export const NPC_ENCOUNTERS = {
 export const SHRINE_ENCOUNTERS = {
   blood: {
     id: "blood",
-    title: "Altar of Crimson Steel",
+    title: "Shrine of Blood",
     role: "Ancient Shrine",
-    desc: "A crimson brazier pulses with ancient strength. Sacrifice vitality for power?",
+    desc: "A crimson orb burns atop the altar. Sacrifice vitality for brutal combat power?",
     choices: [
       { label: "Offer 25% Current HP -> Gain +3 ATK & +4% CRIT", effect: "shrine_blood_atk" },
       { label: "Offer 35 Gold -> Gain +1 Random Relic", effect: "shrine_relic", cost: 35 },
@@ -1598,13 +1607,24 @@ export const SHRINE_ENCOUNTERS = {
   },
   sanctum: {
     id: "sanctum",
-    title: "Shrine of Starlight",
+    title: "Shrine of Magic",
     role: "Ancient Shrine",
-    desc: "Cool silver light bathes this forgotten alcove, humming with arcane resonance.",
+    desc: "A radiant cyan orb hums with arcane resonance above this forgotten stone altar.",
     choices: [
       { label: "Pray for Wisdom -> +1 Skill Point (or +25 XP if Lv 1)", effect: "shrine_skill_pt" },
-      { label: "Drink Starlight -> Full HP/MP & +8 Max MP", effect: "shrine_mp" },
+      { label: "Drink Arcane Light -> Full HP/MP & +8 Max MP", effect: "shrine_mp" },
       { label: "Claim Relic Blessing -> +1 Random Relic (costs 30 Gold)", effect: "shrine_relic", cost: 30 },
+    ],
+  },
+  aegis: {
+    id: "aegis",
+    title: "Shrine of Aegis",
+    role: "Ancient Shrine",
+    desc: "A consecrated golden orb shields the sanctum, radiating bastion fortitude.",
+    choices: [
+      { label: "Claim Ward Blessing -> +3 DEF & +12 Max HP", effect: "shrine_aegis_def" },
+      { label: "Sacred Protection -> +1 Random Relic (costs 30 Gold)", effect: "shrine_relic", cost: 30 },
+      { label: "Leave Untouched", effect: "none" },
     ],
   },
 };

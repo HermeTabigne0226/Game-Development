@@ -99,6 +99,14 @@ export async function loadAllAssets(onProgress = null) {
     vfx_damage_aoe_field: "assets/generated/vfx/vfx_damage_aoe_field.png",
     vfx_spear_charge_lunge: "assets/generated/vfx/vfx_spear_charge_lunge.png",
     vfx_spear_impact_crater: "assets/generated/vfx/vfx_spear_impact_crater.png",
+    charging_sword_stage1: "assets/generated/vfx/charging_sword_stage1.png",
+    charging_sword_stage2: "assets/generated/vfx/charging_sword_stage2.png",
+    charging_sword_max: "assets/generated/vfx/charging_sword_max.png",
+    charging_ground_sigil: "assets/generated/vfx/charging_ground_sigil.png",
+    shrine_magic: "assets/generated/vfx/shrine_magic.png",
+    shrine_aegis: "assets/generated/vfx/shrine_aegis.png",
+    shrine_blood: "assets/generated/vfx/shrine_blood.png",
+    shrine_depleted: "assets/generated/vfx/shrine_depleted.png",
   };
 
   const list = Object.entries(manifest);

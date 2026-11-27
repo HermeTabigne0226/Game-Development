@@ -9,6 +9,7 @@ import {
   getPlayerStats,
   getRarityInfo,
   getWeaponCategory,
+  isBetterEquipmentItem,
   loadSavedRun,
   runtime,
 } from "./state.js";
@@ -359,22 +360,31 @@ export function updateUI() {
   document.getElementById("quick-mp-count").textContent = mpCount;
 
   const maxInv = getMaxInventory(p);
+  const totalItems = p.inventory.reduce((sum, it) => sum + (it?.qty || 1), 0);
+  const invTotalEl = document.getElementById("inv-total");
+  if (invTotalEl) invTotalEl.textContent = totalItems;
   document.getElementById("inv-count").textContent = p.inventory.length;
   const invMaxEl = document.getElementById("inv-max");
   if (invMaxEl) invMaxEl.textContent = maxInv;
+  const mobBagCountEl = document.getElementById("mobile-bag-count");
+  if (mobBagCountEl) mobBagCountEl.textContent = totalItems;
+
+  let upgradeCount = 0;
   const invGrid = document.getElementById("inventory-grid");
   invGrid.innerHTML = "";
   for (let i = 0; i < maxInv; i++) {
     const item = p.inventory[i];
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = `inv-slot ${item ? "" : "empty"}`;
+    const isUpgrade = item ? isBetterEquipmentItem(item, p) : false;
+    if (isUpgrade) upgradeCount += 1;
+    btn.className = `inv-slot ${item ? "" : "empty"}${isUpgrade ? " upgrade-ready" : ""}`;
     if (item) {
       const rInfo = getRarityInfo(item);
-      btn.style.borderColor = rInfo.color;
+      if (!isUpgrade) btn.style.borderColor = rInfo.color;
       btn.style.background = rInfo.bg;
-      btn.title = `[${rInfo.label}] ${item.name} — ${item.desc}`;
-      btn.innerHTML = `<span class="inv-rarity-dot" style="background:${rInfo.color}"></span><img src="${item.icon}" alt="${item.name}" />${item.qty > 1 ? `<span class="inv-qty">${item.qty}</span>` : ""}`;
+      btn.title = `[${rInfo.label}] ${item.name} — ${item.desc}${isUpgrade ? " [BETTER GEAR AVAILABLE!]" : ""}`;
+      btn.innerHTML = `<span class="inv-rarity-dot" style="background:${rInfo.color}"></span>${isUpgrade ? `<span class="inv-upgrade-badge" title="Better than equipped">▲</span>` : ""}<img src="${item.icon}" alt="${item.name}" />${item.qty > 1 ? `<span class="inv-qty">${item.qty}</span>` : ""}`;
       btn.addEventListener("click", () => {
         if (uiHooks.openItemActionDialog) uiHooks.openItemActionDialog(i);
       });
@@ -382,6 +392,19 @@ export function updateUI() {
       btn.disabled = true;
     }
     invGrid.appendChild(btn);
+  }
+
+  const invUpgradePill = document.getElementById("inv-upgrade-pill");
+  if (invUpgradePill) {
+    invUpgradePill.hidden = upgradeCount === 0;
+    invUpgradePill.textContent = upgradeCount > 1 ? `▲ ${upgradeCount} Upgrades` : "▲ Better Gear";
+  }
+  const mobBagBtn = document.getElementById("btn-mobile-bag");
+  const mobBagUpgrade = document.getElementById("mobile-bag-upgrade");
+  if (mobBagBtn) mobBagBtn.classList.toggle("has-upgrade", upgradeCount > 0);
+  if (mobBagUpgrade) {
+    mobBagUpgrade.hidden = upgradeCount === 0;
+    mobBagUpgrade.textContent = upgradeCount > 1 ? `▲ ${upgradeCount}` : "▲ Gear";
   }
 
   renderShortcuts();

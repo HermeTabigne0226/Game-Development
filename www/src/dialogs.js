@@ -737,8 +737,15 @@ export function openShrineDialog(prop) {
   document.getElementById("story-dialog-title").textContent = tpl.title;
   document.getElementById("story-dialog-text").textContent = tpl.desc;
   storyPortraitCtx.clearRect(0, 0, 80, 80);
-  storyPortraitCtx.fillStyle = tpl.id === "blood" ? "#7f1d1d" : "#0c4a6e";
-  storyPortraitCtx.fillRect(10, 10, 60, 60);
+  const shrineKey = tpl.id === "blood" ? "shrine_blood" : tpl.id === "aegis" ? "shrine_aegis" : "shrine_magic";
+  const shrineImg = runtime.assets?.[shrineKey];
+  if (shrineImg) {
+    storyPortraitCtx.imageSmoothingEnabled = false;
+    storyPortraitCtx.drawImage(shrineImg, 6, 6, 68, 68);
+  } else {
+    storyPortraitCtx.fillStyle = tpl.id === "blood" ? "#7f1d1d" : tpl.id === "aegis" ? "#854d0e" : "#0c4a6e";
+    storyPortraitCtx.fillRect(10, 10, 60, 60);
+  }
 
   const choicesEl = document.getElementById("story-choices");
   choicesEl.innerHTML = "";
@@ -780,6 +787,14 @@ export function openShrineDialog(prop) {
         sfx.heal();
         addFloat(p.x, p.y - 0.4, "+8 MAX MP · FULL HEAL", "#38bdf8");
         addLog("Drank Starlight: Full HP/MP and +8 Max MP!", "heal");
+        prop.used = true;
+      } else if (choice.effect === "shrine_aegis_def") {
+        p.baseDef += 3;
+        p.maxHp += 12;
+        p.hp = Math.min(getPlayerStats().maxHp, p.hp + 12);
+        sfx.heal();
+        addFloat(p.x, p.y - 0.4, "+3 DEF · +12 MAX HP!", "#facc15");
+        addLog("Shrine of Aegis blessed your armor (+3 DEF, +12 Max HP)!", "loot");
         prop.used = true;
       } else if (choice.effect === "shrine_relic") {
         const rel = grantRandomRelic(p);

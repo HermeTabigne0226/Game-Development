@@ -412,10 +412,11 @@ function buildFloorCandidate(floor, difficultyId = "normal") {
   if (!isBossFloor && rooms.length > 3 && Math.random() < 0.6) {
     const sPos = freeTileInRoom(rooms[2]);
     if (sPos) {
+      const shrinePool = ["blood", "sanctum", "aegis"];
       props.push({
         id: `shrine_${floor}`,
         kind: "shrine",
-        shrineId: Math.random() < 0.5 ? "blood" : "sanctum",
+        shrineId: shrinePool[Math.floor(Math.random() * shrinePool.length)],
         x: sPos.x,
         y: sPos.y,
         solid: true,

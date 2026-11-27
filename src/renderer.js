@@ -190,25 +190,41 @@ export function renderFrame(ts) {
     const py = pr.y * TILE_SIZE;
 
     if (pr.kind === "shrine") {
-      const col = pr.shrineId === "blood" ? "#ef4444" : "#38bdf8";
+      const col = pr.shrineId === "blood" ? "#ef4444" : pr.shrineId === "aegis" ? "#facc15" : "#38bdf8";
+      const spriteKey = pr.used
+        ? "shrine_depleted"
+        : pr.shrineId === "blood"
+          ? "shrine_blood"
+          : pr.shrineId === "aegis"
+            ? "shrine_aegis"
+            : "shrine_magic";
+      const img = assets[spriteKey];
       ctx.save();
-      ctx.fillStyle = pr.used ? "#334155" : col;
-      ctx.globalAlpha = pr.used ? 0.5 : 0.25 + Math.sin(ts * 0.006) * 0.1;
-      ctx.beginPath();
-      ctx.arc(px + 16, py + 16, 15, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = "#475569";
-      ctx.fillRect(px + 8, py + 12, 16, 14);
-      ctx.fillStyle = pr.used ? "#64748b" : col;
-      ctx.beginPath();
-      ctx.arc(px + 16, py + 10, 5, 0, Math.PI * 2);
-      ctx.fill();
       if (!pr.used) {
+        ctx.fillStyle = col;
+        ctx.globalAlpha = 0.24 + Math.sin(ts * 0.006) * 0.1;
+        ctx.beginPath();
+        ctx.arc(px + 16, py + 16, 17, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = pr.used ? 0.88 : 1;
+      if (img) {
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(img, px - 2, py - 5, 36, 36);
+      } else {
+        ctx.fillStyle = "#475569";
+        ctx.fillRect(px + 8, py + 12, 16, 14);
+        ctx.fillStyle = pr.used ? "#64748b" : col;
+        ctx.beginPath();
+        ctx.arc(px + 16, py + 10, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (!pr.used) {
+        ctx.globalAlpha = 1;
         ctx.font = "bold 8px sans-serif";
         ctx.textAlign = "center";
         ctx.fillStyle = col;
-        ctx.fillText("SHRINE", px + 16, py - 2);
+        ctx.fillText("SHRINE", px + 16, py - 4);
       }
       ctx.restore();
       continue;
@@ -913,38 +929,45 @@ export function renderFrame(ts) {
     ctx.arc(pxCenter, pyCenter, radPx, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
-    if (assets.vfx_holy_ground_impact) {
+    const gatherImg = assets.charging_ground_sigil || assets.vfx_holy_ground_impact;
+    if (gatherImg) {
       ctx.save();
       ctx.imageSmoothingEnabled = false;
-      ctx.globalAlpha = 0.45 + prog * 0.45;
+      ctx.globalAlpha = 0.6 + prog * 0.35;
       ctx.translate(pxCenter, pyCenter);
-      ctx.rotate(ts * 0.0012);
-      const curSz = Math.max(24, radPx * 2 * prog);
-      ctx.drawImage(assets.vfx_holy_ground_impact, -curSz / 2, -curSz / 2, curSz, curSz);
+      ctx.rotate(ts * 0.0006);
+      const fullSz = radPx * 2.08;
+      ctx.drawImage(gatherImg, -fullSz / 2, -fullSz / 2, fullSz, fullSz);
       ctx.restore();
     }
     ctx.strokeStyle = "#fef08a";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
     ctx.arc(pxCenter, pyCenter, radPx * prog, 0, Math.PI * 2);
     ctx.stroke();
-    const lift = 24 + Math.sin(prog * Math.PI * 0.5) * 10;
+
+    const lift = 28 + Math.sin(prog * Math.PI * 0.5) * 10;
     const sy = pyCenter - lift - pz;
-    ctx.translate(pxCenter + (p.facingLeft ? -4 : 4), sy);
-    ctx.fillStyle = "#fef9c3";
-    ctx.strokeStyle = "#f59e0b";
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(0, -28);
-    ctx.lineTo(4, -6);
-    ctx.lineTo(-4, -6);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#eab308";
-    ctx.fillRect(-8, -6, 16, 4);
-    ctx.fillStyle = "#78350f";
-    ctx.fillRect(-2, -2, 4, 8);
+    const swordKey = prog < 0.4 ? "charging_sword_stage1" : prog < 0.8 ? "charging_sword_stage2" : "charging_sword_max";
+    const swordImg = assets[swordKey];
+    if (swordImg) {
+      ctx.imageSmoothingEnabled = false;
+      const pulse = prog >= 0.8 ? 1 + Math.sin(ts * 0.025) * 0.08 : 1;
+      const sz = 52 * pulse;
+      ctx.drawImage(swordImg, pxCenter + (p.facingLeft ? -4 : 4) - sz / 2, sy - sz * 0.62, sz, sz);
+    } else {
+      ctx.translate(pxCenter + (p.facingLeft ? -4 : 4), sy);
+      ctx.fillStyle = "#fef9c3";
+      ctx.strokeStyle = "#f59e0b";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0, -28);
+      ctx.lineTo(4, -6);
+      ctx.lineTo(-4, -6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
     ctx.restore();
   }
 

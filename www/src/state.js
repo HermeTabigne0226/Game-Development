@@ -374,6 +374,24 @@ export function isWeaponSubPairValid(weapon, sub) {
   return getWeaponCategory(weapon) === getSubWeaponCategory(sub);
 }
 
+export function isBetterEquipmentItem(item, p = runtime.state?.player) {
+  if (!item || !item.slot || !p) return false;
+  if (item.slot === "subweapon" && p.equipment?.weapon && !isWeaponSubPairValid(p.equipment.weapon, item)) {
+    return false;
+  }
+  const currentInSlot = p.equipment?.[item.slot] || null;
+  if (!currentInSlot) return true;
+
+  const nextEquipment = { ...p.equipment, [item.slot]: item };
+  if (item.slot === "weapon" && nextEquipment.subweapon && !isWeaponSubPairValid(item, nextEquipment.subweapon)) {
+    nextEquipment.subweapon = null;
+  }
+  const curStats = getPlayerStats(p);
+  const nextStats = getPlayerStats({ ...p, equipment: nextEquipment });
+  const score = (st) => (st.atk || 0) * 3 + (st.def || 0) * 2.5 + (st.crit || 0) * 0.8 + (st.maxHp || 0) * 0.35 + (st.maxMp || 0) * 0.3;
+  return score(nextStats) > score(curStats) + 0.05;
+}
+
 export function getRarityInfo(item) {
   const key =
     item?.rarity ||
