@@ -197,6 +197,7 @@ export function createNewRun(heroName, difficultyId, loadout = DEFAULT_LOADOUT, 
     rings: [],
     groundDecals: [],
     vfxAnims: [],
+    pendingMeteors: [],
     beams: [],
     arrowStorms: [],
     frostZones: [],
@@ -407,6 +408,7 @@ export function restoreRun(saved) {
     rings: [],
     groundDecals: [],
     vfxAnims: [],
+    pendingMeteors: [],
     beams: [],
     arrowStorms: [],
     frostZones: [],
@@ -1690,10 +1692,46 @@ export function updateSimulation(dt) {
       if (dc.life <= 0) s.groundDecals.splice(i, 1);
     }
   }
-  if (Array.isArray(s.vfxAnims)) {
+    if (Array.isArray(s.vfxAnims)) {
     for (let i = s.vfxAnims.length - 1; i >= 0; i--) {
       s.vfxAnims[i].life -= dt;
       if (s.vfxAnims[i].life <= 0) s.vfxAnims.splice(i, 1);
+    }
+  }
+  if (Array.isArray(s.pendingMeteors)) {
+    for (let i = s.pendingMeteors.length - 1; i >= 0; i--) {
+      const pm = s.pendingMeteors[i];
+      pm.timer -= dt;
+      if (pm.timer <= 0) {
+        s.pendingMeteors.splice(i, 1);
+        sfx.ultSlam();
+        const expSize = pm.rad * TILE_SIZE * 1.85;
+        spawnVfxAnim(pm.x, pm.y, "vfx_fire_explosion", expSize, 0.56);
+        spawnGroundDecal(pm.x, pm.y, "vfx_ground_slam_shockwave", pm.rad * TILE_SIZE * 1.5, 0.28, { scaleStart: 0.2, scaleEnd: 1.7 });
+        spawnRing(pm.x, pm.y, pm.rad * TILE_SIZE, "#f97316", 0.42);
+        spawnBurst(pm.x, pm.y, "#facc15", 26, 1.5);
+        s.shake = Math.max(s.shake, 11);
+        s.hitstop = Math.max(s.hitstop, 0.04);
+        if (s.isPvp) {
+          broadcastPvpAction({ kind: "vfx", x: pm.x, y: pm.y, sheetKey: "vfx_fire_explosion", sizePx: expSize, duration: 0.56 });
+          broadcastPvpAction({ kind: "ring", x: pm.x, y: pm.y, radPx: pm.rad * TILE_SIZE, color: "#f97316", dur: 0.42 });
+        }
+        for (const e of [...s.level.enemies]) {
+          const dx = e.x - pm.x;
+          const dy = e.y - pm.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist <= pm.rad + 0.45) {
+            const nx = dist > 0.01 ? dx / dist : 0;
+            const ny = dist > 0.01 ? dy / dist : 0;
+            damageEnemy(e, pm.dmg, true, pm.name, nx * 5.4, ny * 5.4, { isSkill: true, isAoe: true, canInterrupt: true, stunDur: pm.stun });
+          }
+        }
+        for (const pr of s.level.props) {
+          if (pr.solid && ["crate", "barrel", "urn"].includes(pr.kind) && Math.hypot(pr.x + 0.5 - pm.x, pr.y + 0.5 - pm.y) <= pm.rad) {
+            interactProp(pr);
+          }
+        }
+      }
     }
   }
   for (let i = s.beams.length - 1; i >= 0; i--) {

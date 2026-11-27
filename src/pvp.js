@@ -853,6 +853,7 @@ function applyRemoteOpponentAction(msg) {
   } else if (act.kind === "vfx") {
     const opts = act.opts || {
       angle: act.angle || 0,
+      flipX: Boolean(act.flipX),
       anchorX: act.anchorX ?? 0.5,
       anchorY: act.anchorY ?? 0.5,
     };

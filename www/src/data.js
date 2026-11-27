@@ -1,8 +1,16 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.3.8";
+export const GAME_VERSION = "v.1.3.9";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.3.9",
+    title: "Directional & Realistic Meteor Strike Landing",
+    notes: [
+      "Directional Meteor Strike: Meteor Strike now targets where the hero faces/aims (never behind you) and dynamically mirrors its streak trajectory to fall left-to-right when facing right or right-to-left when facing left.",
+      "Impact-Synced Detonation: Shows a glowing ground impact reticle while the meteor streaks down and triggers the explosion, shockwave, camera shake, and AoE stun at the exact moment it strikes the ground.",
+    ],
+  },
   {
     version: "v.1.3.8",
     title: "Hotfix — Stop Ground Item Duplication When Satchel Is Full",

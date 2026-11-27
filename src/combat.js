@@ -886,40 +886,84 @@ export function castSpell(spellId) {
   }
 
   if (spell.type === "meteor_strike") {
-    sfx.ultSlam();
+    sfx.magicOrb();
     p.anim = "attack";
     p.animTimer = 0.32;
+    const dirX = Math.cos(angle);
+    const dirY = Math.sin(angle);
+    const maxRange = spell.range || 5.4;
+    let maxWalkableDist = 1.0;
+    for (let step = 0.3; step <= maxRange; step += 0.3) {
+      if (canOccupy(p.x + dirX * step, p.y + dirY * step, 0.25)) {
+        maxWalkableDist = step;
+      } else {
+        break;
+      }
+    }
+
+    let aimDist = Math.min(maxWalkableDist, 3.8);
+    if (!touchAim.active && mouse.inside && mouse.x !== null && mouse.y !== null) {
+      aimDist = Math.max(1.2, Math.min(maxWalkableDist, Math.hypot(mouse.x - p.x, mouse.y - p.y)));
+    }
+
     let bestEnemy = null;
-    let bestDist = spell.range || 6.2;
+    let bestScore = Infinity;
     for (const e of s.level.enemies) {
       if (e.isBoss && !s.bossFightStarted) continue;
       if (!s.level.visible[Math.floor(e.y)]?.[Math.floor(e.x)]) continue;
-      const d = Math.hypot(e.x - p.x, e.y - p.y);
-      if (d <= bestDist) {
-        bestDist = d;
+      const ex = e.x - p.x;
+      const ey = e.y - p.y;
+      const d = Math.hypot(ex, ey);
+      if (d > maxRange + 0.5 || d < 0.01) continue;
+      const forwardProj = ex * dirX + ey * dirY;
+      if (forwardProj < 0.35) continue; // Only target enemies in the direction hero is facing
+      const perpDist = Math.abs(ex * dirY - ey * dirX);
+      if (perpDist > 1.75) continue;
+      const score = perpDist * 2.2 + Math.abs(forwardProj - aimDist) * 0.45;
+      if (score < bestScore) {
+        bestScore = score;
         bestEnemy = e;
       }
     }
-    const tx = bestEnemy ? bestEnemy.x : p.x + Math.cos(angle) * 3.4;
-    const ty = bestEnemy ? bestEnemy.y : p.y + Math.sin(angle) * 3.4;
+
+    const tx = bestEnemy ? bestEnemy.x : p.x + dirX * aimDist;
+    const ty = bestEnemy ? bestEnemy.y : p.y + dirY * aimDist;
     const rad = spell.radii[rIdx];
     const dmg = Math.round(stats.atk * spell.mults[rIdx]) + spell.flats[rIdx];
     const stun = spell.stuns?.[rIdx] || 1.6;
-    spawnVfxAnim(tx, ty, "vfx_meteor_strike", rad * TILE_SIZE * 1.9, 0.75);
-    spawnVfxAnim(tx, ty, "vfx_fire_explosion", rad * TILE_SIZE * 1.75, 0.62);
-    if (s.isPvp) broadcastPvpAction({ kind: "vfx", x: tx, y: ty, sheetKey: "vfx_meteor_strike", sizePx: rad * TILE_SIZE * 1.9, duration: 0.75 });
-    spawnRing(tx, ty, rad * TILE_SIZE, "#f97316", 0.42);
-    spawnBurst(tx, ty, "#facc15", 24, 1.45);
-    s.shake = Math.max(s.shake, 9);
-    for (const e of [...s.level.enemies]) {
-      const dx = e.x - tx;
-      const dy = e.y - ty;
-      const dist = Math.hypot(dx, dy);
-      if (dist <= rad + 0.45) {
-        const nx = dist > 0.01 ? dx / dist : 0;
-        const ny = dist > 0.01 ? dy / dist : 0;
-        damageEnemy(e, dmg, true, spell.name, nx * 5.2, ny * 5.2, { isSkill: true, isAoe: true, canInterrupt: true, stunDur: stun });
-      }
+    const facingRight = Math.abs(dirX) > 0.12 ? dirX > 0 : !p.facingLeft;
+    const impactDelay = 0.26;
+    const vfxSize = rad * TILE_SIZE * 2.15;
+
+    spawnVfxAnim(tx, ty, "vfx_meteor_strike", vfxSize, 0.86, {
+      flipX: facingRight,
+      anchorX: 0.5,
+      anchorY: 0.78,
+    });
+    spawnRing(tx, ty, rad * TILE_SIZE, "rgba(251, 146, 60, 0.8)", impactDelay);
+    if (!Array.isArray(s.pendingMeteors)) s.pendingMeteors = [];
+    s.pendingMeteors.push({
+      x: tx,
+      y: ty,
+      rad,
+      dmg,
+      stun,
+      name: spell.name,
+      timer: impactDelay,
+      maxTimer: impactDelay,
+    });
+    if (s.isPvp) {
+      broadcastPvpAction({
+        kind: "vfx",
+        x: tx,
+        y: ty,
+        sheetKey: "vfx_meteor_strike",
+        sizePx: vfxSize,
+        duration: 0.86,
+        flipX: facingRight,
+        anchorX: 0.5,
+        anchorY: 0.78,
+      });
     }
     return;
   }

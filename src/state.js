@@ -363,7 +363,7 @@ export function spawnVfxAnim(
   sheetKey,
   sizePx = 64,
   duration = 0.55,
-  { angle = 0, scaleStart = 1, scaleEnd = 1, anchorX = 0.5, anchorY = 0.5, alpha = 1 } = {}
+  { angle = 0, flipX = false, scaleStart = 1, scaleEnd = 1, anchorX = 0.5, anchorY = 0.5, alpha = 1 } = {}
 ) {
   const s = runtime.state;
   if (!s) return;
@@ -377,6 +377,7 @@ export function spawnVfxAnim(
     life: duration,
     maxLife: duration,
     angle,
+    flipX: Boolean(flipX),
     scaleStart,
     scaleEnd,
     anchorX,

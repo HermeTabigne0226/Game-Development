@@ -1100,6 +1100,29 @@ export function renderFrame(ts) {
     ctx.restore();
   }
 
+  if (s.pendingMeteors?.length) {
+    for (const pm of s.pendingMeteors) {
+      const prog = Math.max(0, Math.min(1, 1 - pm.timer / (pm.maxTimer || 0.26)));
+      const radPx = pm.rad * TILE_SIZE;
+      const mx = pm.x * TILE_SIZE;
+      const my = pm.y * TILE_SIZE;
+      ctx.save();
+      ctx.strokeStyle = `rgba(251, 146, 60, ${0.45 + prog * 0.5})`;
+      ctx.fillStyle = `rgba(249, 115, 22, ${0.1 + prog * 0.18})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(mx, my, radPx, radPx * 0.65, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = "#fde047";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.ellipse(mx, my, radPx * Math.max(0.12, 1 - prog), radPx * 0.65 * Math.max(0.12, 1 - prog), 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
   if (s.vfxAnims?.length) {
     for (const va of s.vfxAnims) {
       const sheet = assets[va.sheetKey];
@@ -1116,6 +1139,7 @@ export function renderFrame(ts) {
       ctx.globalAlpha = Math.max(0, Math.min(1, (va.alpha ?? 1) * fade));
       ctx.translate(va.x, va.y);
       if (va.angle) ctx.rotate(va.angle);
+      if (va.flipX) ctx.scale(-1, 1);
       drawGridVfxFrame(
         ctx,
         sheet,
