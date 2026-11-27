@@ -67,6 +67,21 @@
     </div>
   </div>
 
+  <!-- PvP Match Winner Overlay (Centered In-Arena Result + Instant Go to Lobby) -->
+  <div id="pvp-match-overlay" class="fullscreen-overlay pvp-match-overlay" role="dialog" aria-labelledby="pvp-match-title" hidden>
+    <div id="pvp-match-card" class="pvp-match-card">
+      <span id="pvp-match-eyebrow" class="eyebrow">PVP ARENA · MATCH COMPLETE</span>
+      <h1 id="pvp-match-title">VICTORY!</h1>
+      <p id="pvp-match-summary" class="pvp-match-summary"></p>
+      <div id="pvp-match-stats" class="stat-grid"></div>
+      <p id="pvp-match-countdown" class="pvp-match-countdown">Returning to PvP Lobby in 4s...</p>
+      <div class="pvp-match-actions">
+        <button type="button" id="btn-pvp-match-lobby" class="btn btn-primary btn-lg medieval-btn">Go to PvP Lobby</button>
+        <button type="button" id="btn-pvp-match-menu" class="btn btn-secondary btn-lg medieval-btn">Exit to Main Menu</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Game Intro & Main Menu -->
   <div id="main-menu" class="fullscreen-overlay" hidden>
     <div class="menu-card medieval-card">

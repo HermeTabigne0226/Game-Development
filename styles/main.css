@@ -3980,6 +3980,75 @@ kbd {
   padding: 16px;
 }
 
+.pvp-match-overlay {
+  z-index: 98;
+  background: rgba(6, 9, 16, 0.78);
+  backdrop-filter: blur(5px);
+  padding: 16px;
+}
+
+.pvp-match-card {
+  width: min(500px, 94vw);
+  background: linear-gradient(180deg, rgba(20, 26, 42, 0.98) 0%, rgba(11, 15, 25, 0.98) 100%);
+  border: 3px solid #eab308;
+  box-shadow: 0 0 0 3px #0a0d14, 0 20px 56px rgba(0, 0, 0, 0.9);
+  border-radius: 12px;
+  padding: 22px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.pvp-match-card.lose {
+  border-color: #ef4444;
+}
+
+.pvp-match-card h1 {
+  margin: 0;
+  font-size: clamp(1.35rem, 3.6vw, 1.95rem);
+  color: #fde047;
+  text-shadow: 0 2px 12px rgba(234, 179, 8, 0.45);
+}
+
+.pvp-match-card.lose h1 {
+  color: #fca5a5;
+  text-shadow: 0 2px 12px rgba(239, 68, 68, 0.4);
+}
+
+.pvp-match-summary {
+  margin: 0;
+  color: #e2e8f0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.pvp-match-card .stat-grid {
+  width: 100%;
+}
+
+.pvp-match-countdown {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #93c5fd;
+}
+
+.pvp-match-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.pvp-match-actions .btn {
+  min-width: 170px;
+  justify-content: center;
+}
+
 .pvp-vs-backdrop {
   width: min(920px, 96vw);
   background: #101522;

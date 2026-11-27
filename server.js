@@ -261,9 +261,25 @@ function clearRoomAutoStart(room) {
   if (room) room.autoStartAt = 0;
 }
 
+function clearRoomTimers(room) {
+  if (!room) return;
+  if (room.roundTimer) {
+    clearTimeout(room.roundTimer);
+    room.roundTimer = null;
+  }
+  if (room.lethalVerifyTimer) {
+    clearTimeout(room.lethalVerifyTimer);
+    room.lethalVerifyTimer = null;
+  }
+}
+
 function finishPvpRound(room, winnerIdx, reason = "ko") {
   if (!room || room.status !== "playing" || room.roundEnded || room.players.length < 2) return;
   room.roundEnded = true;
+  if (room.lethalVerifyTimer) {
+    clearTimeout(room.lethalVerifyTimer);
+    room.lethalVerifyTimer = null;
+  }
   if (winnerIdx === 0 || winnerIdx === 1) {
     room.scores[winnerIdx] += 1;
   }
@@ -327,6 +343,7 @@ function finishPvpRound(room, winnerIdx, reason = "ko") {
 
 function launchPvpRoomMatch(room) {
   clearRoomAutoStart(room);
+  clearRoomTimers(room);
   room.status = "playing";
   room.round = 1;
   room.roundEnded = false;
@@ -555,6 +572,18 @@ function handleClientMessage(client, msg) {
     return;
   }
 
+  if (msg.type === "claim_round_win") {
+    if (room.status !== "playing" || room.roundEnded || room.players.length < 2) return;
+    if (typeof msg.round === "number" && msg.round < room.round) return;
+    const peer = room.players[pIdx === 0 ? 1 : 0];
+    if (!peer) return;
+    const peerSilentMs = Date.now() - (peer.lastSyncAt || room.roundStartedAt || 0);
+    if ((peer.lastHp ?? 1000) <= 0 || (peer.estHp ?? 1000) <= 0 || peerSilentMs > 900) {
+      finishPvpRound(room, pIdx, "ko");
+    }
+    return;
+  }
+
   if (msg.type === "round_timeout") {
     if (typeof msg.round === "number" && msg.round < room.round) return;
     if (room.status !== "playing" || room.roundEnded || room.players.length < 2) return;
@@ -663,6 +692,19 @@ function handleClientMessage(client, msg) {
         finishPvpRound(room, pIdx, "ko");
         return;
       }
+    } else if (!room.lethalVerifyTimer && (peer.lastHp ?? 1000) - Math.round(validatedHit.dmg * 0.55) <= 0) {
+      const roundSnap = room.round;
+      const hitAt = now;
+      room.lethalVerifyTimer = setTimeout(() => {
+        room.lethalVerifyTimer = null;
+        if (!rooms.has(room.id) || room.status !== "playing" || room.roundEnded || room.round !== roundSnap) return;
+        const curPeer = room.players[peerIdx];
+        if (!curPeer) return;
+        const confirmedAlive = (curPeer.lastSyncAt || 0) > hitAt + 150 && (curPeer.lastHp ?? 0) > 0;
+        if (!confirmedAlive) {
+          finishPvpRound(room, pIdx, "ko");
+        }
+      }, 1000);
     }
 
     sendWsJson(peer.client, validatedHit);
