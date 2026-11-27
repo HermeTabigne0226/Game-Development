@@ -1,8 +1,15 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.3.7";
+export const GAME_VERSION = "v.1.3.8";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.3.8",
+    title: "Hotfix — Stop Ground Item Duplication When Satchel Is Full",
+    notes: [
+      "Ground Item Pickup Fix: Removed a leftover duplicate pickup loop in the simulation tick that respawned copies of ground drops every frame whenever your Satchel was full.",
+    ],
+  },
   {
     version: "v.1.3.7",
     title: "Sub-Weapon Dash Skills, Menu Fix, APK In-Place Updates & PvP Guide",

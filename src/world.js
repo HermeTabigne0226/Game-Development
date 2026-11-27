@@ -1311,21 +1311,6 @@ export function updateSimulation(dt) {
       }
       if (dist < 0.72) {
         const qty = gItem.item.qty || 1;
-        if (giveOrDropItem(gItem.item, gItem.x, gItem.y, { qty }) && s.player.inventory.some((i) => i.id === gItem.item.id)) {
-          // Wait: giveOrDropItem spawns a new ground item if full! Check addItemToInventory directly:
-        }
-      }
-      remaining.push(gItem);
-    }
-  }
-  // Clean ground-item pickup loop (without double spawning)
-  if (Array.isArray(s.level.groundItems) && s.level.groundItems.length > 0) {
-    const remaining = [];
-    let pickedAny = false;
-    for (const gItem of s.level.groundItems) {
-      const dist = Math.hypot(gItem.x - p.x, gItem.y - p.y);
-      if (!gItem.requireLeave && dist < 0.72) {
-        const qty = gItem.item.qty || 1;
         const maxInv = p.maxInventory || 15;
         const existing = gItem.item.type === "consumable" ? p.inventory.find((i) => i.id === gItem.item.id) : null;
         if (existing) {
