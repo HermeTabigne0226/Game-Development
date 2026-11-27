@@ -2480,10 +2480,104 @@ body {
 .pvp-conn-pill.pending { background: rgba(234, 179, 8, 0.2); border-color: #facc15; color: #fef08a; }
 .pvp-conn-pill.offline { background: rgba(239, 68, 68, 0.16); border-color: #f87171; color: #fca5a5; }
 
+.pvp-mode-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.pvp-mode-tab {
+  padding: 8px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: #101522;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.pvp-mode-tab.active {
+  border-color: #38bdf8;
+  background: rgba(14, 116, 144, 0.28);
+  color: #e0f2fe;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.22);
+}
+
+.pvp-lan-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.pvp-lan-host-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pvp-lan-host-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 240px;
+}
+
+.pvp-lan-host-info strong {
+  font-size: 0.8rem;
+  color: #fde047;
+}
+
+.pvp-lan-host-info span {
+  font-size: 0.72rem;
+  color: #cbd5e1;
+  line-height: 1.35;
+}
+
+.pvp-lan-host-info code {
+  background: rgba(30, 41, 59, 0.9);
+  padding: 1px 4px;
+  border-radius: 4px;
+  color: #7dd3fc;
+}
+
+.pvp-lan-host-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pvp-scan-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.pvp-scan-chip {
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(74, 222, 128, 0.55);
+  background: rgba(22, 163, 74, 0.16);
+  color: #86efac;
+  font-size: 0.73rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .pvp-server-bar {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .pvp-server-bar input,

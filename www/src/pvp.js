@@ -15,6 +15,8 @@ import {
 } from "./state.js";
 
 export const PVP_SERVER_URL_KEY = "shattered_crown_pvp_server_v1";
+export const PVP_LAN_URL_KEY = "shattered_crown_pvp_lan_url_v1";
+export const PVP_MODE_KEY = "shattered_crown_pvp_mode_v1";
 export const DEFAULT_PVP_SERVER_URL = "wss://game-development-v1fo.onrender.com/ws";
 
 export const PVP_MAPS = [
@@ -60,6 +62,56 @@ export const PVP_MAPS = [
   },
 ];
 
+export function getPvpMode() {
+  try {
+    const saved = localStorage.getItem(PVP_MODE_KEY);
+    if (saved === "lan" || saved === "network") return saved;
+  } catch {}
+  const host = window.location.hostname || "";
+  const proto = window.location.protocol;
+  const isLocalHttp = proto === "http:" && host;
+  return isLocalHttp ? "lan" : "network";
+}
+
+export function setPvpMode(mode) {
+  try {
+    localStorage.setItem(PVP_MODE_KEY, mode === "lan" ? "lan" : "network");
+  } catch {}
+}
+
+export function getDefaultLanUrl() {
+  const host = window.location.hostname || "";
+  const proto = window.location.protocol;
+  if (proto === "http:" && window.location.host) {
+    return `ws://${window.location.host}/ws`;
+  }
+  try {
+    if (window.AndroidApp?.getLanStatus) {
+      const st = JSON.parse(window.AndroidApp.getLanStatus());
+      if (st?.running) return "ws://127.0.0.1:8080/ws";
+    }
+    if (window.AndroidApp?.getLanIp) {
+      const ip = String(window.AndroidApp.getLanIp() || "").trim();
+      if (ip && ip !== "127.0.0.1") return `ws://${ip}:8080/ws`;
+    }
+  } catch {}
+  return "ws://localhost:8080/ws";
+}
+
+export function getSavedLanUrl() {
+  try {
+    const saved = localStorage.getItem(PVP_LAN_URL_KEY);
+    if (saved) return saved;
+  } catch {}
+  return getDefaultLanUrl();
+}
+
+export function setSavedLanUrl(url) {
+  try {
+    localStorage.setItem(PVP_LAN_URL_KEY, String(url || "").trim());
+  } catch {}
+}
+
 export function getSavedPvpServerUrl() {
   const host = window.location.hostname || "";
   const proto = window.location.protocol;
@@ -90,12 +142,23 @@ export function setSavedPvpServerUrl(url) {
   } catch {}
 }
 
-export function normalizeWsUrl(raw) {
+export function normalizeWsUrl(raw, { defaultLan = false } = {}) {
   let u = String(raw || "").trim();
   if (!u) return "";
   if (u.startsWith("https://")) u = `wss://${u.slice(8)}`;
   else if (u.startsWith("http://")) u = `ws://${u.slice(7)}`;
-  else if (!u.startsWith("ws://") && !u.startsWith("wss://")) u = `wss://${u}`;
+  else if (!u.startsWith("ws://") && !u.startsWith("wss://")) {
+    const bareHost = u.split("/")[0];
+    const looksLocal =
+      defaultLan ||
+      /^(localhost|127\.0\.0\.1|\d{1,3}(?:\.\d{1,3}){3})(:\d+)?$/i.test(bareHost);
+    if (looksLocal) {
+      const hasPort = /:\d+$/.test(bareHost);
+      u = hasPort ? `ws://${u}` : `ws://${bareHost}:8080${u.slice(bareHost.length)}`;
+    } else {
+      u = `wss://${u}`;
+    }
+  }
   u = u.replace(/\/+$/, "");
   if (!u.endsWith("/ws")) u += "/ws";
   return u;

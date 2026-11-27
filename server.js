@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const crypto = require("crypto");
+const dgram = require("dgram");
 
 const PORT = Number(process.argv[2] || process.env.PORT) || 8080;
 const ROOT_DIR = path.resolve(__dirname);
@@ -532,5 +533,23 @@ server.listen(PORT, "0.0.0.0", () => {
         console.log(`  Same-Network LAN URL: http://${addr.address}:${PORT}`);
       }
     }
+  }
+
+  // UDP Wi-Fi discovery responder so Android APK / LAN peers can auto-find this PC host on port 8081
+  if (!process.env.RENDER) {
+    try {
+      const udp = dgram.createSocket({ type: "udp4", reuseAddr: true });
+      udp.on("message", (msg, rinfo) => {
+        if (msg.toString("utf8").trim() === "DISCOVER_SHATTERED_CROWN") {
+          const info = Buffer.from(
+            JSON.stringify({ name: `${os.hostname()} (PC)`, port: PORT, clients: clients.size, lobbies: rooms.size }),
+            "utf8"
+          );
+          udp.send(info, rinfo.port, rinfo.address, () => {});
+        }
+      });
+      udp.on("error", () => {});
+      udp.bind(8081, "0.0.0.0");
+    } catch {}
   }
 });

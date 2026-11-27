@@ -718,19 +718,44 @@
         </div>
       </div>
 
-      <div class="pvp-server-bar">
-        <label for="pvp-server-url" class="sr-only">Multiplayer Server URL</label>
+      <div class="pvp-mode-tabs" role="tablist" aria-label="Multiplayer Connection Mode">
+        <button type="button" id="btn-pvp-mode-network" class="pvp-mode-tab active" role="tab" aria-selected="true">
+          🌐 Network (Render / Vercel / Online)
+        </button>
+        <button type="button" id="btn-pvp-mode-lan" class="pvp-mode-tab" role="tab" aria-selected="false">
+          📡 LAN (Wi-Fi · PC / Phone-to-Phone)
+        </button>
+      </div>
+
+      <div id="pvp-network-bar" class="pvp-server-bar">
+        <label for="pvp-server-url" class="sr-only">Network Server URL</label>
         <input id="pvp-server-url" type="text" placeholder="wss://game-development-v1fo.onrender.com/ws" />
         <button type="button" id="btn-pvp-connect" class="btn btn-primary btn-sm">Connect</button>
-        <button type="button" id="btn-pvp-cloud-preset" class="btn btn-secondary btn-sm" title="Use Render Cloud Relay (Vercel + Android APK)">Cloud</button>
-        <button type="button" id="btn-pvp-lan-preset" class="btn btn-secondary btn-sm" title="Connect to local PC server on Wi-Fi">LAN IP</button>
+        <button type="button" id="btn-pvp-cloud-preset" class="btn btn-secondary btn-sm" title="Use Render Cloud Relay">Cloud</button>
       </div>
-      <div id="pvp-status-msg" class="pvp-status-msg">Auto-connecting to Cloud PvP Relay (or enter a Wi-Fi LAN IP)...</div>
-      <div class="pvp-help-strip">
-        <strong>Online &amp; Same-Wi-Fi Ready:</strong>
-        <span><b>Online (Vercel + APK):</b> Click <b>Cloud</b> (default) to connect anywhere.</span>
-        <span><b>Local Wi-Fi:</b> Run <code>node server.js</code> on PC &amp; click <b>LAN IP</b> (<code>ws://&lt;PC-IP&gt;:8080/ws</code>).</span>
+
+      <div id="pvp-lan-panel" class="pvp-lan-panel" hidden>
+        <div class="pvp-lan-host-box">
+          <div class="pvp-lan-host-info">
+            <strong id="pvp-lan-host-title">LAN Server (PC or Phone Host)</strong>
+            <span id="pvp-lan-host-desc">Host directly on this Phone APK, or run <code>node server.js</code> on PC.</span>
+          </div>
+          <div class="pvp-lan-host-actions">
+            <button type="button" id="btn-pvp-host-lan" class="btn btn-primary btn-sm" hidden>Host LAN on Phone</button>
+            <button type="button" id="btn-pvp-copy-ip" class="btn btn-secondary btn-sm" hidden>Copy IP</button>
+          </div>
+        </div>
+        <div class="pvp-server-bar">
+          <label for="pvp-lan-url" class="sr-only">LAN Host IP or URL</label>
+          <input id="pvp-lan-url" type="text" placeholder="Enter Host IP (e.g. 192.168.1.5 or localhost)" />
+          <button type="button" id="btn-pvp-lan-connect" class="btn btn-primary btn-sm">Join IP</button>
+          <button type="button" id="btn-pvp-lan-localhost" class="btn btn-secondary btn-sm" title="Connect to localhost:8080">localhost</button>
+          <button type="button" id="btn-pvp-lan-scan" class="btn btn-secondary btn-sm" title="Scan Wi-Fi for Phone or PC LAN hosts">Scan Wi-Fi</button>
+        </div>
+        <div id="pvp-lan-scan-results" class="pvp-scan-row" hidden></div>
       </div>
+
+      <div id="pvp-status-msg" class="pvp-status-msg">Connecting to PvP server...</div>
 
       <div id="pvp-browser-view" class="pvp-browser-view">
         <div class="pvp-fighter-strip">

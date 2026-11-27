@@ -1,8 +1,17 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.3.3";
+export const GAME_VERSION = "v.1.3.4";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.3.4",
+    title: "Network vs LAN Mode Tabs & Phone-to-Phone LAN Hosting",
+    notes: [
+      "Network vs LAN Mode Switcher: Separated Online Network PvP (Render Cloud / Vercel) from Local LAN PvP (localhost / Wi-Fi IP).",
+      "Phone-to-Phone & PC-to-Phone LAN Server: Built an embedded HTTP + WebSocket LAN host right into the Android APK (Host LAN on Phone + Scan Wi-Fi) alongside PC server.js UDP discovery — play 1v1 LAN matches over Wi-Fi or Mobile Hotspot even with zero Internet.",
+      "Smart IP Normalization: Enter a bare IP like 192.168.1.5 or localhost and the PvP client automatically maps it to ws://<ip>:8080/ws.",
+    ],
+  },
   {
     version: "v.1.3.3",
     title: "Built-In Cloud PvP Relay (1-Click Connect)",

@@ -17,7 +17,19 @@ import {
   SPELLS,
   getItemPrice,
 } from "./data.js";
-import { DEFAULT_PVP_SERVER_URL, getSavedPvpServerUrl, PVP_MAPS, pvpHooks, pvpNet } from "./pvp.js";
+import {
+  DEFAULT_PVP_SERVER_URL,
+  getDefaultLanUrl,
+  getPvpMode,
+  getSavedLanUrl,
+  getSavedPvpServerUrl,
+  normalizeWsUrl,
+  PVP_MAPS,
+  pvpHooks,
+  pvpNet,
+  setPvpMode,
+  setSavedLanUrl,
+} from "./pvp.js";
 import { TILE } from "./dungeon.js";
 import {
   addFloat,
@@ -1448,10 +1460,25 @@ export function openPvpDialog() {
   const dlg = document.getElementById("pvp-dialog");
   if (!dlg) return;
 
+  const modeNetBtn = document.getElementById("btn-pvp-mode-network");
+  const modeLanBtn = document.getElementById("btn-pvp-mode-lan");
+  const netBar = document.getElementById("pvp-network-bar");
+  const lanPanel = document.getElementById("pvp-lan-panel");
+
   const urlInput = document.getElementById("pvp-server-url");
   const connectBtn = document.getElementById("btn-pvp-connect");
   const cloudPresetBtn = document.getElementById("btn-pvp-cloud-preset");
-  const lanPresetBtn = document.getElementById("btn-pvp-lan-preset");
+
+  const lanUrlInput = document.getElementById("pvp-lan-url");
+  const lanConnectBtn = document.getElementById("btn-pvp-lan-connect");
+  const lanLocalBtn = document.getElementById("btn-pvp-lan-localhost");
+  const lanScanBtn = document.getElementById("btn-pvp-lan-scan");
+  const lanScanResults = document.getElementById("pvp-lan-scan-results");
+  const lanHostBtn = document.getElementById("btn-pvp-host-lan");
+  const lanCopyIpBtn = document.getElementById("btn-pvp-copy-ip");
+  const lanHostTitle = document.getElementById("pvp-lan-host-title");
+  const lanHostDesc = document.getElementById("pvp-lan-host-desc");
+
   const connPill = document.getElementById("pvp-conn-pill");
   const statusEl = document.getElementById("pvp-status-msg");
   const browserView = document.getElementById("pvp-browser-view");
@@ -1479,12 +1506,74 @@ export function openPvpDialog() {
   let pvpHeroClass = "paladin";
   let pvpLoadout = [...DEFAULT_LOADOUT.paladin];
   let readyState = false;
+  let activeMode = getPvpMode();
+  let activeLanHostIp = "";
 
   if (heroNameInput && !heroNameInput.value) {
     heroNameInput.value = runtime.meta?.heroName || "Sir Aldric";
   }
   if (urlInput && !urlInput.value) {
     urlInput.value = getSavedPvpServerUrl();
+  }
+  if (lanUrlInput && !lanUrlInput.value) {
+    lanUrlInput.value = getSavedLanUrl();
+  }
+
+  const getLanStatusObj = () => {
+    try {
+      if (window.AndroidApp?.getLanStatus) return JSON.parse(window.AndroidApp.getLanStatus());
+    } catch {}
+    return null;
+  };
+
+  function syncModeAndLanHostUI() {
+    const isLan = activeMode === "lan";
+    if (modeNetBtn) {
+      modeNetBtn.classList.toggle("active", !isLan);
+      modeNetBtn.setAttribute("aria-selected", String(!isLan));
+    }
+    if (modeLanBtn) {
+      modeLanBtn.classList.toggle("active", isLan);
+      modeLanBtn.setAttribute("aria-selected", String(isLan));
+    }
+    if (netBar) netBar.hidden = isLan;
+    if (lanPanel) lanPanel.hidden = !isLan;
+
+    const hasApkLan = Boolean(window.AndroidApp?.startLanServer);
+    const lanSt = hasApkLan ? getLanStatusObj() : null;
+    if (hasApkLan && lanHostBtn && lanHostTitle && lanHostDesc) {
+      lanHostBtn.hidden = false;
+      if (lanSt?.running) {
+        activeLanHostIp = lanSt.ip || "127.0.0.1";
+        lanHostBtn.textContent = "Stop LAN Server";
+        lanHostBtn.className = "btn btn-secondary btn-sm";
+        lanHostTitle.textContent = `Phone LAN Host Active: ${activeLanHostIp}:${lanSt.port || 8080}`;
+        lanHostDesc.innerHTML = `2nd Phone APK: enter <code>${activeLanHostIp}</code> (or Scan Wi-Fi). Browser: open <code>http://${activeLanHostIp}:${lanSt.port || 8080}</code>.`;
+        if (lanCopyIpBtn) lanCopyIpBtn.hidden = false;
+      } else {
+        activeLanHostIp = "";
+        lanHostBtn.textContent = "Host LAN on Phone";
+        lanHostBtn.className = "btn btn-primary btn-sm";
+        lanHostTitle.textContent = "Phone-to-Phone LAN Server";
+        lanHostDesc.innerHTML = `Tap <b>Host LAN on Phone</b> so friends on your Wi-Fi or Hotspot can join without a PC or Internet.`;
+        if (lanCopyIpBtn) lanCopyIpBtn.hidden = true;
+      }
+    } else if (lanHostBtn && lanHostTitle && lanHostDesc) {
+      lanHostBtn.hidden = true;
+      if (lanCopyIpBtn) lanCopyIpBtn.hidden = true;
+      const proto = window.location.protocol;
+      const host = window.location.hostname || "";
+      if (proto === "https:" && host !== "localhost") {
+        lanHostTitle.textContent = "Local LAN Mode (Browser Note)";
+        lanHostDesc.innerHTML = `HTTPS pages (Vercel) block <code>ws://</code> LAN sockets. For offline Wi-Fi LAN, open <code>http://&lt;Host-PC-or-Phone-IP&gt;:8080</code> directly in browser, or use <b>Network</b> tab.`;
+      } else {
+        lanHostTitle.textContent = "Local PC / LAN Server";
+        lanHostDesc.innerHTML = `Run <code>node server.js</code> on PC (or host from Android APK), then join <code>localhost</code> or Host IP (<code>192.168.x.x</code>).`;
+      }
+    }
+    if (lanScanBtn) {
+      lanScanBtn.hidden = !Boolean(window.AndroidApp?.discoverLanHosts);
+    }
   }
 
   const getFighterName = () => heroNameInput?.value.trim() || runtime.meta?.heroName || "Sir Aldric";
@@ -1535,10 +1624,14 @@ export function openPvpDialog() {
         statusEl.textContent = pvpNet.lastError;
         statusEl.className = "pvp-status-msg error";
       } else if (pvpNet.connected) {
-        statusEl.textContent = `Connected (${pvpNet.clientIp || "Network"}). Same-Wi-Fi lobbies appear first with a Same Network badge.`;
+        statusEl.textContent = activeMode === "lan"
+          ? `LAN Connected (${pvpNet.clientIp || "Wi-Fi"}). Create a LAN match or join a friend on your Wi-Fi!`
+          : `Network Connected (${pvpNet.clientIp || "Online"}). Same-Wi-Fi lobbies appear first with a Same Network badge.`;
         statusEl.className = "pvp-status-msg ok";
       } else {
-        statusEl.textContent = "Enter your local LAN URL (ws://<PC-IP>:8080) or free Render relay URL (wss://.../ws) and click Connect.";
+        statusEl.textContent = activeMode === "lan"
+          ? "Host on Phone/PC or enter a Host LAN IP (e.g. 192.168.1.5 or localhost) and click Join IP."
+          : "Network Mode connects to the Render Cloud Relay (Vercel + Android APK).";
         statusEl.className = "pvp-status-msg";
       }
     }
@@ -1652,31 +1745,130 @@ export function openPvpDialog() {
     };
   }
 
-  connectBtn.onclick = () => pvpNet.connect(urlInput?.value || "");
+  const connectForMode = (mode, customUrl = null) => {
+    if (mode === "lan") {
+      const target = normalizeWsUrl(customUrl ?? (lanUrlInput?.value || getSavedLanUrl()), { defaultLan: true });
+      if (lanUrlInput && target) lanUrlInput.value = target;
+      if (target) setSavedLanUrl(target);
+      pvpNet.connect(target);
+    } else {
+      const target = normalizeWsUrl(customUrl ?? (urlInput?.value || getSavedPvpServerUrl()), { defaultLan: false });
+      if (urlInput && target) urlInput.value = target;
+      pvpNet.connect(target);
+    }
+  };
+
+  if (modeNetBtn) {
+    modeNetBtn.onclick = () => {
+      if (activeMode === "network") return;
+      activeMode = "network";
+      setPvpMode("network");
+      syncModeAndLanHostUI();
+      pvpNet.disconnect();
+      connectForMode("network");
+      renderPvpUI();
+    };
+  }
+  if (modeLanBtn) {
+    modeLanBtn.onclick = () => {
+      if (activeMode === "lan") return;
+      activeMode = "lan";
+      setPvpMode("lan");
+      syncModeAndLanHostUI();
+      pvpNet.disconnect();
+      renderPvpUI();
+    };
+  }
+
+  connectBtn.onclick = () => connectForMode("network");
   if (cloudPresetBtn) {
     cloudPresetBtn.onclick = () => {
       if (urlInput) urlInput.value = DEFAULT_PVP_SERVER_URL;
-      pvpNet.connect(DEFAULT_PVP_SERVER_URL);
+      connectForMode("network", DEFAULT_PVP_SERVER_URL);
     };
   }
-  if (lanPresetBtn) {
-    lanPresetBtn.onclick = () => {
-      const host = window.location.hostname || "";
-      const proto = window.location.protocol;
-      let nextUrl = "";
-      if (proto === "http:" && host && host !== "localhost" && host !== "127.0.0.1") {
-        nextUrl = `ws://${window.location.host}/ws`;
-      } else {
-        const curSaved = urlInput?.value.trim() || "";
-        const m = curSaved.match(/wss?:\/\/([^/:]+)/i);
-        const defaultIp = m && !/localhost|127\.0\.0\.1|onrender/i.test(m[1]) ? m[1] : "192.168.1.";
-        const ip = window.prompt("Enter your PC's Wi-Fi IP (printed by `node server.js`, e.g. 192.168.3.23):", defaultIp);
-        if (!ip || !ip.trim()) return;
-        const clean = ip.trim();
-        nextUrl = /^wss?:\/\//i.test(clean) ? clean : `ws://${clean.replace(/:\d+$/, "")}:8080/ws`;
+  if (lanConnectBtn) {
+    lanConnectBtn.onclick = () => connectForMode("lan");
+  }
+  if (lanLocalBtn) {
+    lanLocalBtn.onclick = () => {
+      const target = getDefaultLanUrl().startsWith("ws://127.0.0.1") ? "ws://127.0.0.1:8080/ws" : "ws://localhost:8080/ws";
+      if (lanUrlInput) lanUrlInput.value = target;
+      connectForMode("lan", target);
+    };
+  }
+  if (lanHostBtn) {
+    lanHostBtn.onclick = () => {
+      if (!window.AndroidApp?.startLanServer) return;
+      const st = getLanStatusObj();
+      if (st?.running) {
+        window.AndroidApp.stopLanServer();
+        pvpNet.disconnect();
+        syncModeAndLanHostUI();
+        renderPvpUI();
+        return;
       }
-      if (urlInput) urlInput.value = nextUrl;
-      pvpNet.connect(nextUrl);
+      try {
+        const res = JSON.parse(window.AndroidApp.startLanServer());
+        if (res?.ok) {
+          syncModeAndLanHostUI();
+          const selfUrl = res.selfUrl || "ws://127.0.0.1:8080/ws";
+          if (lanUrlInput) lanUrlInput.value = res.url || selfUrl;
+          setSavedLanUrl(res.url || selfUrl);
+          pvpNet.connect(selfUrl);
+        } else if (statusEl) {
+          statusEl.textContent = res?.error || "Could not start Phone LAN server on port 8080.";
+          statusEl.className = "pvp-status-msg error";
+        }
+      } catch (err) {
+        if (statusEl) {
+          statusEl.textContent = err?.message || "Failed to launch Phone LAN server.";
+          statusEl.className = "pvp-status-msg error";
+        }
+      }
+    };
+  }
+  if (lanCopyIpBtn) {
+    lanCopyIpBtn.onclick = () => {
+      const txt = activeLanHostIp || getLanStatusObj()?.ip || "";
+      if (!txt) return;
+      navigator.clipboard?.writeText(txt).catch(() => {});
+      if (statusEl) {
+        statusEl.textContent = `Copied LAN IP: ${txt} (Friends connect on port 8080)`;
+        statusEl.className = "pvp-status-msg ok";
+      }
+    };
+  }
+  if (lanScanBtn) {
+    lanScanBtn.onclick = () => {
+      if (!window.AndroidApp?.discoverLanHosts || !lanScanResults) return;
+      lanScanBtn.disabled = true;
+      lanScanBtn.textContent = "Scanning...";
+      setTimeout(() => {
+        try {
+          const found = JSON.parse(window.AndroidApp.discoverLanHosts() || "[]");
+          lanScanResults.innerHTML = "";
+          if (!found.length) {
+            lanScanResults.hidden = false;
+            lanScanResults.innerHTML = `<span class="hint-text">No LAN hosts found on Wi-Fi yet. Host on 1 Phone/PC or type their IP manually.</span>`;
+          } else {
+            lanScanResults.hidden = false;
+            for (const h of found) {
+              const chip = document.createElement("button");
+              chip.type = "button";
+              chip.className = "pvp-scan-chip";
+              chip.textContent = `${h.name || h.ip} (${h.ip})`;
+              chip.addEventListener("click", () => {
+                if (lanUrlInput) lanUrlInput.value = h.url;
+                connectForMode("lan", h.url);
+              });
+              lanScanResults.appendChild(chip);
+            }
+          }
+        } catch {}
+        lanScanBtn.disabled = false;
+        lanScanBtn.textContent = "Scan Wi-Fi";
+      }, 40);
     };
   }
   refreshBtn.onclick = () => pvpNet.send({ type: "list_lobbies" });
@@ -1732,11 +1924,16 @@ export function openPvpDialog() {
   };
 
   pvpHooks.onLobbyStateChange = renderPvpUI;
+  syncModeAndLanHostUI();
   renderMapPicker();
   renderPvpUI();
 
-  if (!pvpNet.connected && !pvpNet.connecting && urlInput?.value) {
-    pvpNet.connect(urlInput.value);
+  if (!pvpNet.connected && !pvpNet.connecting) {
+    if (activeMode === "network" && urlInput?.value) {
+      connectForMode("network");
+    } else if (activeMode === "lan" && window.location.protocol === "http:") {
+      connectForMode("lan");
+    }
   } else if (pvpNet.connected) {
     pvpNet.send({ type: "list_lobbies" });
   }
