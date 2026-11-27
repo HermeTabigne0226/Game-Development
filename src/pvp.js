@@ -15,6 +15,7 @@ import {
 } from "./state.js";
 
 export const PVP_SERVER_URL_KEY = "shattered_crown_pvp_server_v1";
+export const DEFAULT_PVP_SERVER_URL = "wss://game-development-v1fo.onrender.com/ws";
 
 export const PVP_MAPS = [
   {
@@ -75,7 +76,7 @@ export function getSavedPvpServerUrl() {
     const wsProto = proto === "https:" ? "wss:" : "ws:";
     return `${wsProto}//${window.location.host}/ws`;
   }
-  return "";
+  return DEFAULT_PVP_SERVER_URL;
 }
 
 export function setSavedPvpServerUrl(url) {

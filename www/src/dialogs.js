@@ -17,7 +17,7 @@ import {
   SPELLS,
   getItemPrice,
 } from "./data.js";
-import { getSavedPvpServerUrl, PVP_MAPS, pvpHooks, pvpNet } from "./pvp.js";
+import { DEFAULT_PVP_SERVER_URL, getSavedPvpServerUrl, PVP_MAPS, pvpHooks, pvpNet } from "./pvp.js";
 import { TILE } from "./dungeon.js";
 import {
   addFloat,
@@ -1450,6 +1450,7 @@ export function openPvpDialog() {
 
   const urlInput = document.getElementById("pvp-server-url");
   const connectBtn = document.getElementById("btn-pvp-connect");
+  const cloudPresetBtn = document.getElementById("btn-pvp-cloud-preset");
   const lanPresetBtn = document.getElementById("btn-pvp-lan-preset");
   const connPill = document.getElementById("pvp-conn-pill");
   const statusEl = document.getElementById("pvp-status-msg");
@@ -1652,6 +1653,12 @@ export function openPvpDialog() {
   }
 
   connectBtn.onclick = () => pvpNet.connect(urlInput?.value || "");
+  if (cloudPresetBtn) {
+    cloudPresetBtn.onclick = () => {
+      if (urlInput) urlInput.value = DEFAULT_PVP_SERVER_URL;
+      pvpNet.connect(DEFAULT_PVP_SERVER_URL);
+    };
+  }
   if (lanPresetBtn) {
     lanPresetBtn.onclick = () => {
       const host = window.location.hostname || "";

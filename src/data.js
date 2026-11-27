@@ -1,8 +1,16 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.3.2";
+export const GAME_VERSION = "v.1.3.3";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.3.3",
+    title: "Built-In Cloud PvP Relay (1-Click Connect)",
+    notes: [
+      "1-Click Cloud PvP: Connected the live Render WebSocket relay (wss://game-development-v1fo.onrender.com/ws) as the automatic default for both Vercel Web and Android APK players.",
+      "Cloud & LAN Presets: Added a 1-tap Cloud preset alongside LAN IP inside the PvP Arena lobby browser.",
+    ],
+  },
   {
     version: "v.1.3.2",
     title: "Interact Prompt [F], Clear Doorways & Android LAN PvP Fix",
