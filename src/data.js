@@ -1,8 +1,15 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.2.4.3";
+export const GAME_VERSION = "v.1.2.4.4";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.2.4.4",
+    title: "Hotfix — Mobile FPS & Ping Alignment",
+    notes: [
+      "Mobile FPS & Ping Layout: Stacked the FPS and Ping readout vertically directly beneath the Menu button so it never overlaps the dungeon minimap.",
+    ],
+  },
   {
     version: "v.1.2.4.3",
     title: "Hotfix — Shrine Removal, Smooth Skyfall & New Icon",
