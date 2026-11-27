@@ -74,7 +74,7 @@ public final class LocalPvpServer {
         String appVersion;
         JSONArray loadout;
         boolean ready;
-        int lastHp = 5000;
+        int lastHp = 1000;
 
         PlayerSlot(String id, Client client, String heroName, String heroClass, String appVersion, JSONArray loadout) {
             this.id = id;
@@ -748,7 +748,7 @@ public final class LocalPvpServer {
             r.status = "lobby";
             for (PlayerSlot pl : r.players) {
                 pl.ready = false;
-                pl.lastHp = 5000;
+                pl.lastHp = 1000;
             }
             if (scheduler != null) {
                 r.roundTimer = scheduler.schedule(() -> {
@@ -777,7 +777,7 @@ public final class LocalPvpServer {
                     synchronized (r) {
                         if (!rooms.containsKey(r.id) || r.players.size() < 2) return;
                         r.roundEnded = false;
-                        for (PlayerSlot pl : r.players) pl.lastHp = 5000;
+                        for (PlayerSlot pl : r.players) pl.lastHp = 1000;
                         JSONObject detail = serializeRoomDetail(r);
                         for (int i = 0; i < r.players.size(); i++) {
                             try {
@@ -801,7 +801,7 @@ public final class LocalPvpServer {
         r.roundEnded = false;
         r.scores[0] = 0;
         r.scores[1] = 0;
-        for (PlayerSlot pl : r.players) pl.lastHp = 5000;
+        for (PlayerSlot pl : r.players) pl.lastHp = 1000;
         JSONObject detail = serializeRoomDetail(r);
         for (int i = 0; i < r.players.size(); i++) {
             try {

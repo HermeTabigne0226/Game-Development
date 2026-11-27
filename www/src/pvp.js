@@ -313,33 +313,45 @@ export function buildBalancedPvpPlayer(heroName, heroClassId, loadoutIds) {
 
   const clone = (it) => (it ? { ...it } : null);
   let equipment;
+  let baseAtk;
+  let baseDef;
+  let baseCrit;
   if (cls.id === "ranger") {
     equipment = {
       weapon: clone(ITEMS.emerald_recurve),
-      subweapon: clone(ITEMS.hunter_quiver),
-      armor: clone(ITEMS.ranger_coat),
-      helmet: clone(ITEMS.warden_hood),
-      boots: clone(ITEMS.windstep_boots),
-      accessory: clone(ITEMS.blood_ring),
+      subweapon: clone(ITEMS.hunter_arrows),
+      armor: clone(ITEMS.ranger_tunic),
+      helmet: clone(ITEMS.ranger_hood),
+      boots: clone(ITEMS.ranger_boots),
+      ring: clone(ITEMS.ember_ring),
     };
+    baseAtk = 6;
+    baseDef = 9;
+    baseCrit = 0;
   } else if (cls.id === "mage") {
     equipment = {
-      weapon: clone(ITEMS.trident_staff),
-      subweapon: clone(ITEMS.astral_focus),
+      weapon: clone(ITEMS.frost_wand),
+      subweapon: clone(ITEMS.apprentice_tome),
       armor: clone(ITEMS.astral_robes),
-      helmet: clone(ITEMS.astral_circlet),
-      boots: clone(ITEMS.windstep_boots),
-      accessory: clone(ITEMS.astral_ring),
+      helmet: clone(ITEMS.steel_helm),
+      boots: clone(ITEMS.swift_boots),
+      ring: clone(ITEMS.astral_ring),
     };
+    baseAtk = 3;
+    baseDef = 5;
+    baseCrit = 7;
   } else {
     equipment = {
-      weapon: clone(ITEMS.steel_blade),
-      subweapon: clone(ITEMS.iron_shield),
-      armor: clone(ITEMS.chainmail),
-      helmet: clone(ITEMS.iron_helm),
-      boots: clone(ITEMS.swift_greaves),
-      accessory: clone(ITEMS.blood_ring),
+      weapon: clone(ITEMS.vanguard_blade),
+      subweapon: clone(ITEMS.oak_shield),
+      armor: clone(ITEMS.plate_armor),
+      helmet: clone(ITEMS.steel_helm),
+      boots: clone(ITEMS.swift_boots),
+      ring: clone(ITEMS.ember_ring),
     };
+    baseAtk = 10;
+    baseDef = 2;
+    baseCrit = 8;
   }
 
   const player = {
@@ -375,17 +387,17 @@ export function buildBalancedPvpPlayer(heroName, heroClassId, loadoutIds) {
     sunderTimer: 0,
     level: 5,
     xp: 0,
-    nextXp: 999,
+    xpNext: 999,
     skillPoints: 0,
     loadout: chosen,
     skillRanks,
-    maxHp: 5000,
-    hp: 5000,
+    maxHp: 1000,
+    hp: 1000,
     maxMp: 38 + cls.bonusMp * 2,
     mp: 38 + cls.bonusMp * 2,
-    baseAtk: 8 + cls.bonusAtk,
-    baseDef: 3 + cls.bonusDef,
-    baseCrit: 10 + cls.bonusCrit,
+    baseAtk,
+    baseDef,
+    baseCrit,
     gold: 0,
     basicShotCount: 0,
     hitCounter: 0,
@@ -404,7 +416,7 @@ export function buildBalancedPvpPlayer(heroName, heroClassId, loadoutIds) {
     aegisBlast: null,
   };
   const gearBonusStats = getPlayerStats({ ...player, maxHp: 0 });
-  player.maxHp = Math.max(1000, 5000 - gearBonusStats.maxHp);
+  player.maxHp = Math.max(100, 1000 - gearBonusStats.maxHp);
   const stats = getPlayerStats(player);
   player.hp = stats.maxHp;
   player.mp = stats.maxMp;
@@ -664,7 +676,7 @@ export const pvpNet = new PvpNetworkClient();
 export function createOpponentEntity(playerData, spawn) {
   const safeId = playerData.heroClass === "paladin" ? "gilded" : playerData.heroClass;
   const cls = HERO_CLASSES[safeId] || HERO_CLASSES.gilded;
-  const maxHp = 5000;
+  const maxHp = 1000;
   return {
     uid: `pvp_rival_${playerData.id || playerData.slot}`,
     id: `pvp_${cls.id}`,
@@ -816,11 +828,11 @@ function showPvpVsLoadingScreen(room, mySlot, durationMs = 3000) {
   document.getElementById("pvp-vs-map-sub").textContent = map.subtitle;
 
   document.getElementById("pvp-vs-left-name").textContent = myInfo.heroName || myCls.name;
-  document.getElementById("pvp-vs-left-class").textContent = `${myCls.name} · 5,000 HP`;
+  document.getElementById("pvp-vs-left-class").textContent = `${myCls.name} · 1,000 HP`;
   document.getElementById("pvp-vs-left-skills").innerHTML = renderSkillsHtml(myIds);
 
   document.getElementById("pvp-vs-right-name").textContent = oppInfo.heroName || oppCls.name;
-  document.getElementById("pvp-vs-right-class").textContent = `${oppCls.name} · 5,000 HP`;
+  document.getElementById("pvp-vs-right-class").textContent = `${oppCls.name} · 1,000 HP`;
   document.getElementById("pvp-vs-right-skills").innerHTML = renderSkillsHtml(oppIds);
 
   const barEl = document.getElementById("pvp-vs-bar-fill");
@@ -894,7 +906,7 @@ export function startPvpMatchSession(room, mySlot) {
   if (pvpHooks.updateRoomAndBossHUD) pvpHooks.updateRoomAndBossHUD();
   runtime.uiDirty = true;
   showPvpVsLoadingScreen(room, mySlot, 3000);
-  addLog(`PvP Duel started on ${runtime.state.level.pvpMap.name}! Best of 3 rounds (5,000 HP).`, "story");
+  addLog(`PvP Duel started on ${runtime.state.level.pvpMap.name}! Best of 3 rounds (1,000 HP).`, "story");
 }
 
 export function startPvpRound(room, mySlot) {

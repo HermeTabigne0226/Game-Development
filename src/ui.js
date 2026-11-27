@@ -506,7 +506,7 @@ export function updateRoomAndBossHUD() {
       if (p2Name) p2Name.textContent = opp?.name || oppCls.name;
       if (p2Cls) p2Cls.textContent = oppCls.name;
       const oppHpVal = Math.max(0, Math.ceil(opp?.hp ?? 0));
-      const oppMaxHp = Math.max(1, opp?.maxHp || 5000);
+      const oppMaxHp = Math.max(1, opp?.maxHp || 1000);
       const oppPct = Math.max(0, Math.min(100, ((opp?.hp ?? 0) / oppMaxHp) * 100));
       if (p2Fill) {
         p2Fill.style.width = `${oppPct}%`;

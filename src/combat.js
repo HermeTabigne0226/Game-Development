@@ -135,7 +135,7 @@ export function healPlayer(amount, sourceLabel = null) {
   if (!s) return 0;
   const p = s.player;
   const stats = getPlayerStats();
-  const finalHeal = Math.max(1, Math.round(amount * (s.isPvp ? 10 : 1)));
+  const finalHeal = Math.max(1, Math.round(amount * (s.isPvp ? 2.2 : 1)));
   const before = p.hp;
   p.hp = Math.min(stats.maxHp, p.hp + finalHeal);
   const gained = Math.max(0, Math.round(p.hp - before));
@@ -200,8 +200,13 @@ export function damageEnemy(enemy, rawDmg, isCrit = false, sourceLabel = "strike
   }
 
   if (enemy.isPvpPlayer) {
+    if (options.isSkill) {
+      if (p.heroClass === "mage") modDmg *= 0.78;
+      else if (p.heroClass === "gilded") modDmg *= 1.12;
+      else if (p.heroClass === "ranger") modDmg *= 1.05;
+    }
     if ((p.pvpDmgTimer || 0) > 0) modDmg *= p.pvpDmgMult || 1.3;
-    const outDmg = Math.max(10, Math.round(modDmg * 10));
+    const outDmg = Math.max(4, Math.round(modDmg * 1.45));
     enemy.hurtTimer = 0.16;
     s.shake = Math.max(s.shake, isCrit ? 5 : 2.5);
     addFloat(enemy.x, enemy.y, `${outDmg}${isCrit ? "!" : ""}`, isCrit ? "#fde047" : "#f87171");
@@ -881,7 +886,7 @@ export function castSpell(spellId) {
 
   if (spell.type === "mana_shield") {
     sfx.heal();
-    const bonus = spell.defBonuses[rIdx];
+    const bonus = s.isPvp ? Math.max(4, Math.round(spell.defBonuses[rIdx] * 0.5)) : spell.defBonuses[rIdx];
     const gained = healPlayer(spell.heals[rIdx]);
     p.tempDef = bonus;
     p.tempDefTimer = spell.duration;
@@ -1285,12 +1290,13 @@ export function castSpell(spellId) {
 
   if (spell.type === "ultimate_charge_stun") {
     sfx.ultLeap();
+    const chargeDur = s.isPvp ? 1.35 : spell.chargeTime;
     p.anim = "attack";
-    p.animTimer = spell.chargeTime;
-    p.ultCharge = { timer: spell.chargeTime, duration: spell.chargeTime, rankIdx: rIdx, spell };
+    p.animTimer = chargeDur;
+    p.ultCharge = { timer: chargeDur, duration: chargeDur, rankIdx: rIdx, spell };
     addFloat(p.x, p.y - 0.5, "CHARGING...", "#fde047");
-    addLog(`${spell.name}: Raising sword (${spell.chargeTime.toFixed(1)}s charge)...`, "story");
-    if (s.isPvp) broadcastPvpAction({ kind: "ult_charge", duration: spell.chargeTime, radius: spell.radii[rIdx] });
+    addLog(`${spell.name}: Raising sword (${chargeDur.toFixed(1)}s charge)...`, "story");
+    if (s.isPvp) broadcastPvpAction({ kind: "ult_charge", duration: chargeDur, radius: spell.radii[rIdx] });
     return;
   }
 

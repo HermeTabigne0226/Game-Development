@@ -12,6 +12,7 @@ export const PATCH_NOTES = [
       "PvP Full Arena Visibility & Skill VFX Sync: Fixed PvP fog-of-war regression after moving and synced all Gilded Knight & Sylvan Ranger skill visuals (Divine Cataclysm, Valiant Charge, Radiant Cleave, Skyfall Judgment, Aegis Bulwark, Arrow Storm, Frost Zones, and buff auras) to your rival's screen.",
       "Auto-Return Lobby Countdown & Lobby Confirmation: Added a 5-second auto-return countdown to the PvP Lobby after match victory/defeat, renamed the PvP Menu button to Lobby, and added a confirmation dialog to Go to PvP Lobby or Exit Match.",
       "PvP Power-Up Vials (15s Arena Spawns): Replaced static PvP shrines/wells with color-coded walk-over Vials spawning every 15s — Red (+5%–20% HP), Green (2.5%/s Regen for 5s), Yellow (+30% DMG for 7s), Purple (+30% Speed for 6s), and Cyan (+8 DEF & -1.5s CD).",
+      "1,000 HP PvP Hero Rebalance: Standardized all 3 classes to 1,000 HP with valid balanced gear (fixing missing Knight/Ranger gear & Archmage over-scaling), tuned PvP damage/healing for longer tactical duels, trimmed Archmage spell burst & Mana Shield DEF, and sped up Divine Cataclysm charge to 1.35s in PvP.",
     ],
   },
   {
