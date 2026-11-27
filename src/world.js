@@ -3,7 +3,7 @@ import { combatHooks, damageEnemy, hurtPlayer, performMeleeAttack, unlockCodex }
 import { DEFAULT_LOADOUT, ELITE_AFFIXES, HERO_CLASSES, ITEMS, NPC_ENCOUNTERS, RELICS, SHRINE_ENCOUNTERS, SPELLS } from "./data.js";
 import { MAP_H, MAP_W, TILE, computeFOV, createScaledEnemy, generateFloor } from "./dungeon.js";
 import { checkBossSpotted, revealBossRoom, startBossMatch, updateEnemiesAndBosses } from "./enemyAI.js";
-import { broadcastPvpAction, updatePvpFrame } from "./pvp.js";
+import { broadcastPvpAction, notifyLocalPvpTimeout, updatePvpFrame } from "./pvp.js";
 import {
   addFloat,
   addLog,
@@ -161,6 +161,7 @@ export function createNewRun(heroName, difficultyId, loadout = DEFAULT_LOADOUT, 
     grantRandomRelic(player);
   }
 
+  document.body.classList.remove("pvp-active");
   runtime.state = {
     floor: 1,
     difficulty: difficultyId,
@@ -372,6 +373,7 @@ export function restoreRun(saved) {
   saved.player.stunTimer = 0;
   saved.player.tempDef = 0;
   saved.player.tempDefTimer = 0;
+  document.body.classList.remove("pvp-active");
   runtime.state = {
     floor: saved.floor,
     difficulty: saved.difficulty || "normal",
@@ -732,6 +734,42 @@ export function updateSimulation(dt) {
 
   const p = s.player;
   const stats = getPlayerStats();
+
+  if (s.isPvp && s.pvpRoundEnded) {
+    if (p.animTimer > 0) p.animTimer = Math.max(0, p.animTimer - dt);
+    for (let i = s.particles.length - 1; i >= 0; i--) {
+      const pt = s.particles[i];
+      pt.x += pt.vx * dt;
+      pt.y += pt.vy * dt;
+      pt.life -= dt;
+      if (pt.life <= 0) s.particles.splice(i, 1);
+    }
+    for (let i = s.floatingTexts.length - 1; i >= 0; i--) {
+      const ft = s.floatingTexts[i];
+      ft.y += ft.vy * dt;
+      ft.life -= dt;
+      if (ft.life <= 0) s.floatingTexts.splice(i, 1);
+    }
+    for (let i = s.vfxAnims.length - 1; i >= 0; i--) {
+      s.vfxAnims[i].life -= dt;
+      if (s.vfxAnims[i].life <= 0) s.vfxAnims.splice(i, 1);
+    }
+    return;
+  }
+
+  if (s.isPvp && !s.pvpRoundEnded) {
+    s.pvpRoundTimer = Math.max(0, (s.pvpRoundTimer ?? 99) - dt);
+    if (s.pvpRoundTimer <= 0 && !s.pvpTimeoutSent) {
+      s.pvpTimeoutSent = true;
+      notifyLocalPvpTimeout();
+    }
+  }
+
+  if (!s.isPvp && p.hp <= 0 && s.dyingTimer <= 0) {
+    p.hp = 0;
+    p.anim = "death";
+    s.dyingTimer = 0.05;
+  }
 
   if (s.dyingTimer > 0) {
     s.dyingTimer -= dt;

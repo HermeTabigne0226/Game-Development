@@ -2459,7 +2459,17 @@ body {
 }
 
 .pvp-card {
-  max-width: 760px;
+  max-inline-size: min(820px, 100%);
+  width: min(820px, calc(100vw - 16px));
+  overflow-y: auto !important;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+
+.pvp-connection-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .pvp-header-right {
@@ -2777,16 +2787,171 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: rgba(15, 23, 42, 0.75);
-  border: 1px solid var(--border);
+  padding: 9px 12px;
+  background: linear-gradient(90deg, rgba(16, 22, 38, 0.96), rgba(28, 25, 54, 0.92));
+  border: 2px solid #475569;
+  box-shadow: inset 0 0 0 1px #090b12;
+}
+
+.pvp-room-banner-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.pvp-room-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pvp-room-title-row .pvp-net-pill {
+  margin-left: 0;
+  font-size: 0.68rem;
+  padding: 2px 8px;
 }
 
 .pvp-room-banner h3 {
-  margin: 0 0 2px;
-  font-size: 0.96rem;
+  margin: 0;
+  font-size: 0.98rem;
   color: #fde047;
+}
+
+.pvp-char-setup-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 10px 12px;
+  background: rgba(12, 16, 26, 0.88);
+  border: 2px solid #3b4766;
+  box-shadow: inset 0 0 0 1px #06080e;
+}
+
+.pvp-char-setup-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.pvp-char-setup-title {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-inline-size: 0;
+}
+
+.pvp-char-setup-title strong {
+  font-size: 0.84rem;
+  color: #fde047;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pvp-hero-select-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pvp-hero-card-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  background: #141a29;
+  border: 2px solid #2e374d;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  min-inline-size: 0;
+  transition: border-color 0.14s ease, background 0.14s ease, box-shadow 0.14s ease;
+}
+
+.pvp-hero-card-btn:hover {
+  border-color: #64748b;
+  background: #1a2236;
+}
+
+.pvp-hero-card-btn.active {
+  border-color: #facc15;
+  background: linear-gradient(135deg, rgba(250, 204, 21, 0.18), rgba(18, 24, 38, 0.96));
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.25);
+}
+
+.pvp-hero-card-btn canvas {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+  background: #090d16;
+  border: 1px solid #334155;
+}
+
+.pvp-hero-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.pvp-hero-card-meta strong {
+  font-size: 0.78rem;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pvp-hero-card-meta span {
+  font-size: 0.66rem;
+  color: var(--muted);
+  line-height: 1.25;
+}
+
+.pvp-skills-strip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(71, 85, 105, 0.45);
+}
+
+.pvp-room-skills-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1 1 240px;
+  min-inline-size: 0;
+}
+
+.pvp-room-skill-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 7px 3px 4px;
+  background: #0c101b;
+  border: 1px solid #334155;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.pvp-room-skill-chip.ult {
+  border-color: #f97316;
+  color: #fed7aa;
+}
+
+.pvp-room-skill-chip img {
+  width: 20px;
+  height: 20px;
+  object-fit: cover;
+  border-radius: 3px;
 }
 
 .pvp-vs-row {
@@ -2863,7 +3028,8 @@ body {
 
 @media (max-width: 680px) {
   .pvp-split,
-  .pvp-vs-row {
+  .pvp-vs-row,
+  .pvp-hero-select-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -3978,5 +4144,326 @@ kbd {
     width: 42px;
     height: 42px;
     font-size: 1rem;
+  }
+}
+
+/* ==========================================================================
+   Street Fighter Style PvP Arena HUD (#pvp-sf-hud)
+   ========================================================================== */
+.pvp-sf-hud {
+  position: absolute;
+  top: max(6px, env(safe-area-inset-top));
+  inset-inline: max(8px, env(safe-area-inset-left)) max(8px, env(safe-area-inset-right));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.pvp-sf-side {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  min-inline-size: 0;
+}
+
+.pvp-sf-side.p2 {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.pvp-sf-portrait-wrap {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #161f33 0%, #090d16 100%);
+  border: 2px solid #eab308;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.75), inset 0 0 0 1px #05070c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pvp-sf-side.p1 .pvp-sf-portrait-wrap {
+  border-color: #38bdf8;
+}
+
+.pvp-sf-side.p2 .pvp-sf-portrait-wrap {
+  border-color: #f87171;
+}
+
+.pvp-sf-portrait-wrap canvas {
+  width: 42px;
+  height: 42px;
+  display: block;
+  image-rendering: pixelated;
+}
+
+.pvp-sf-info {
+  flex: 1;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pvp-sf-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-inline-size: 0;
+}
+
+.pvp-sf-side.p2 .pvp-sf-meta {
+  flex-direction: row-reverse;
+}
+
+.pvp-sf-identity {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-shadow: 0 1px 3px #000, 0 0 6px rgba(0, 0, 0, 0.9);
+}
+
+.pvp-sf-side.p2 .pvp-sf-identity {
+  flex-direction: row-reverse;
+}
+
+.pvp-sf-identity strong {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pvp-sf-class {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #fde047;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pvp-sf-wins {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 1px 6px;
+  background: rgba(8, 11, 18, 0.85);
+  border: 1px solid #334155;
+  border-radius: 999px;
+}
+
+.pvp-sf-side.p2 .pvp-sf-wins {
+  flex-direction: row-reverse;
+}
+
+.pvp-win-pip {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1e293b;
+  border: 1px solid #475569;
+}
+
+.pvp-win-pip.won {
+  background: #fde047;
+  border-color: #fef08a;
+  box-shadow: 0 0 6px rgba(250, 204, 21, 0.85);
+}
+
+.pvp-win-count {
+  font-size: 0.64rem;
+  font-weight: 900;
+  color: #fde047;
+  font-variant-numeric: tabular-nums;
+}
+
+.pvp-sf-hp-track {
+  position: relative;
+  height: 16px;
+  display: flex;
+  background: linear-gradient(180deg, #27090d 0%, #140508 100%);
+  border: 2px solid #eab308;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), inset 0 1px 2px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+}
+
+.pvp-sf-side.p1 .pvp-sf-hp-track {
+  justify-content: flex-end;
+}
+
+.pvp-sf-side.p2 .pvp-sf-hp-track {
+  justify-content: flex-start;
+}
+
+.pvp-sf-hp-fill {
+  height: 100%;
+  background: linear-gradient(180deg, #fde047 0%, #eab308 55%, #ca8a04 100%);
+  transition: width 0.12s linear;
+}
+
+.pvp-sf-hp-fill.danger {
+  background: linear-gradient(180deg, #f87171 0%, #dc2626 60%, #991b1b 100%);
+}
+
+.pvp-sf-hp-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding-inline: 6px;
+  font-size: 0.66rem;
+  font-weight: 900;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px #000, 0 0 4px #000;
+}
+
+.pvp-sf-side.p1 .pvp-sf-hp-text {
+  justify-content: flex-start;
+}
+
+.pvp-sf-side.p2 .pvp-sf-hp-text {
+  justify-content: flex-end;
+}
+
+.pvp-sf-skills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pvp-sf-side.p2 .pvp-sf-skills {
+  justify-content: flex-end;
+}
+
+.pvp-sf-skill {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  background: #0a0e17;
+  border: 1.5px solid #475569;
+  overflow: hidden;
+}
+
+.pvp-sf-skill.ult {
+  border-color: #f97316;
+}
+
+.pvp-sf-skill img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.pvp-sf-skill.on-cd img {
+  filter: grayscale(0.8) brightness(0.45);
+}
+
+.pvp-sf-skill-cd {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.64rem;
+  font-weight: 900;
+  color: #fde047;
+  background: rgba(5, 7, 12, 0.65);
+}
+
+.pvp-sf-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 58px;
+  padding: 2px 8px 4px;
+  background: linear-gradient(180deg, rgba(16, 22, 36, 0.94) 0%, rgba(8, 11, 18, 0.96) 100%);
+  border: 2px solid #eab308;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.8), inset 0 0 0 1px #05070c;
+}
+
+.pvp-sf-round {
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #38bdf8;
+  line-height: 1.1;
+}
+
+.pvp-sf-timer {
+  font-size: 1.55rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #fde047;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 0 #713f12, 0 3px 8px rgba(0, 0, 0, 0.9);
+}
+
+.pvp-sf-timer.low {
+  color: #ef4444;
+  text-shadow: 0 2px 0 #450a0a, 0 0 10px rgba(239, 68, 68, 0.8);
+}
+
+/* Hide dungeon clutter during active PvP match */
+body.pvp-active #room-enemy-badge,
+body.pvp-active #boss-hud-bar {
+  display: none !important;
+}
+
+body.pvp-active .mhud-top-left,
+body.pvp-active .minimap-box {
+  display: none !important;
+}
+
+@media (max-width: 960px), (pointer: coarse) {
+  body.pvp-active .mhud-top-right {
+    top: max(76px, calc(env(safe-area-inset-top) + 72px));
+    right: max(8px, env(safe-area-inset-right));
+  }
+  body.pvp-active .perf-hud {
+    top: max(112px, calc(env(safe-area-inset-top) + 108px));
+  }
+  .pvp-sf-portrait-wrap {
+    width: 36px;
+    height: 36px;
+  }
+  .pvp-sf-portrait-wrap canvas {
+    width: 32px;
+    height: 32px;
+  }
+  .pvp-sf-identity strong {
+    font-size: 0.68rem;
+  }
+  .pvp-sf-class {
+    font-size: 0.58rem;
+  }
+  .pvp-sf-hp-track {
+    height: 13px;
+  }
+  .pvp-sf-hp-text {
+    font-size: 0.58rem;
+  }
+  .pvp-sf-skill {
+    width: 20px;
+    height: 20px;
+  }
+  .pvp-sf-center {
+    min-inline-size: 46px;
+    padding: 2px 6px 3px;
+  }
+  .pvp-sf-timer {
+    font-size: 1.25rem;
   }
 }

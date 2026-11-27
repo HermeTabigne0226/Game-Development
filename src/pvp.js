@@ -655,7 +655,7 @@ export function createOpponentEntity(playerData, spawn) {
   };
 }
 
-function setupPvpMatchEntities(room, mySlot) {
+function setupPvpMatchEntities(room, mySlot, isNextRound = false) {
   const level = buildPvpArenaLevel(room.mapId);
   const myInfo = room.players[mySlot];
   const oppSlot = mySlot === 0 ? 1 : 0;
@@ -680,8 +680,13 @@ function setupPvpMatchEntities(room, mySlot) {
     pvpRound: room.round || 1,
     pvpScores: [...(room.scores || [0, 0])],
     pvpRoundEnded: false,
-    pvpIntroTimer: 4.5,
+    pvpTimeoutSent: false,
+    pvpRoundTimer: 99,
+    pvpRoundBanner: null,
+    pvpIntroTimer: isNextRound ? 3.0 : 4.5,
     pvpOpponent: opp,
+    pvpMyInfo: myInfo,
+    pvpOppInfo: oppInfo,
     floor: 1,
     difficulty: "normal",
     isEndless: false,
@@ -806,7 +811,8 @@ function showPvpVsLoadingScreen(room, mySlot, durationMs = 3000) {
 }
 
 export function startPvpMatchSession(room, mySlot) {
-  setupPvpMatchEntities(room, mySlot);
+  setupPvpMatchEntities(room, mySlot, false);
+  document.body.classList.add("pvp-active");
   const mpDlg = document.getElementById("pvp-dialog");
   if (mpDlg?.open) mpDlg.close("match_start");
   if (pvpHooks.hideMainMenu) pvpHooks.hideMainMenu();
@@ -818,12 +824,48 @@ export function startPvpMatchSession(room, mySlot) {
 }
 
 export function startPvpRound(room, mySlot) {
-  startPvpMatchSession(room, mySlot);
+  setupPvpMatchEntities(room, mySlot, true);
+  document.body.classList.add("pvp-active");
+  const vsOverlay = document.getElementById("pvp-vs-screen");
+  if (vsOverlay) vsOverlay.hidden = true;
+  if (pvpHooks.hideMainMenu) pvpHooks.hideMainMenu();
+  if (pvpHooks.buildSpellButtons) pvpHooks.buildSpellButtons();
+  if (pvpHooks.updateUI) pvpHooks.updateUI();
+  runtime.uiDirty = true;
+  sfx.levelUp();
+  addLog(`Round ${room.round || 1} — Get Ready!`, "story");
+}
+
+export function notifyLocalPvpDefeat() {
+  const s = runtime.state;
+  if (!s?.isPvp || s.pvpRoundEnded || s.runEnded) return;
+  const p = s.player;
+  s.pvpRoundEnded = true;
+  p.hp = 0;
+  p.anim = "death";
+  p.animTimer = 1.2;
+  addFloat(p.x, p.y - 0.5, "K.O.!", "#ef4444");
+  runtime.uiDirty = true;
+  pvpNet.send({ type: "round_lost" });
+}
+
+export function notifyLocalPvpTimeout() {
+  const s = runtime.state;
+  if (!s?.isPvp || s.pvpRoundEnded || s.runEnded) return;
+  pvpNet.send({
+    type: "round_timeout",
+    myHp: Math.max(0, Math.round(s.player?.hp || 0)),
+    oppHp: Math.max(0, Math.round(s.pvpOpponent?.hp || 0)),
+  });
 }
 
 export function updatePvpFrame(dt) {
   const s = runtime.state;
   if (!s?.isPvp) return;
+
+  if (!s.pvpRoundEnded && !s.runEnded && s.player && s.player.hp <= 0) {
+    notifyLocalPvpDefeat();
+  }
 
   // Interpolate opponent hero smoothly
   const opp = s.pvpOpponent;
@@ -988,9 +1030,7 @@ function applyIncomingPvpHit(msg) {
   runtime.uiDirty = true;
 
   if (p.hp <= 0) {
-    s.pvpRoundEnded = true;
-    addFloat(p.x, p.y - 0.5, "DEFEATED!", "#ef4444");
-    pvpNet.send({ type: "round_lost" });
+    notifyLocalPvpDefeat();
   }
 }
 
@@ -999,13 +1039,35 @@ function handleRemoteRoundOver(msg) {
   if (!s?.isPvp) return;
   s.pvpRoundEnded = true;
   s.pvpScores = [...(msg.scores || [0, 0])];
-  const wonRound = msg.winnerSlot === s.pvpMySlot;
+  const mySc = s.pvpScores[s.pvpMySlot] || 0;
+  const oppSc = s.pvpScores[s.pvpMySlot === 0 ? 1 : 0] || 0;
+  const isDraw = Boolean(msg.isDraw) || msg.winnerSlot < 0;
+  const wonRound = !isDraw && msg.winnerSlot === s.pvpMySlot;
+  const isTimeout = msg.reason === "timeout";
+
+  if (wonRound && !isTimeout && s.pvpOpponent) {
+    s.pvpOpponent.hp = 0;
+  }
   if (wonRound) {
     sfx.levelUp();
-    showFloorBanner(`Round ${msg.round} Won! (${s.pvpScores[s.pvpMySlot]} - ${s.pvpScores[s.pvpMySlot === 0 ? 1 : 0]})`);
   } else {
-    showFloorBanner(`Round ${msg.round} Lost (${s.pvpScores[s.pvpMySlot]} - ${s.pvpScores[s.pvpMySlot === 0 ? 1 : 0]})`);
+    sfx.hurt();
   }
+
+  const title = isDraw
+    ? "TIME OVER — DRAW!"
+    : wonRound
+      ? `${isTimeout ? "TIME OVER" : "K.O.!"} — ROUND ${msg.round} WON!`
+      : `${isTimeout ? "TIME OVER" : "K.O.!"} — ROUND ${msg.round} LOST`;
+  const sub = `Score: ${mySc} - ${oppSc} · Next round starting...`;
+  s.pvpRoundBanner = {
+    title,
+    sub,
+    color: isDraw ? "#38bdf8" : wonRound ? "#fde047" : "#f87171",
+  };
+  showFloorBanner(`${title} (${mySc} - ${oppSc})`);
+  runtime.uiDirty = true;
+  if (pvpHooks.updateUI) pvpHooks.updateUI();
 }
 
 function handleRemoteMatchOver(msg) {
@@ -1015,6 +1077,9 @@ function handleRemoteMatchOver(msg) {
   s.runEnded = true;
   s.pvpScores = [...(msg.scores || [0, 0])];
   const won = msg.winnerSlot === s.pvpMySlot;
+  if (won && s.pvpOpponent && msg.reason !== "timeout") {
+    s.pvpOpponent.hp = 0;
+  }
   if (won) {
     sfx.victory();
     runtime.meta.soulShards = (runtime.meta.soulShards || 0) + 2;
@@ -1022,6 +1087,7 @@ function handleRemoteMatchOver(msg) {
   } else {
     sfx.gameOver();
   }
+  if (pvpHooks.updateUI) pvpHooks.updateUI();
 
   const dlg = document.getElementById("end-dialog");
   document.getElementById("end-dialog-title").textContent = won ? "PvP Arena Champion!" : "Defeated in the Arena";
@@ -1036,6 +1102,8 @@ function handleRemoteMatchOver(msg) {
   `;
   const endlessBtn = document.getElementById("btn-end-endless");
   if (endlessBtn) endlessBtn.hidden = true;
+  const sanctumBtn = document.getElementById("btn-end-sanctum");
+  if (sanctumBtn) sanctumBtn.textContent = "Return to PvP Lobby";
   dlg.showModal();
 }
 

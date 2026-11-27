@@ -1419,7 +1419,7 @@ export function openHeroDialog(onSelectHero, onBack = null) {
   rafId = requestAnimationFrame(tickPreview);
 }
 
-export function openLoadoutDialog(onConfirm, onBack) {
+export function openLoadoutDialog(onConfirm, onBack, initialLoadout = null) {
   const dlg = document.getElementById("loadout-dialog");
   const basicList = document.getElementById("loadout-basic-list");
   const ultList = document.getElementById("loadout-ult-list");
@@ -1429,8 +1429,12 @@ export function openLoadoutDialog(onConfirm, onBack) {
 
   const basicSpells = SPELLS.filter((s) => !s.isUltimate);
   const ultSpells = SPELLS.filter((s) => s.isUltimate);
-  let selectedBasic = [];
-  let selectedUlt = null;
+  let selectedBasic = Array.isArray(initialLoadout)
+    ? initialLoadout.filter((id) => basicSpells.some((sp) => sp.id === id)).slice(0, 3)
+    : [];
+  let selectedUlt = Array.isArray(initialLoadout)
+    ? initialLoadout.find((id) => ultSpells.some((sp) => sp.id === id)) || null
+    : null;
 
   function renderLoadout() {
     badge.textContent = `${selectedBasic.length}/3 Basic · ${selectedUlt ? 1 : 0}/1 Ult`;
@@ -1485,6 +1489,7 @@ export function openPvpDialog() {
 
   const modeNetBtn = document.getElementById("btn-pvp-mode-network");
   const modeLanBtn = document.getElementById("btn-pvp-mode-lan");
+  const connShell = document.getElementById("pvp-connection-shell");
   const netBar = document.getElementById("pvp-network-bar");
   const lanPanel = document.getElementById("pvp-lan-panel");
 
@@ -1515,8 +1520,11 @@ export function openPvpDialog() {
   const createBtn = document.getElementById("btn-pvp-create");
   const refreshBtn = document.getElementById("btn-pvp-refresh");
 
+  const roomNetBadgeEl = document.getElementById("pvp-room-network-badge");
   const roomTitleEl = document.getElementById("pvp-room-title");
   const roomMetaEl = document.getElementById("pvp-room-meta");
+  const roomErrorEl = document.getElementById("pvp-room-error");
+  const roomSkillsPreviewEl = document.getElementById("pvp-room-skills-preview");
   const vsRowEl = document.getElementById("pvp-vs-row");
   const hostMapBar = document.getElementById("pvp-host-map-bar");
   const hostMapSelect = document.getElementById("pvp-room-map-select");
@@ -1525,12 +1533,22 @@ export function openPvpDialog() {
   const readyBtn = document.getElementById("btn-pvp-ready");
   const startBtn = document.getElementById("btn-pvp-start");
 
+  if (!openPvpDialog._prefs) {
+    openPvpDialog._prefs = {
+      heroClass: "mage",
+      loadout: [...(CLASS_DEFAULT_LOADOUTS.mage || DEFAULT_LOADOUT)],
+    };
+  }
+  const prefs = openPvpDialog._prefs;
   let selectedMapId = 0;
-  let pvpHeroClass = "mage";
-  let pvpLoadout = [...(CLASS_DEFAULT_LOADOUTS.mage || DEFAULT_LOADOUT)];
+  let pvpHeroClass = prefs.heroClass;
+  let pvpLoadout = [...prefs.loadout];
   let readyState = false;
   let activeMode = getPvpMode();
   let activeLanHostIp = "";
+  let previewAnimFrame = 0;
+  let previewLastTick = performance.now();
+  let previewRafId = 0;
 
   const extractHostDisplay = (raw) =>
     String(raw || "")
@@ -1615,6 +1633,48 @@ export function openPvpDialog() {
 
   const getFighterName = () => heroNameInput?.value.trim() || runtime.meta?.heroName || "Sir Aldric";
 
+  function renderLobbyCharacterSetup() {
+    for (const hBtn of document.querySelectorAll(".pvp-hero-card-btn")) {
+      hBtn.classList.toggle("active", (hBtn.dataset.pvpHero || "mage") === pvpHeroClass);
+    }
+    if (roomSkillsPreviewEl) {
+      roomSkillsPreviewEl.innerHTML = pvpLoadout
+        .map((id) => SPELLS.find((sp) => sp.id === id))
+        .filter(Boolean)
+        .map(
+          (sp) =>
+            `<div class="pvp-room-skill-chip${sp.isUltimate ? " ult" : ""}" title="${sp.name}: ${sp.desc}"><img src="${sp.icon}" alt="" /><span>${sp.name}</span></div>`
+        )
+        .join("");
+    }
+  }
+
+  function tickHeroPreviews(now) {
+    if (!dlg.open) {
+      previewRafId = 0;
+      return;
+    }
+    if (pvpNet.room) {
+      if (now - previewLastTick >= 120) {
+        previewLastTick = now;
+        previewAnimFrame = (previewAnimFrame + 1) % 24;
+      }
+      for (const prefix of ["mage", "gilded", "ranger"]) {
+        const cvs = document.getElementById(`pvp-hero-preview-${prefix}`);
+        const ctx = cvs?.getContext("2d");
+        if (!ctx) continue;
+        ctx.clearRect(0, 0, 56, 56);
+        ctx.imageSmoothingEnabled = false;
+        const isSel = pvpHeroClass === prefix;
+        const sheet = isSel
+          ? (runtime.assets[`${prefix}_walk`] || runtime.assets[`${prefix}_idle`])
+          : runtime.assets[`${prefix}_idle`];
+        if (sheet) drawSheetFrame(ctx, sheet, previewAnimFrame, 4, 4, 48, 48);
+      }
+    }
+    previewRafId = requestAnimationFrame(tickHeroPreviews);
+  }
+
   function renderMapPicker() {
     if (mapGridEl) {
       mapGridEl.innerHTML = "";
@@ -1677,8 +1737,18 @@ export function openPvpDialog() {
     if (refreshBtn) refreshBtn.disabled = !pvpNet.connected;
 
     const inRoom = Boolean(pvpNet.room);
+    if (connShell) connShell.hidden = inRoom;
     if (browserView) browserView.hidden = inRoom;
     if (roomView) roomView.hidden = !inRoom;
+
+    if (roomErrorEl) {
+      if (inRoom && evt === "error" && pvpNet.lastError) {
+        roomErrorEl.textContent = pvpNet.lastError;
+        roomErrorEl.hidden = false;
+      } else if (!inRoom || evt === "lobby_joined" || evt === "lobby_update") {
+        roomErrorEl.hidden = true;
+      }
+    }
 
     if (!inRoom && lobbyListEl) {
       if (!pvpNet.connected) {
@@ -1724,6 +1794,23 @@ export function openPvpDialog() {
     if (inRoom && pvpNet.room) {
       const rm = pvpNet.room;
       const m = PVP_MAPS[rm.mapId] || PVP_MAPS[0];
+      const myPl = rm.players[pvpNet.mySlot];
+      if (myPl) {
+        if (["mage", "gilded", "ranger"].includes(myPl.heroClass)) {
+          pvpHeroClass = myPl.heroClass;
+          prefs.heroClass = pvpHeroClass;
+        }
+        if (Array.isArray(myPl.loadout) && myPl.loadout.length >= 4) {
+          pvpLoadout = [...myPl.loadout];
+          prefs.loadout = [...pvpLoadout];
+        }
+      }
+      renderLobbyCharacterSetup();
+
+      if (roomNetBadgeEl) {
+        const pingTxt = typeof runtime.netPingMs === "number" ? ` · ${Math.round(runtime.netPingMs)} ms` : "";
+        roomNetBadgeEl.textContent = `${activeMode === "lan" ? "📡 LAN / Wi-Fi" : "🌐 Online Cloud"}${pingTxt}`;
+      }
       if (roomTitleEl) roomTitleEl.textContent = `${rm.name}${rm.hasPassword ? " 🔒" : ""}`;
       if (roomMetaEl) roomMetaEl.textContent = `Map: ${m.name} — ${m.desc}`;
 
@@ -1750,14 +1837,13 @@ export function openPvpDialog() {
             box.innerHTML = `
               <span class="pvp-slot-tag">CHALLENGER</span>
               <strong>Waiting for Player...</strong>
-              <span class="pvp-hero-role">Share your Room Name on the same network</span>
+              <span class="pvp-hero-role">Waiting for a challenger to join this lobby</span>
             `;
           }
           vsRowEl.appendChild(box);
         }
       }
 
-      const myPl = rm.players[pvpNet.mySlot];
       readyState = Boolean(myPl?.ready);
       const normV = (v) => String(v || "").replace(/^v\.?/i, "").trim();
       const hasOpp = rm.players.length === 2;
@@ -1836,11 +1922,39 @@ export function openPvpDialog() {
     guideOpenBtn.onclick = () => document.getElementById("pvp-guide-dialog")?.showModal();
   }
 
-  for (const hBtn of document.querySelectorAll(".pvp-hero-btn")) {
+  for (const hBtn of document.querySelectorAll(".pvp-hero-card-btn")) {
     hBtn.onclick = () => {
       pvpHeroClass = hBtn.dataset.pvpHero || "mage";
       pvpLoadout = [...(CLASS_DEFAULT_LOADOUTS[pvpHeroClass] || DEFAULT_LOADOUT)];
-      for (const b of document.querySelectorAll(".pvp-hero-btn")) b.classList.toggle("active", b === hBtn);
+      prefs.heroClass = pvpHeroClass;
+      prefs.loadout = [...pvpLoadout];
+      if (pvpHeroClass === "mage") sfx.magicOrb();
+      else if (pvpHeroClass === "ranger") sfx.arrow();
+      else sfx.slash();
+      renderLobbyCharacterSetup();
+      if (pvpNet.room) {
+        pvpNet.send({
+          type: "update_player",
+          heroName: getFighterName(),
+          heroClass: pvpHeroClass,
+          appVersion: GAME_VERSION,
+          loadout: pvpLoadout,
+          ready: false,
+        });
+      }
+    };
+  }
+  if (heroNameInput) {
+    heroNameInput.onchange = () => {
+      if (pvpNet.room) {
+        pvpNet.send({
+          type: "update_player",
+          heroName: getFighterName(),
+          heroClass: pvpHeroClass,
+          appVersion: GAME_VERSION,
+          loadout: pvpLoadout,
+        });
+      }
     };
   }
 
@@ -2004,30 +2118,38 @@ export function openPvpDialog() {
   loadoutBtn.onclick = () => {
     dlg.close("pick");
     const reopen = () => openPvpDialog();
-    openHeroDialog((chosenHero) => {
-      pvpHeroClass = chosenHero;
-      openLoadoutDialog(
-        (chosenLoadout) => {
-          pvpLoadout = [...chosenLoadout];
-          pvpNet.send({
-            type: "update_player",
-            heroName: getFighterName(),
-            heroClass: pvpHeroClass,
-            appVersion: GAME_VERSION,
-            loadout: pvpLoadout,
-            ready: false,
-          });
-          reopen();
-        },
-        reopen
-      );
-    }, reopen);
+    openLoadoutDialog(
+      (chosenLoadout) => {
+        pvpLoadout = [...chosenLoadout];
+        prefs.loadout = [...pvpLoadout];
+        pvpNet.send({
+          type: "update_player",
+          heroName: getFighterName(),
+          heroClass: pvpHeroClass,
+          appVersion: GAME_VERSION,
+          loadout: pvpLoadout,
+          ready: false,
+        });
+        reopen();
+      },
+      reopen,
+      pvpLoadout
+    );
   };
 
   pvpHooks.onLobbyStateChange = renderPvpUI;
   syncModeAndLanHostUI();
   renderMapPicker();
+  renderLobbyCharacterSetup();
   renderPvpUI();
+  if (previewRafId) cancelAnimationFrame(previewRafId);
+  previewRafId = requestAnimationFrame(tickHeroPreviews);
+  dlg.addEventListener("close", () => {
+    if (previewRafId) {
+      cancelAnimationFrame(previewRafId);
+      previewRafId = 0;
+    }
+  }, { once: true });
 
   if (!pvpNet.connected && !pvpNet.connecting) {
     if (activeMode === "network") {

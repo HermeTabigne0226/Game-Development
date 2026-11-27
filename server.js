@@ -166,12 +166,67 @@ function clearRoomAutoStart(room) {
   if (room) room.autoStartAt = 0;
 }
 
+function finishPvpRound(room, winnerIdx, reason = "ko") {
+  if (!room || room.status !== "playing" || room.roundEnded || room.players.length < 2) return;
+  room.roundEnded = true;
+  if (winnerIdx === 0 || winnerIdx === 1) {
+    room.scores[winnerIdx] += 1;
+  }
+
+  if (winnerIdx >= 0 && room.scores[winnerIdx] >= 2) {
+    for (const pl of room.players) {
+      sendWsJson(pl.client, {
+        type: "match_over",
+        winnerSlot: winnerIdx,
+        scores: [...room.scores],
+        round: room.round,
+        reason,
+      });
+    }
+    room.status = "lobby";
+    room.players.forEach((pl) => {
+      pl.ready = false;
+      pl.lastHp = 5000;
+    });
+    room.roundTimer = setTimeout(() => {
+      if (rooms.has(room.id)) broadcastRoomUpdate(room);
+    }, 600);
+    broadcastLobbies();
+  } else {
+    for (const pl of room.players) {
+      sendWsJson(pl.client, {
+        type: "round_over",
+        winnerSlot: winnerIdx,
+        isDraw: winnerIdx < 0,
+        scores: [...room.scores],
+        round: room.round,
+        reason,
+      });
+    }
+    room.round += 1;
+    room.roundTimer = setTimeout(() => {
+      if (!rooms.has(room.id) || room.players.length < 2) return;
+      room.roundEnded = false;
+      room.players.forEach((pl) => { pl.lastHp = 5000; });
+      const detail = serializeRoomDetail(room);
+      for (let i = 0; i < room.players.length; i++) {
+        sendWsJson(room.players[i].client, {
+          type: "next_round",
+          slot: i,
+          room: detail,
+        });
+      }
+    }, 2400);
+  }
+}
+
 function launchPvpRoomMatch(room) {
   clearRoomAutoStart(room);
   room.status = "playing";
   room.round = 1;
   room.roundEnded = false;
   room.scores = [0, 0];
+  room.players.forEach((pl) => { pl.lastHp = 5000; });
   const detail = serializeRoomDetail(room);
   for (let i = 0; i < room.players.length; i++) {
     sendWsJson(room.players[i].client, {
@@ -363,50 +418,24 @@ function handleClientMessage(client, msg) {
   }
 
   if (msg.type === "round_lost") {
-    if (room.status !== "playing" || room.roundEnded || room.players.length < 2) return;
-    room.roundEnded = true;
-    const winnerIdx = pIdx === 0 ? 1 : 0;
-    room.scores[winnerIdx] += 1;
-
-    if (room.scores[winnerIdx] >= 2) {
-      for (const pl of room.players) {
-        sendWsJson(pl.client, {
-          type: "match_over",
-          winnerSlot: winnerIdx,
-          scores: [...room.scores],
-          round: room.round,
-        });
-      }
-      room.status = "lobby";
-      room.players.forEach((pl) => { pl.ready = false; });
-      room.roundTimer = setTimeout(() => {
-        if (rooms.has(room.id)) broadcastRoomUpdate(room);
-      }, 600);
-      broadcastLobbies();
-    } else {
-      for (const pl of room.players) {
-        sendWsJson(pl.client, {
-          type: "round_over",
-          winnerSlot: winnerIdx,
-          scores: [...room.scores],
-          round: room.round,
-        });
-      }
-      room.round += 1;
-      room.roundTimer = setTimeout(() => {
-        if (!rooms.has(room.id) || room.players.length < 2) return;
-        room.roundEnded = false;
-        const detail = serializeRoomDetail(room);
-        for (let i = 0; i < room.players.length; i++) {
-          sendWsJson(room.players[i].client, {
-            type: "next_round",
-            slot: i,
-            room: detail,
-          });
-        }
-      }, 2400);
-    }
+    finishPvpRound(room, pIdx === 0 ? 1 : 0, "ko");
     return;
+  }
+
+  if (msg.type === "round_timeout") {
+    if (room.status !== "playing" || room.roundEnded || room.players.length < 2) return;
+    const hp0 = Number.isFinite(room.players[0].lastHp) ? room.players[0].lastHp : 5000;
+    const hp1 = Number.isFinite(room.players[1].lastHp) ? room.players[1].lastHp : 5000;
+    const winnerIdx = hp0 === hp1 ? -1 : hp0 > hp1 ? 0 : 1;
+    finishPvpRound(room, winnerIdx, "timeout");
+    return;
+  }
+
+  if (msg.type === "pvp_sync" && typeof msg.hp === "number") {
+    room.players[pIdx].lastHp = Math.max(0, msg.hp);
+    if (room.status === "playing" && !room.roundEnded && room.players[pIdx].lastHp <= 0) {
+      finishPvpRound(room, pIdx === 0 ? 1 : 0, "ko");
+    }
   }
 
   // Forward real-time gameplay events (pvp_sync, pvp_action, pvp_hit, pvp_prop)

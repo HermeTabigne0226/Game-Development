@@ -74,6 +74,7 @@ public final class LocalPvpServer {
         String appVersion;
         JSONArray loadout;
         boolean ready;
+        int lastHp = 5000;
 
         PlayerSlot(String id, Client client, String heroName, String heroClass, String appVersion, JSONArray loadout) {
             this.id = id;
@@ -721,6 +722,78 @@ public final class LocalPvpServer {
         r.autoStartAt = 0L;
     }
 
+    private void finishRound(Room r, int winnerIdx, String reason) {
+        if (r == null || !"playing".equals(r.status) || r.roundEnded || r.players.size() < 2) return;
+        r.roundEnded = true;
+        if (winnerIdx == 0 || winnerIdx == 1) {
+            r.scores[winnerIdx] += 1;
+        }
+
+        JSONArray sc = new JSONArray();
+        sc.put(r.scores[0]);
+        sc.put(r.scores[1]);
+
+        if (winnerIdx >= 0 && r.scores[winnerIdx] >= 2) {
+            for (PlayerSlot pl : r.players) {
+                try {
+                    JSONObject over = new JSONObject();
+                    over.put("type", "match_over");
+                    over.put("winnerSlot", winnerIdx);
+                    over.put("scores", sc);
+                    over.put("round", r.round);
+                    over.put("reason", reason);
+                    sendWsJson(pl.client, over);
+                } catch (Exception ignored) {}
+            }
+            r.status = "lobby";
+            for (PlayerSlot pl : r.players) {
+                pl.ready = false;
+                pl.lastHp = 5000;
+            }
+            if (scheduler != null) {
+                r.roundTimer = scheduler.schedule(() -> {
+                    synchronized (r) {
+                        if (rooms.containsKey(r.id)) broadcastRoomUpdate(r);
+                    }
+                }, 600, TimeUnit.MILLISECONDS);
+            }
+            broadcastLobbies();
+        } else {
+            for (PlayerSlot pl : r.players) {
+                try {
+                    JSONObject ro = new JSONObject();
+                    ro.put("type", "round_over");
+                    ro.put("winnerSlot", winnerIdx);
+                    ro.put("isDraw", winnerIdx < 0);
+                    ro.put("scores", sc);
+                    ro.put("round", r.round);
+                    ro.put("reason", reason);
+                    sendWsJson(pl.client, ro);
+                } catch (Exception ignored) {}
+            }
+            r.round += 1;
+            if (scheduler != null) {
+                r.roundTimer = scheduler.schedule(() -> {
+                    synchronized (r) {
+                        if (!rooms.containsKey(r.id) || r.players.size() < 2) return;
+                        r.roundEnded = false;
+                        for (PlayerSlot pl : r.players) pl.lastHp = 5000;
+                        JSONObject detail = serializeRoomDetail(r);
+                        for (int i = 0; i < r.players.size(); i++) {
+                            try {
+                                JSONObject nxt = new JSONObject();
+                                nxt.put("type", "next_round");
+                                nxt.put("slot", i);
+                                nxt.put("room", detail);
+                                sendWsJson(r.players.get(i).client, nxt);
+                            } catch (Exception ignored) {}
+                        }
+                    }
+                }, 2400, TimeUnit.MILLISECONDS);
+            }
+        }
+    }
+
     private void launchRoomMatch(Room r) {
         clearAutoStart(r);
         r.status = "playing";
@@ -728,6 +801,7 @@ public final class LocalPvpServer {
         r.roundEnded = false;
         r.scores[0] = 0;
         r.scores[1] = 0;
+        for (PlayerSlot pl : r.players) pl.lastHp = 5000;
         JSONObject detail = serializeRoomDetail(r);
         for (int i = 0; i < r.players.size(); i++) {
             try {
@@ -910,68 +984,25 @@ public final class LocalPvpServer {
             }
 
             if ("round_lost".equals(type)) {
-                if (!"playing".equals(r.status) || r.roundEnded || r.players.size() < 2) return;
-                r.roundEnded = true;
-                int winnerIdx = pIdx == 0 ? 1 : 0;
-                r.scores[winnerIdx] += 1;
-
-                JSONArray sc = new JSONArray();
-                sc.put(r.scores[0]);
-                sc.put(r.scores[1]);
-
-                if (r.scores[winnerIdx] >= 2) {
-                    for (PlayerSlot pl : r.players) {
-                        try {
-                            JSONObject over = new JSONObject();
-                            over.put("type", "match_over");
-                            over.put("winnerSlot", winnerIdx);
-                            over.put("scores", sc);
-                            over.put("round", r.round);
-                            sendWsJson(pl.client, over);
-                        } catch (Exception ignored) {}
-                    }
-                    r.status = "lobby";
-                    for (PlayerSlot pl : r.players) pl.ready = false;
-                    if (scheduler != null) {
-                        r.roundTimer = scheduler.schedule(() -> {
-                            synchronized (r) {
-                                if (rooms.containsKey(r.id)) broadcastRoomUpdate(r);
-                            }
-                        }, 600, TimeUnit.MILLISECONDS);
-                    }
-                    broadcastLobbies();
-                } else {
-                    for (PlayerSlot pl : r.players) {
-                        try {
-                            JSONObject ro = new JSONObject();
-                            ro.put("type", "round_over");
-                            ro.put("winnerSlot", winnerIdx);
-                            ro.put("scores", sc);
-                            ro.put("round", r.round);
-                            sendWsJson(pl.client, ro);
-                        } catch (Exception ignored) {}
-                    }
-                    r.round += 1;
-                    if (scheduler != null) {
-                        r.roundTimer = scheduler.schedule(() -> {
-                            synchronized (r) {
-                                if (!rooms.containsKey(r.id) || r.players.size() < 2) return;
-                                r.roundEnded = false;
-                                JSONObject detail = serializeRoomDetail(r);
-                                for (int i = 0; i < r.players.size(); i++) {
-                                    try {
-                                        JSONObject nxt = new JSONObject();
-                                        nxt.put("type", "next_round");
-                                        nxt.put("slot", i);
-                                        nxt.put("room", detail);
-                                        sendWsJson(r.players.get(i).client, nxt);
-                                    } catch (Exception ignored) {}
-                                }
-                            }
-                        }, 2400, TimeUnit.MILLISECONDS);
-                    }
-                }
+                finishRound(r, pIdx == 0 ? 1 : 0, "ko");
                 return;
+            }
+
+            if ("round_timeout".equals(type)) {
+                if (!"playing".equals(r.status) || r.roundEnded || r.players.size() < 2) return;
+                int hp0 = r.players.get(0).lastHp;
+                int hp1 = r.players.get(1).lastHp;
+                int winnerIdx = hp0 == hp1 ? -1 : (hp0 > hp1 ? 0 : 1);
+                finishRound(r, winnerIdx, "timeout");
+                return;
+            }
+
+            if ("pvp_sync".equals(type) && msg.has("hp")) {
+                PlayerSlot cur = r.players.get(pIdx);
+                cur.lastHp = Math.max(0, msg.optInt("hp", cur.lastHp));
+                if ("playing".equals(r.status) && !r.roundEnded && cur.lastHp <= 0) {
+                    finishRound(r, pIdx == 0 ? 1 : 0, "ko");
+                }
             }
 
             if (r.players.size() >= 2) {

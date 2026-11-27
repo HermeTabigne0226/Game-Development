@@ -1,6 +1,6 @@
 import { sfx } from "./audio.js";
 import { DIFFICULTIES, HERO_CLASSES, ITEMS, LORE_CODEX, SPELLS } from "./data.js";
-import { broadcastPvpAction, sendPvpHit } from "./pvp.js";
+import { broadcastPvpAction, notifyLocalPvpDefeat, sendPvpHit } from "./pvp.js";
 import { MAP_H, MAP_W, TILE } from "./dungeon.js";
 import {
   addFloat,
@@ -34,6 +34,7 @@ export const combatHooks = {
   updateUI: null,
   buildSpellButtons: null,
   openSkillDialog: null,
+  endRun: null,
 };
 
 export function unlockCodex(id) {
@@ -1456,8 +1457,12 @@ export function hurtPlayer(rawDmg, sourceName, knockX = 0, knockY = 0, options =
     p.hp = 0;
     p.anim = "death";
     p.animTimer = 1.0;
-    s.dyingTimer = 0.9;
     spawnBurst(p.x, p.y, "#f87171", 20, 1.2);
+    if (s.isPvp) {
+      notifyLocalPvpDefeat();
+    } else {
+      s.dyingTimer = 0.9;
+    }
   }
 }
 
@@ -1509,7 +1514,13 @@ export function endRun(victory) {
   if (endlessBtn) {
     endlessBtn.hidden = !victory;
   }
+  const sanctumBtn = document.getElementById("btn-end-sanctum");
+  if (sanctumBtn) {
+    sanctumBtn.textContent = "Return to Oakhaven Sanctum";
+  }
 
   if (combatHooks.updateUI) combatHooks.updateUI();
   dlg.showModal();
 }
+
+combatHooks.endRun = endRun;

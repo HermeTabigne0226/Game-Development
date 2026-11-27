@@ -1506,27 +1506,59 @@ export function renderFrame(ts) {
 
   ctx.restore();
 
-  if (s.isPvp && (s.pvpIntroTimer || 0) > 0 && s.pvpIntroTimer <= 1.55) {
-    const num = Math.max(1, Math.ceil(s.pvpIntroTimer * 2));
-    const label = num >= 3 ? "3" : num === 2 ? "2" : "1";
+  if (s.isPvp && (s.pvpIntroTimer || 0) > 0) {
+    const showThreshold = (s.pvpRound || 1) > 1 ? 3.05 : 1.55;
+    if (s.pvpIntroTimer <= showThreshold) {
+      const num = (s.pvpRound || 1) > 1
+        ? Math.max(1, Math.min(3, Math.ceil(s.pvpIntroTimer)))
+        : Math.max(1, Math.min(3, Math.ceil(s.pvpIntroTimer * 2)));
+      const label = String(num);
+      ctx.save();
+      ctx.fillStyle = "rgba(6, 8, 15, 0.35)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const pulse = 1 + Math.sin(ts * 0.02) * 0.08;
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.scale(pulse, pulse);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.strokeStyle = "#090b10";
+      ctx.lineWidth = 8;
+      ctx.font = "900 18px system-ui, sans-serif";
+      const roundHeader = `ROUND ${s.pvpRound || 1}`;
+      ctx.strokeText(roundHeader, 0, -56);
+      ctx.fillStyle = "#38bdf8";
+      ctx.fillText(roundHeader, 0, -56);
+
+      ctx.font = "900 72px system-ui, sans-serif";
+      ctx.strokeText(label, 0, -4);
+      ctx.fillStyle = "#fde047";
+      ctx.fillText(label, 0, -4);
+
+      ctx.font = "800 18px system-ui, sans-serif";
+      ctx.strokeText("GET READY!", 0, 48);
+      ctx.fillStyle = "#e2e8f0";
+      ctx.fillText("GET READY!", 0, 48);
+      ctx.restore();
+    }
+  } else if (s.isPvp && s.pvpRoundEnded && s.pvpRoundBanner) {
     ctx.save();
-    ctx.fillStyle = "rgba(6, 8, 15, 0.35)";
+    ctx.fillStyle = "rgba(6, 8, 15, 0.45)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    const pulse = 1 + Math.sin(ts * 0.02) * 0.08;
     ctx.translate(canvas.width / 2, canvas.height / 2);
-    ctx.scale(pulse, pulse);
-    ctx.font = "900 72px system-ui, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.strokeStyle = "#090b10";
     ctx.lineWidth = 8;
-    ctx.strokeText(label, 0, -10);
-    ctx.fillStyle = "#fde047";
-    ctx.fillText(label, 0, -10);
-    ctx.font = "800 18px system-ui, sans-serif";
+    ctx.font = "900 34px system-ui, sans-serif";
+    ctx.strokeText(s.pvpRoundBanner.title, 0, -14);
+    ctx.fillStyle = s.pvpRoundBanner.color || "#fde047";
+    ctx.fillText(s.pvpRoundBanner.title, 0, -14);
+
+    ctx.font = "700 16px system-ui, sans-serif";
+    ctx.lineWidth = 4;
+    ctx.strokeText(s.pvpRoundBanner.sub, 0, 24);
     ctx.fillStyle = "#e2e8f0";
-    ctx.strokeText("GET READY!", 0, 42);
-    ctx.fillText("GET READY!", 0, 42);
+    ctx.fillText(s.pvpRoundBanner.sub, 0, 24);
     ctx.restore();
   }
 
@@ -1538,6 +1570,25 @@ export function renderFrame(ts) {
     mobilePortraitCtx.clearRect(0, 0, 44, 44);
     mobilePortraitCtx.imageSmoothingEnabled = false;
     drawSheetFrame(mobilePortraitCtx, pAnimSheet, animFrame, 2, 2, 40, 40);
+  }
+  if (s.isPvp) {
+    const p1HudCvs = document.getElementById("pvp-hud-p1-portrait");
+    const p2HudCvs = document.getElementById("pvp-hud-p2-portrait");
+    if (p1HudCvs) {
+      const c1 = p1HudCvs.getContext("2d");
+      c1.clearRect(0, 0, 44, 44);
+      c1.imageSmoothingEnabled = false;
+      drawSheetFrame(c1, pAnimSheet, animFrame, 2, 2, 40, 40, false);
+    }
+    if (p2HudCvs && s.pvpOpponent) {
+      const opp = s.pvpOpponent;
+      const oppPrefix = opp.heroClass === "mage" ? "mage" : opp.heroClass === "ranger" ? "ranger" : "gilded";
+      const oppSheet = assets[`${oppPrefix}_${opp.anim || "idle"}`] || assets[`${oppPrefix}_idle`] || assets.gilded_idle;
+      const c2 = p2HudCvs.getContext("2d");
+      c2.clearRect(0, 0, 44, 44);
+      c2.imageSmoothingEnabled = false;
+      drawSheetFrame(c2, oppSheet, animFrame, 2, 2, 40, 40, true);
+    }
   }
   if (!renderMinimap._lastTs || ts - renderMinimap._lastTs >= 150) {
     renderMinimap._lastTs = ts;

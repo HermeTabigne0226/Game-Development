@@ -263,6 +263,61 @@
               <div id="boss-hud-fill" class="boss-hud-fill" style="width:100%"></div>
             </div>
           </div>
+          <!-- Street Fighter Style PvP HUD -->
+          <div id="pvp-sf-hud" class="pvp-sf-hud" hidden>
+            <div class="pvp-sf-side p1">
+              <div class="pvp-sf-portrait-wrap">
+                <canvas id="pvp-hud-p1-portrait" width="44" height="44" aria-hidden="true"></canvas>
+              </div>
+              <div class="pvp-sf-info">
+                <div class="pvp-sf-meta">
+                  <div class="pvp-sf-identity">
+                    <strong id="pvp-hud-p1-name">Sir Aldric</strong>
+                    <span id="pvp-hud-p1-class" class="pvp-sf-class">Archmage</span>
+                  </div>
+                  <div id="pvp-hud-p1-wins" class="pvp-sf-wins" aria-label="Your round wins">
+                    <span class="pvp-win-pip"></span>
+                    <span class="pvp-win-pip"></span>
+                    <span class="pvp-win-count">0W</span>
+                  </div>
+                </div>
+                <div class="pvp-sf-hp-track">
+                  <div id="pvp-hud-p1-hp-fill" class="pvp-sf-hp-fill" style="width:100%"></div>
+                  <span id="pvp-hud-p1-hp-text" class="pvp-sf-hp-text">5000</span>
+                </div>
+                <div id="pvp-hud-p1-skills" class="pvp-sf-skills"></div>
+              </div>
+            </div>
+
+            <div class="pvp-sf-center">
+              <span id="pvp-hud-round" class="pvp-sf-round">RND 1</span>
+              <div id="pvp-hud-timer" class="pvp-sf-timer">99</div>
+            </div>
+
+            <div class="pvp-sf-side p2">
+              <div class="pvp-sf-portrait-wrap">
+                <canvas id="pvp-hud-p2-portrait" width="44" height="44" aria-hidden="true"></canvas>
+              </div>
+              <div class="pvp-sf-info">
+                <div class="pvp-sf-meta">
+                  <div class="pvp-sf-identity">
+                    <strong id="pvp-hud-p2-name">Rival</strong>
+                    <span id="pvp-hud-p2-class" class="pvp-sf-class">Gilded Knight</span>
+                  </div>
+                  <div id="pvp-hud-p2-wins" class="pvp-sf-wins" aria-label="Rival round wins">
+                    <span class="pvp-win-pip"></span>
+                    <span class="pvp-win-pip"></span>
+                    <span class="pvp-win-count">0W</span>
+                  </div>
+                </div>
+                <div class="pvp-sf-hp-track">
+                  <div id="pvp-hud-p2-hp-fill" class="pvp-sf-hp-fill" style="width:100%"></div>
+                  <span id="pvp-hud-p2-hp-text" class="pvp-sf-hp-text">5000</span>
+                </div>
+                <div id="pvp-hud-p2-skills" class="pvp-sf-skills"></div>
+              </div>
+            </div>
+          </div>
           <div id="boss-intro-overlay" class="boss-intro-overlay" hidden>
             <div class="boss-intro-card">
               <canvas id="boss-intro-canvas" width="96" height="96" aria-hidden="true"></canvas>
@@ -783,8 +838,8 @@
   </dialog>
 
   <!-- Multiplayer 1v1 PvP Arena Modal -->
-  <dialog id="pvp-dialog" aria-labelledby="pvp-dialog-title">
-    <div class="dialog-card pvp-card">
+  <dialog id="pvp-dialog" class="pixel-dialog" aria-labelledby="pvp-dialog-title">
+    <div class="dialog-card pvp-card pixel-quest-card">
       <div class="dialog-header">
         <div>
           <span class="eyebrow">Real-Time 1v1 Multiplayer</span>
@@ -799,56 +854,46 @@
         </div>
       </div>
 
-      <div class="pvp-mode-tabs" role="tablist" aria-label="Multiplayer Connection Mode">
-        <button type="button" id="btn-pvp-mode-network" class="pvp-mode-tab active" role="tab" aria-selected="true">
-          🌐 Online (Auto Cloud)
-        </button>
-        <button type="button" id="btn-pvp-mode-lan" class="pvp-mode-tab" role="tab" aria-selected="false">
-          📡 LAN / Offline (Wi-Fi)
-        </button>
-      </div>
-
-      <div id="pvp-network-bar" class="pvp-server-bar">
-        <span class="hint-text" style="flex:1">Auto-connects to the Online PvP Server — no setup required.</span>
-        <button type="button" id="btn-pvp-connect" class="btn btn-primary btn-sm">Reconnect</button>
-      </div>
-
-      <div id="pvp-lan-panel" class="pvp-lan-panel" hidden>
-        <div class="pvp-lan-host-box">
-          <div class="pvp-lan-host-info">
-            <strong id="pvp-lan-host-title">LAN Server (Same Wi-Fi)</strong>
-            <span id="pvp-lan-host-desc">Host on a Phone or PC, then type the Host IP below or tap Scan Wi-Fi.</span>
-          </div>
-          <div class="pvp-lan-host-actions">
-            <button type="button" id="btn-pvp-host-lan" class="btn btn-primary btn-sm" hidden>Host LAN on Phone</button>
-            <button type="button" id="btn-pvp-copy-ip" class="btn btn-secondary btn-sm" hidden>Copy IP</button>
-          </div>
+      <div id="pvp-connection-shell" class="pvp-connection-shell">
+        <div class="pvp-mode-tabs" role="tablist" aria-label="Multiplayer Connection Mode">
+          <button type="button" id="btn-pvp-mode-network" class="pvp-mode-tab active" role="tab" aria-selected="true">
+            🌐 Online (Auto Cloud)
+          </button>
+          <button type="button" id="btn-pvp-mode-lan" class="pvp-mode-tab" role="tab" aria-selected="false">
+            📡 LAN / Offline (Wi-Fi)
+          </button>
         </div>
-        <div class="pvp-server-bar">
-          <label for="pvp-lan-url" class="sr-only">Host IP</label>
-          <input id="pvp-lan-url" type="text" placeholder="Type Host IP (e.g. 192.168.1.5)" />
-          <button type="button" id="btn-pvp-lan-connect" class="btn btn-primary btn-sm">Connect IP</button>
-          <button type="button" id="btn-pvp-lan-localhost" class="btn btn-secondary btn-sm" title="Connect to this device">This Device</button>
-          <button type="button" id="btn-pvp-lan-scan" class="btn btn-secondary btn-sm" title="Scan Wi-Fi for nearby hosts">Scan Wi-Fi</button>
-        </div>
-        <div id="pvp-lan-scan-results" class="pvp-scan-row" hidden></div>
-      </div>
 
-      <div id="pvp-status-msg" class="pvp-status-msg">Connecting to PvP server...</div>
+        <div id="pvp-network-bar" class="pvp-server-bar">
+          <span class="hint-text" style="flex:1">Auto-connects to the Online PvP Server — no setup required.</span>
+          <button type="button" id="btn-pvp-connect" class="btn btn-primary btn-sm">Reconnect</button>
+        </div>
+
+        <div id="pvp-lan-panel" class="pvp-lan-panel" hidden>
+          <div class="pvp-lan-host-box">
+            <div class="pvp-lan-host-info">
+              <strong id="pvp-lan-host-title">LAN Server (Same Wi-Fi)</strong>
+              <span id="pvp-lan-host-desc">Host on a Phone or PC, then type the Host IP below or tap Scan Wi-Fi.</span>
+            </div>
+            <div class="pvp-lan-host-actions">
+              <button type="button" id="btn-pvp-host-lan" class="btn btn-primary btn-sm" hidden>Host LAN on Phone</button>
+              <button type="button" id="btn-pvp-copy-ip" class="btn btn-secondary btn-sm" hidden>Copy IP</button>
+            </div>
+          </div>
+          <div class="pvp-server-bar">
+            <label for="pvp-lan-url" class="sr-only">Host IP</label>
+            <input id="pvp-lan-url" type="text" placeholder="Type Host IP (e.g. 192.168.1.5)" />
+            <button type="button" id="btn-pvp-lan-connect" class="btn btn-primary btn-sm">Connect IP</button>
+            <button type="button" id="btn-pvp-lan-localhost" class="btn btn-secondary btn-sm" title="Connect to this device">This Device</button>
+            <button type="button" id="btn-pvp-lan-scan" class="btn btn-secondary btn-sm" title="Scan Wi-Fi for nearby hosts">Scan Wi-Fi</button>
+          </div>
+          <div id="pvp-lan-scan-results" class="pvp-scan-row" hidden></div>
+        </div>
+
+        <div id="pvp-status-msg" class="pvp-status-msg">Connecting to PvP server...</div>
+      </div>
 
       <div id="pvp-browser-view" class="pvp-browser-view">
-        <div class="pvp-fighter-strip">
-          <div class="pvp-fighter-name">
-            <label for="pvp-hero-name">Fighter Name</label>
-            <input id="pvp-hero-name" type="text" maxlength="18" placeholder="Sir Aldric" />
-          </div>
-          <div class="pvp-class-pills" role="group" aria-label="Choose PvP Hero">
-            <button type="button" class="btn btn-secondary btn-sm pvp-hero-btn active" data-pvp-hero="mage">Archmage</button>
-            <button type="button" class="btn btn-secondary btn-sm pvp-hero-btn" data-pvp-hero="gilded">Gilded</button>
-            <button type="button" class="btn btn-secondary btn-sm pvp-hero-btn" data-pvp-hero="ranger">Ranger</button>
-          </div>
-        </div>
-
         <div class="pvp-split">
           <section class="pvp-pane">
             <div class="pvp-pane-head">
@@ -877,15 +922,61 @@
 
       <div id="pvp-room-view" class="pvp-room-view" hidden>
         <div class="pvp-room-banner">
-          <div>
-            <h3 id="pvp-room-title">Arena Room</h3>
+          <div class="pvp-room-banner-meta">
+            <div class="pvp-room-title-row">
+              <span id="pvp-room-network-badge" class="pvp-net-pill">🌐 Online Cloud</span>
+              <h3 id="pvp-room-title">Arena Room</h3>
+            </div>
             <span id="pvp-room-meta" class="hint-text">Map: Goblin Catacombs Pit</span>
           </div>
           <button type="button" id="btn-pvp-leave" class="btn btn-secondary btn-sm">Leave Lobby</button>
         </div>
 
+        <div id="pvp-room-error" class="pvp-status-msg error" hidden></div>
         <div id="pvp-vs-row" class="pvp-vs-row"></div>
         <div id="pvp-lobby-countdown" class="pvp-lobby-countdown" hidden>All Fighters Ready!</div>
+
+        <section class="pvp-char-setup-panel" aria-label="Character Selection and Loadout">
+          <div class="pvp-char-setup-head">
+            <div class="pvp-char-setup-title">
+              <strong>Choose Your Fighter</strong>
+              <span class="hint-text">Select your class &amp; 4 combat skills for this match</span>
+            </div>
+            <div class="pvp-fighter-name">
+              <label for="pvp-hero-name">Fighter Name</label>
+              <input id="pvp-hero-name" type="text" maxlength="18" placeholder="Sir Aldric" />
+            </div>
+          </div>
+
+          <div class="pvp-hero-select-grid" role="group" aria-label="Choose PvP Hero">
+            <button type="button" class="pvp-hero-card-btn active" data-pvp-hero="mage">
+              <canvas id="pvp-hero-preview-mage" width="56" height="56" aria-hidden="true"></canvas>
+              <div class="pvp-hero-card-meta">
+                <strong>Arcane Archmage</strong>
+                <span>5,000 HP · +10 MP · Blink Dash</span>
+              </div>
+            </button>
+            <button type="button" class="pvp-hero-card-btn" data-pvp-hero="gilded">
+              <canvas id="pvp-hero-preview-gilded" width="56" height="56" aria-hidden="true"></canvas>
+              <div class="pvp-hero-card-meta">
+                <strong>Gilded Knight</strong>
+                <span>5,000 HP · +CRIT · Shield Bash</span>
+              </div>
+            </button>
+            <button type="button" class="pvp-hero-card-btn" data-pvp-hero="ranger">
+              <canvas id="pvp-hero-preview-ranger" width="56" height="56" aria-hidden="true"></canvas>
+              <div class="pvp-hero-card-meta">
+                <strong>Sylvan Ranger</strong>
+                <span>5,000 HP · +Speed · 3x Ricochet</span>
+              </div>
+            </button>
+          </div>
+
+          <div class="pvp-skills-strip-row">
+            <div id="pvp-room-skills-preview" class="pvp-room-skills-preview"></div>
+            <button type="button" id="btn-pvp-loadout" class="btn btn-secondary btn-sm">Change Skills (3+1)</button>
+          </div>
+        </section>
 
         <div class="pvp-room-config">
           <div id="pvp-host-map-bar" class="pvp-host-map-bar" hidden>
@@ -894,7 +985,6 @@
           </div>
           <div class="pvp-room-actions">
             <button type="button" id="btn-pvp-update-game" class="btn btn-primary" hidden>Update Game</button>
-            <button type="button" id="btn-pvp-loadout" class="btn btn-secondary">Change Class / Skills</button>
             <button type="button" id="btn-pvp-ready" class="btn btn-secondary">Ready Up</button>
             <button type="button" id="btn-pvp-start" class="btn btn-primary" hidden>Start PvP Match</button>
           </div>
@@ -954,7 +1044,7 @@
         <div class="setting-row">
           <div>
             <strong>Installed Version</strong>
-            <span id="update-current-ver">v.1.3.12</span>
+            <span id="update-current-ver">v.1.3.13</span>
           </div>
           <span id="update-latest-badge" class="menu-version-badge" style="position:static">Checking...</span>
         </div>

@@ -576,6 +576,9 @@ function setupControls() {
     document.getElementById("end-dialog").close("sanctum");
     if (runtime.state?.isPvp) {
       runtime.state.isPvp = false;
+      document.body.classList.remove("pvp-active");
+      const sfHud = document.getElementById("pvp-sf-hud");
+      if (sfHud) sfHud.hidden = true;
       showMainMenu();
       if (pvpNet.connected) openPvpDialog();
       return;

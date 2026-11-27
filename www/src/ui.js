@@ -1,6 +1,6 @@
 import { bgm, sfx } from "./audio.js";
 import { castSpell, combatHooks, upgradeSkillById } from "./combat.js";
-import { HERO_CLASSES, RELICS, SPELLS } from "./data.js";
+import { CLASS_DEFAULT_LOADOUTS, DEFAULT_LOADOUT, HERO_CLASSES, RELICS, SPELLS } from "./data.js";
 import { pvpHooks } from "./pvp.js";
 import { renderHooks } from "./renderer.js";
 import {
@@ -440,28 +440,129 @@ export function updateRoomAndBossHUD() {
   const s = runtime.state;
   if (!s) return;
 
+  const sfHud = document.getElementById("pvp-sf-hud");
   if (s.isPvp) {
+    document.body.classList.add("pvp-active");
     const opp = s.pvpOpponent;
+    const p = s.player;
+    const stats = getPlayerStats(p);
     const mySc = s.pvpScores?.[s.pvpMySlot] || 0;
     const oppSc = s.pvpScores?.[s.pvpMySlot === 0 ? 1 : 0] || 0;
+
     const badge = document.getElementById("room-enemy-badge");
-    if (badge) {
-      badge.textContent = `PvP Rnd ${s.pvpRound || 1}/3 · ${mySc} - ${oppSc}`;
-      badge.className = "room-enemy-badge has-enemies";
-    }
+    if (badge) badge.hidden = true;
     const bossBar = document.getElementById("boss-hud-bar");
-    if (bossBar && opp) {
-      bossBar.hidden = false;
-      const clsName = HERO_CLASSES[opp.heroClass]?.name || opp.heroClass;
-      document.getElementById("boss-hud-name").textContent = `Rival: ${opp.name} (${clsName})`;
-      document.getElementById("boss-hud-hp-text").textContent = `${Math.max(0, Math.ceil(opp.hp))} / ${opp.maxHp}`;
-      document.getElementById("boss-hud-fill").style.width = `${Math.max(0, (opp.hp / opp.maxHp) * 100)}%`;
-    } else if (bossBar) {
-      bossBar.hidden = true;
+    if (bossBar) bossBar.hidden = true;
+
+    if (sfHud) {
+      sfHud.hidden = false;
+      const myCls = HERO_CLASSES[p.heroClass === "paladin" ? "gilded" : p.heroClass] || HERO_CLASSES.gilded;
+      const oppCls = HERO_CLASSES[opp?.heroClass === "paladin" ? "gilded" : opp?.heroClass] || HERO_CLASSES.gilded;
+
+      const p1Name = document.getElementById("pvp-hud-p1-name");
+      const p1Cls = document.getElementById("pvp-hud-p1-class");
+      const p1Fill = document.getElementById("pvp-hud-p1-hp-fill");
+      const p1Text = document.getElementById("pvp-hud-p1-hp-text");
+      const p1Wins = document.getElementById("pvp-hud-p1-wins");
+      const p1Skills = document.getElementById("pvp-hud-p1-skills");
+
+      if (p1Name) p1Name.textContent = p.name || myCls.name;
+      if (p1Cls) p1Cls.textContent = myCls.name;
+      const myHpVal = Math.max(0, Math.ceil(p.hp));
+      const myMaxHp = Math.max(1, stats.maxHp);
+      const myPct = Math.max(0, Math.min(100, (p.hp / myMaxHp) * 100));
+      if (p1Fill) {
+        p1Fill.style.width = `${myPct}%`;
+        p1Fill.classList.toggle("danger", myPct <= 25);
+      }
+      if (p1Text) p1Text.textContent = `${myHpVal}`;
+      if (p1Wins) {
+        const pips = p1Wins.querySelectorAll(".pvp-win-pip");
+        pips.forEach((pip, idx) => pip.classList.toggle("won", idx < mySc));
+        const cnt = p1Wins.querySelector(".pvp-win-count");
+        if (cnt) cnt.textContent = `${mySc}W`;
+      }
+
+      const p2Name = document.getElementById("pvp-hud-p2-name");
+      const p2Cls = document.getElementById("pvp-hud-p2-class");
+      const p2Fill = document.getElementById("pvp-hud-p2-hp-fill");
+      const p2Text = document.getElementById("pvp-hud-p2-hp-text");
+      const p2Wins = document.getElementById("pvp-hud-p2-wins");
+      const p2Skills = document.getElementById("pvp-hud-p2-skills");
+
+      if (p2Name) p2Name.textContent = opp?.name || oppCls.name;
+      if (p2Cls) p2Cls.textContent = oppCls.name;
+      const oppHpVal = Math.max(0, Math.ceil(opp?.hp ?? 0));
+      const oppMaxHp = Math.max(1, opp?.maxHp || 5000);
+      const oppPct = Math.max(0, Math.min(100, ((opp?.hp ?? 0) / oppMaxHp) * 100));
+      if (p2Fill) {
+        p2Fill.style.width = `${oppPct}%`;
+        p2Fill.classList.toggle("danger", oppPct <= 25);
+      }
+      if (p2Text) p2Text.textContent = `${oppHpVal}`;
+      if (p2Wins) {
+        const pips = p2Wins.querySelectorAll(".pvp-win-pip");
+        pips.forEach((pip, idx) => pip.classList.toggle("won", idx < oppSc));
+        const cnt = p2Wins.querySelector(".pvp-win-count");
+        if (cnt) cnt.textContent = `${oppSc}W`;
+      }
+
+      const roundEl = document.getElementById("pvp-hud-round");
+      const timerEl = document.getElementById("pvp-hud-timer");
+      const remSec = Math.max(0, Math.ceil(s.pvpRoundTimer ?? 99));
+      if (roundEl) roundEl.textContent = `RND ${s.pvpRound || 1}`;
+      if (timerEl) {
+        timerEl.textContent = String(remSec).padStart(2, "0");
+        timerEl.classList.toggle("low", remSec <= 15);
+      }
+
+      const mySpells = getActiveSpells(p);
+      const p1Sig = mySpells.map((sp) => sp.id).join(",");
+      if (p1Skills && sfHud.dataset.p1Sig !== p1Sig) {
+        sfHud.dataset.p1Sig = p1Sig;
+        p1Skills.innerHTML = mySpells
+          .map(
+            (sp) =>
+              `<div class="pvp-sf-skill${sp.isUltimate ? " ult" : ""}" data-spell-id="${sp.id}" title="${sp.name}"><img src="${sp.icon}" alt="${sp.name}" /><span class="pvp-sf-skill-cd" hidden></span></div>`
+          )
+          .join("");
+      }
+      if (p1Skills) {
+        for (const el of p1Skills.querySelectorAll(".pvp-sf-skill")) {
+          const cd = s.spellCooldowns?.[el.dataset.spellId] || 0;
+          const cdBadge = el.querySelector(".pvp-sf-skill-cd");
+          el.classList.toggle("on-cd", cd > 0);
+          if (cdBadge) {
+            cdBadge.hidden = cd <= 0;
+            if (cd > 0) cdBadge.textContent = String(Math.ceil(cd));
+          }
+        }
+      }
+
+      const oppIds = Array.isArray(s.pvpOppInfo?.loadout) && s.pvpOppInfo.loadout.length >= 4
+        ? s.pvpOppInfo.loadout
+        : (CLASS_DEFAULT_LOADOUTS[oppCls.id] || DEFAULT_LOADOUT);
+      const p2Sig = oppIds.join(",");
+      if (p2Skills && sfHud.dataset.p2Sig !== p2Sig) {
+        sfHud.dataset.p2Sig = p2Sig;
+        p2Skills.innerHTML = oppIds
+          .map((id) => SPELLS.find((sp) => sp.id === id))
+          .filter(Boolean)
+          .map(
+            (sp) =>
+              `<div class="pvp-sf-skill${sp.isUltimate ? " ult" : ""}" title="${sp.name}"><img src="${sp.icon}" alt="${sp.name}" /></div>`
+          )
+          .join("");
+      }
     }
     bgm.play("boss");
     return;
   }
+
+  document.body.classList.remove("pvp-active");
+  if (sfHud) sfHud.hidden = true;
+  const badgeRestore = document.getElementById("room-enemy-badge");
+  if (badgeRestore) badgeRestore.hidden = false;
 
   const nonBossLeft = s.level.enemies.filter((e) => !e.isBoss && !e.isClone).length;
   const boss = s.level.enemies.find((e) => e.isBoss);
@@ -575,6 +676,7 @@ export function syncSettingsUI() {
 }
 
 export function showMainMenu() {
+  document.body.classList.remove("pvp-active");
   bgm.play("town");
   const menu = document.getElementById("main-menu");
   const resumeBtn = document.getElementById("menu-btn-resume");
@@ -600,6 +702,7 @@ export function showMainMenu() {
 
 export function hideMainMenu() {
   document.getElementById("main-menu").hidden = true;
+  document.body.classList.toggle("pvp-active", Boolean(runtime.state?.isPvp));
   runtime.lastFrameTime = performance.now();
 }
 

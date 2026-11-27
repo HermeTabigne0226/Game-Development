@@ -1,8 +1,18 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.3.12";
+export const GAME_VERSION = "v.1.3.13";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.3.13",
+    title: "Street Fighter PvP HUD, Lobby-First Flow, Round KO & Zero-HP Fix",
+    notes: [
+      "Zero-HP Defeat Fix: Fixed a hook bug where reaching 0 HP in dungeon runs failed to trigger the Game Over screen.",
+      "Lobby-First PvP Flow & Medieval Theme: Pick your server and create or join a lobby first; once inside a room, IP/connection clutter is hidden and you customize your Fighter Name, animated Hero Class, and 4 Combat Skills directly in the themed lobby.",
+      "PvP Round KO, Timer & Scoring: Added K.O. and 99s timeout round resolution, automatic winner points, arena resets, and crisp 3-2-1 round countdowns.",
+      "Street Fighter Style PvP HUD: Added mirrored fighter portraits, names, classes, center-draining HP bars, round-win pips & score, skill icons, and a 99s center round timer.",
+    ],
+  },
   {
     version: "v.1.3.12",
     title: "Mobile In-Menu Check Update, Download, Install & Restart",
