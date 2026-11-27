@@ -655,14 +655,18 @@ export function updatePerfHUD() {
   }
 }
 
+const BTN_SIZE_LABELS = { small: "Small", medium: "Medium", big: "Big" };
+
 export function syncSettingsUI() {
   const m = runtime.meta;
-  if (!m.settings) m.settings = { sfxLevel: "high", musicLevel: "low", screenShake: true, showPerf: true };
+  if (!m.settings) m.settings = { sfxLevel: "high", musicLevel: "low", screenShake: true, showPerf: true, mobileButtonSize: "small" };
   if (!m.settings.sfxLevel) m.settings.sfxLevel = m.settings.sfx === false ? "off" : "high";
   if (!m.settings.musicLevel) m.settings.musicLevel = "low";
+  if (!BTN_SIZE_LABELS[m.settings.mobileButtonSize]) m.settings.mobileButtonSize = "small";
 
   sfx.setLevel(m.settings.sfxLevel);
   bgm.setLevel(m.settings.musicLevel);
+  document.body.dataset.btnSize = m.settings.mobileButtonSize;
 
   const muteBtn = document.getElementById("btn-mute");
   if (muteBtn) {
@@ -677,6 +681,8 @@ export function syncSettingsUI() {
   if (shakeSettingBtn) shakeSettingBtn.textContent = m.settings.screenShake !== false ? "On" : "Off";
   const perfSettingBtn = document.getElementById("setting-perf-btn");
   if (perfSettingBtn) perfSettingBtn.textContent = m.settings.showPerf !== false ? "On" : "Off";
+  const btnSizeBtn = document.getElementById("setting-btn-size-btn");
+  if (btnSizeBtn) btnSizeBtn.textContent = BTN_SIZE_LABELS[m.settings.mobileButtonSize] || "Small";
   updatePerfHUD();
 }
 

@@ -1,8 +1,18 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.0.0 Beta";
+export const GAME_VERSION = "v.1.0.1 Beta";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.0.1 Beta",
+    title: "Mobile Touch Button Size, Centered PvP Winner Overlay & Side-Matched HUD",
+    notes: [
+      "Touch Button Size Setting (Mobile): Added Small (Default), Medium, and Big mobile control sizing in Settings with 1:1 scaled joystick & attack wheel thumbstick tracking across different phone resolutions.",
+      "Centered PvP Winner Overlay & Lobby Button: Replaced modal-only match end popups with an in-arena Winner card, instant Go to PvP Lobby button, server 1.0s lethal verification, and disconnect/timeout recovery so PvP never stalls after Round 2+.",
+      "Side-Matched HUD & Anti-AFK Damage: Bound Left/Right PvP healthbars, portraits, skills, and VS cards to each fighter's spawn side; fixed background/Alt+Tab/Home-screen invulnerability with wall-clock iFrames + server background HP tracking; replaced blocky chill squares with a frost aura and hid PvP Resonance MP popups.",
+      "Streamlined PvP Dungeon UI: Cleaned up the PvP header and removed redundant connection banners & public IP display.",
+    ],
+  },
   {
     version: "v.1.0.0 Beta",
     title: "Beta Launch — Rebalanced 1,000 HP PvP, Power-Up Vials & Security Hardening",

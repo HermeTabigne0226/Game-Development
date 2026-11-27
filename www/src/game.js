@@ -117,11 +117,16 @@ function setupControls() {
   let joyPointerId = null;
   let joyOriginX = 0;
   let joyOriginY = 0;
+  const getTouchCtrlScale = () => {
+    const sz = runtime.meta?.settings?.mobileButtonSize;
+    return sz === "big" ? 1.32 : sz === "medium" ? 1.16 : 1;
+  };
 
   const updateJoystick = (clientX, clientY) => {
+    const scale = getTouchCtrlScale();
     const maxR = 42;
-    let dx = clientX - joyOriginX;
-    let dy = clientY - joyOriginY;
+    let dx = (clientX - joyOriginX) / scale;
+    let dy = (clientY - joyOriginY) / scale;
     const dist = Math.hypot(dx, dy);
     if (dist > maxR) {
       dx = (dx / dist) * maxR;
@@ -155,10 +160,11 @@ function setupControls() {
   joyZone.addEventListener("pointerdown", (e) => {
     e.preventDefault();
     const zRect = joyZone.getBoundingClientRect();
+    const pad = 52 * getTouchCtrlScale();
     joyPointerId = e.pointerId;
     joyZone.setPointerCapture(e.pointerId);
-    const localX = Math.max(52, Math.min(zRect.width - 52, e.clientX - zRect.left));
-    const localY = Math.max(52, Math.min(zRect.height - 52, e.clientY - zRect.top));
+    const localX = Math.max(pad, Math.min(zRect.width - pad, e.clientX - zRect.left));
+    const localY = Math.max(pad, Math.min(zRect.height - pad, e.clientY - zRect.top));
     joyOriginX = zRect.left + localX;
     joyOriginY = zRect.top + localY;
     joy.classList.add("active");
@@ -179,9 +185,10 @@ function setupControls() {
   let atkCenterY = 0;
 
   const updateAttackWheel = (clientX, clientY) => {
+    const scale = getTouchCtrlScale();
     const maxR = 34;
-    let dx = clientX - atkCenterX;
-    let dy = clientY - atkCenterY;
+    let dx = (clientX - atkCenterX) / scale;
+    let dy = (clientY - atkCenterY) / scale;
     const dist = Math.hypot(dx, dy);
     if (dist > maxR) {
       dx = (dx / dist) * maxR;
@@ -312,6 +319,14 @@ function setupControls() {
 
   document.getElementById("setting-perf-btn")?.addEventListener("click", () => {
     runtime.meta.settings.showPerf = runtime.meta.settings.showPerf === false;
+    saveMeta();
+    syncSettingsUI();
+  });
+
+  const BTN_SIZE_CYCLE = ["small", "medium", "big"];
+  document.getElementById("setting-btn-size-btn")?.addEventListener("click", () => {
+    const idx = BTN_SIZE_CYCLE.indexOf(runtime.meta.settings.mobileButtonSize || "small");
+    runtime.meta.settings.mobileButtonSize = BTN_SIZE_CYCLE[(idx + 1) % BTN_SIZE_CYCLE.length];
     saveMeta();
     syncSettingsUI();
   });

@@ -54,7 +54,7 @@ export function loadMeta() {
     endlessBestFloor: 0,
     victories: 0,
     lastSeenPatchVersion: "",
-    settings: { sfxLevel: "high", musicLevel: "low", screenShake: true, showPerf: true },
+    settings: { sfxLevel: "high", musicLevel: "low", screenShake: true, showPerf: true, mobileButtonSize: "small" },
   };
   if (!loaded || typeof loaded !== "object") return base;
   return {
