@@ -1,4 +1,4 @@
-const CACHE_NAME = "shattered-crown-v43";
+const CACHE_NAME = "shattered-crown-v44";
 
 const PRECACHE_URLS = [
   "./",
@@ -20,6 +20,17 @@ const PRECACHE_URLS = [
   "./assets/knob_sword.svg",
   "./assets/knob_wand.svg",
   "./assets/knob_arrow.svg",
+  "./assets/generated/vfx/vfx_frost_zone.png",
+  "./assets/generated/vfx/vfx_radiant_wave.png",
+  "./assets/generated/vfx/vfx_holy_beam.png",
+  "./assets/generated/vfx/vfx_holy_ground_impact.png",
+  "./assets/generated/vfx/vfx_aegis_guard.png",
+  "./assets/generated/vfx/vfx_skyfall_reticle.png",
+  "./assets/generated/vfx/vfx_ground_slam_shockwave.png",
+  "./assets/generated/vfx/vfx_heal_haste_aura.png",
+  "./assets/generated/vfx/vfx_damage_aoe_field.png",
+  "./assets/generated/vfx/vfx_spear_charge_lunge.png",
+  "./assets/generated/vfx/vfx_spear_impact_crater.png",
   "./assets/generated/ranger/ranger_idle.png",
   "./assets/generated/ranger/ranger_walk.png",
   "./assets/generated/ranger/ranger_attack.png",

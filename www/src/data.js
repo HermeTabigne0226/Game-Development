@@ -1,8 +1,16 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.2.1";
+export const GAME_VERSION = "v.1.2.2";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.2.2",
+    title: "Pixel-Art Skill VFX Upgrade & Valiant Charge Polish",
+    notes: [
+      "Custom Pixel-Art Skill VFX: Upgraded Frost Nova crystal glyphs, Radiant Cleave flame waves & chevrons, Holy Smite / Divine Cataclysm beams & sunburst ground sigils, Skyfall Judgment reticles & slam shockwaves, Heal/Haste emerald cross auras, Aegis guard rings, Seal of Retribution hazard fields, and Valiant Charge war-lance + puncture craters.",
+      "Valiant Charge Showcase Timing: Extended charge windup (0.62s) and surge duration (0.38s) with full invulnerability throughout so the extending spear, spiral wind shockwaves, and landing crater are clearly visible.",
+    ],
+  },
   {
     version: "v.1.2.1",
     title: "Hotfixes — Skill VFX, Mobile Controls & Menu Fit",

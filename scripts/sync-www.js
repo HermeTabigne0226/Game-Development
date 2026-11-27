@@ -13,6 +13,7 @@ const ITEMS_TO_COPY = [
   "assets/knob_sword.svg",
   "assets/knob_wand.svg",
   "assets/knob_arrow.svg",
+  "assets/generated/vfx",
   "assets/generated/ranger/ranger_idle.png",
   "assets/generated/ranger/ranger_walk.png",
   "assets/generated/ranger/ranger_attack.png",

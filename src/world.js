@@ -23,6 +23,7 @@ import {
   saveRun,
   showFloorBanner,
   spawnBurst,
+  spawnGroundDecal,
   spawnRing,
   TILE_SIZE,
   touchAim,
@@ -191,6 +192,7 @@ export function createNewRun(heroName, difficultyId, loadout = DEFAULT_LOADOUT, 
     projectiles: [],
     slashes: [],
     rings: [],
+    groundDecals: [],
     beams: [],
     arrowStorms: [],
     frostZones: [],
@@ -391,6 +393,7 @@ export function restoreRun(saved) {
     projectiles: [],
     slashes: [],
     rings: [],
+    groundDecals: [],
     beams: [],
     arrowStorms: [],
     frostZones: [],
@@ -452,6 +455,7 @@ export function descendFloor() {
   s.projectiles = [];
   s.slashes = [];
   s.rings = [];
+  s.groundDecals = [];
   s.beams = [];
   s.arrowStorms = [];
   s.frostZones = [];
@@ -717,6 +721,7 @@ export function updateSimulation(dt) {
       s.shake = Math.max(s.shake, 7);
       spawnBurst(p.x, p.y, "#38bdf8", 22, 1.35);
       spawnRing(p.x, p.y, ab.radius * TILE_SIZE, "#facc15", 0.38);
+      spawnGroundDecal(p.x, p.y, "vfx_aegis_guard", ab.radius * TILE_SIZE * 2.0, 0.38, { scaleStart: 0.55, scaleEnd: 1.15, spin: 1.0 });
       for (const e of [...s.level.enemies]) {
         const dx = e.x - p.x;
         const dy = e.y - p.y;
@@ -862,7 +867,9 @@ export function updateSimulation(dt) {
       spawnBurst(p.x, p.y, "#ffffff", 16, 1.25);
       spawnRing(p.x, p.y, radius * TILE_SIZE, "#fbbf24", 0.45);
       spawnRing(p.x, p.y, radius * TILE_SIZE * 0.6, "#ffffff", 0.3);
-      s.beams.push({ x: p.x * TILE_SIZE, y: p.y * TILE_SIZE, color: "#fde047", life: 0.36, maxLife: 0.36 });
+      spawnGroundDecal(p.x, p.y, "vfx_holy_ground_impact", radius * TILE_SIZE * 2.15, 0.9, { scaleStart: 0.72, scaleEnd: 1.08, spin: 0.35 });
+      spawnGroundDecal(p.x, p.y, "vfx_ground_slam_shockwave", radius * TILE_SIZE * 1.45, 0.24, { scaleStart: 0.15, scaleEnd: 1.85 });
+      s.beams.push({ x: p.x * TILE_SIZE, y: p.y * TILE_SIZE, color: "#fde047", life: 0.42, maxLife: 0.42 });
 
       for (const e of [...s.level.enemies]) {
         const dx = e.x - p.x;
@@ -1011,6 +1018,8 @@ export function updateSimulation(dt) {
         spawnBurst(impactX, impactY, "#38bdf8", 14, 1.25);
         spawnRing(impactX, impactY, 1.75 * TILE_SIZE, "#38bdf8", 0.3, { delay: 0, lineWidth: 3 });
         spawnRing(impactX, impactY, 2.05 * TILE_SIZE, "#fde047", 0.38, { delay: 0.06, lineWidth: 2.5 });
+        spawnGroundDecal(impactX, impactY, "vfx_spear_impact_crater", 104, 0.95, { scaleStart: 0.55, scaleEnd: 1.05 });
+        spawnGroundDecal(impactX, impactY, "vfx_ground_slam_shockwave", 92, 0.25, { angle: ang - Math.PI / 2, scaleStart: 0.45, scaleEnd: 1.55 });
         for (const e of [...s.level.enemies]) {
           if (Math.hypot(e.x - impactX, e.y - impactY) <= 1.75 || Math.hypot(e.x - p.x, e.y - p.y) <= 1.35) {
             damageEnemy(e, finDmg, false, `${vc.spell.name} Burst`, vc.dirX * 3.5, vc.dirY * 3.5, { isSkill: true, isAoe: true });
@@ -1076,7 +1085,9 @@ export function updateSimulation(dt) {
       spawnRing(p.x, p.y, radPx * 1.12, "#f97316", 0.52, { delay: 0.14, lineWidth: 2.8 });
       spawnRing(p.x, p.y, radPx * 0.72, "#38bdf8", 0.44, { delay: 0.21, lineWidth: 2.4 });
       spawnRing(p.x, p.y, radPx * 1.24, "#fef08a", 0.56, { delay: 0.28, lineWidth: 2 });
-      s.beams.push({ x: p.x * TILE_SIZE, y: p.y * TILE_SIZE, color: "#fde047", life: 0.38, maxLife: 0.38 });
+      spawnGroundDecal(p.x, p.y, "vfx_ground_slam_shockwave", radPx * 1.45, 0.24, { scaleStart: 0.1, scaleEnd: 2.0 });
+      spawnGroundDecal(p.x, p.y, "vfx_holy_ground_impact", radPx * 2.1, 0.85, { scaleStart: 0.75, scaleEnd: 1.05, spin: 0.3 });
+      s.beams.push({ x: p.x * TILE_SIZE, y: p.y * TILE_SIZE, color: "#fde047", life: 0.44, maxLife: 0.44 });
       spawnBurst(p.x, p.y, "#f97316", 32, 1.7);
       spawnBurst(p.x, p.y, "#fde047", 20, 1.35);
 
@@ -1483,6 +1494,14 @@ export function updateSimulation(dt) {
     const t = 1 - Math.max(0, rg.life / rg.maxLife);
     rg.radius = 4 + (rg.maxRadius - 4) * t;
     if (rg.life <= 0) s.rings.splice(i, 1);
+  }
+  if (Array.isArray(s.groundDecals)) {
+    for (let i = s.groundDecals.length - 1; i >= 0; i--) {
+      const dc = s.groundDecals[i];
+      dc.life -= dt;
+      dc.angle += (dc.spin || 0) * dt;
+      if (dc.life <= 0) s.groundDecals.splice(i, 1);
+    }
   }
   for (let i = s.beams.length - 1; i >= 0; i--) {
     s.beams[i].life -= dt;

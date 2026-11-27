@@ -86,6 +86,19 @@ export async function loadAllAssets(onProgress = null) {
     "assets/wand_icon.svg": "assets/wand_icon.svg",
     "assets/crossbow_icon.svg": "assets/crossbow_icon.svg",
     "assets/spellbook_icon.svg": "assets/spellbook_icon.svg",
+
+    // Pixel-art skill VFX & aura sprites
+    vfx_frost_zone: "assets/generated/vfx/vfx_frost_zone.png",
+    vfx_radiant_wave: "assets/generated/vfx/vfx_radiant_wave.png",
+    vfx_holy_beam: "assets/generated/vfx/vfx_holy_beam.png",
+    vfx_holy_ground_impact: "assets/generated/vfx/vfx_holy_ground_impact.png",
+    vfx_aegis_guard: "assets/generated/vfx/vfx_aegis_guard.png",
+    vfx_skyfall_reticle: "assets/generated/vfx/vfx_skyfall_reticle.png",
+    vfx_ground_slam_shockwave: "assets/generated/vfx/vfx_ground_slam_shockwave.png",
+    vfx_heal_haste_aura: "assets/generated/vfx/vfx_heal_haste_aura.png",
+    vfx_damage_aoe_field: "assets/generated/vfx/vfx_damage_aoe_field.png",
+    vfx_spear_charge_lunge: "assets/generated/vfx/vfx_spear_charge_lunge.png",
+    vfx_spear_impact_crater: "assets/generated/vfx/vfx_spear_impact_crater.png",
   };
 
   const list = Object.entries(manifest);

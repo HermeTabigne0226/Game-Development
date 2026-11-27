@@ -329,6 +329,32 @@ export function spawnRing(tx, ty, maxRadiusPx, color, duration = 0.35, { delay =
   });
 }
 
+export function spawnGroundDecal(
+  tx,
+  ty,
+  spriteKey,
+  sizePx,
+  duration = 0.65,
+  { angle = 0, spin = 0, scaleStart = 1, scaleEnd = 1 } = {}
+) {
+  const s = runtime.state;
+  if (!s) return;
+  if (!Array.isArray(s.groundDecals)) s.groundDecals = [];
+  if (s.groundDecals.length >= 24) s.groundDecals.shift();
+  s.groundDecals.push({
+    x: tx * TILE_SIZE,
+    y: ty * TILE_SIZE,
+    spriteKey,
+    sizePx,
+    life: duration,
+    maxLife: duration,
+    angle,
+    spin,
+    scaleStart,
+    scaleEnd,
+  });
+}
+
 export function getWeaponCategory(weapon) {
   if (!weapon) return null;
   if (weapon.weaponType === "bow") return "bow";

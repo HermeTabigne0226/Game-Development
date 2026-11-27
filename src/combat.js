@@ -16,6 +16,7 @@ import {
   saveMeta,
   saveRun,
   spawnBurst,
+  spawnGroundDecal,
   spawnGroundItem,
   spawnRing,
   TILE_SIZE,
@@ -676,6 +677,7 @@ export function castSpell(spellId) {
     spawnBurst(p.x, p.y, spell.color, 22, 1.3);
     spawnRing(p.x, p.y, radius * TILE_SIZE, spell.color, 0.35);
     spawnRing(p.x, p.y, radius * TILE_SIZE * 0.65, "#fde047", 0.25);
+    spawnGroundDecal(p.x, p.y, "vfx_holy_ground_impact", radius * TILE_SIZE * 2.05, 0.55, { scaleStart: 0.45, scaleEnd: 1.12, spin: 0.7 });
 
     const hits = s.level.enemies.filter((e) => Math.hypot(e.x - p.x, e.y - p.y) <= radius + 0.35);
     for (const e of hits) {
@@ -739,7 +741,8 @@ export function castSpell(spellId) {
 
     spawnBurst(targetX, targetY, spell.color, 18, 1.2);
     spawnRing(targetX, targetY, 38, spell.color, 0.35);
-    s.beams.push({ x: targetX * TILE_SIZE, y: targetY * TILE_SIZE, color: spell.color, life: 0.32, maxLife: 0.32 });
+    spawnGroundDecal(targetX, targetY, "vfx_holy_ground_impact", 84, 0.65, { scaleStart: 0.72, scaleEnd: 1.08, spin: 0.5 });
+    s.beams.push({ x: targetX * TILE_SIZE, y: targetY * TILE_SIZE, color: spell.color, life: 0.36, maxLife: 0.36 });
     s.shake = Math.max(s.shake, 4);
 
     const dmg = Math.round(stats.atk * spell.mults[rIdx]) + spell.flats[rIdx];
@@ -785,10 +788,10 @@ export function castSpell(spellId) {
   if (spell.type === "radiant_cleave") {
     sfx.heal();
     p.anim = "attack";
-    p.animTimer = 0.52;
+    p.animTimer = 0.67;
     p.radiantCharge = {
-      timer: 0.5,
-      duration: 0.5,
+      timer: 0.65,
+      duration: 0.65,
       angle,
       rankIdx: rIdx,
       dmg: Math.round(stats.atk * spell.mults[rIdx]),
@@ -806,6 +809,7 @@ export function castSpell(spellId) {
     sfx.heal();
     spawnBurst(p.x, p.y, "#34d399", 18, 1.2);
     spawnRing(p.x, p.y, 38, "#34d399", 0.4);
+    spawnGroundDecal(p.x, p.y, "vfx_heal_haste_aura", 92, 0.48, { scaleStart: 0.65, scaleEnd: 1.25, spin: 1.2 });
     addFloat(p.x, p.y - 0.35, `+${gained} HP · HASTE`, "#34d399");
     addLog(`${spell.name}: Restored ${gained} HP and gained +15% Speed!`, "heal");
     return;
@@ -817,8 +821,8 @@ export function castSpell(spellId) {
     const dirY = Math.sin(angle);
     p.facingLeft = dirX < 0;
     p.anim = "attack";
-    p.animTimer = 0.55;
-    p.iFrames = Math.max(p.iFrames, 0.58);
+    p.animTimer = 1.05;
+    p.iFrames = Math.max(p.iFrames, 1.08);
 
     let endX = p.x;
     let endY = p.y;
@@ -835,12 +839,12 @@ export function castSpell(spellId) {
       }
     }
     const travelDist = Math.hypot(endX - p.x, endY - p.y);
-    const spearDistMax = Math.max(1.35, travelDist);
+    const spearDistMax = Math.max(1.65, travelDist);
     p.valiantCharge = {
       phase: "windup",
-      timer: 0.28,
-      windupDur: 0.28,
-      dashDur: 0.22,
+      timer: 0.62,
+      windupDur: 0.62,
+      dashDur: 0.38,
       startX: p.x,
       startY: p.y,
       targetX: endX,
@@ -850,14 +854,14 @@ export function castSpell(spellId) {
       traveled: 0,
       dirX,
       dirY,
-      speed: travelDist > 0.05 ? travelDist / 0.22 : 0,
+      speed: travelDist > 0.05 ? travelDist / 0.38 : 0,
       baseDmg: Math.round(stats.atk * spell.mults[rIdx]),
       wallBonus: spell.wallBonus || 0.65,
       piercedIds: new Set(),
       hitIds: new Set(),
       spell,
     };
-    spawnRing(p.x, p.y, 26, "#38bdf8", 0.3);
+    spawnRing(p.x, p.y, 26, "#38bdf8", 0.35);
     return;
   }
 
@@ -892,6 +896,7 @@ export function castSpell(spellId) {
     p.anim = "attack";
     p.animTimer = 0.25;
     s.slashes.push({ x: p.x * TILE_SIZE, y: p.y * TILE_SIZE, angle, color: spell.color, life: 0.24, maxLife: 0.24 });
+    spawnGroundDecal(p.x, p.y, "vfx_damage_aoe_field", spell.range * TILE_SIZE * 1.45, 0.3, { scaleStart: 0.55, scaleEnd: 1.05, spin: 1.4 });
     const dmg = Math.round(stats.atk * spell.mults[rIdx]);
     const dirX = Math.cos(angle);
     const dirY = Math.sin(angle);
@@ -987,6 +992,7 @@ export function castSpell(spellId) {
     sfx.levelUp();
     spawnBurst(p.x, p.y, "#fb923c", 16, 1.2);
     spawnRing(p.x, p.y, 38, "#facc15", 0.35);
+    spawnGroundDecal(p.x, p.y, "vfx_skyfall_reticle", 96, 0.45, { scaleStart: 0.5, scaleEnd: 1.15, spin: 1.1 });
     addFloat(p.x, p.y - 0.35, `+${gained} HP · +${atkBonus} ATK`, "#fde047");
     addLog(`${spell.name}: +${gained} HP and +${atkBonus} ATK for ${spell.duration}s!`, "heal");
     return;

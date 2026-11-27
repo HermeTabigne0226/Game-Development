@@ -323,6 +323,25 @@ export function renderFrame(ts) {
     ctx.restore();
   }
 
+  // Pixel-art Ground Impact Decals & Timed Shockwave Sprites
+  if (Array.isArray(s.groundDecals)) {
+    for (const dc of s.groundDecals) {
+      const img = assets[dc.spriteKey];
+      if (!img) continue;
+      const frac = Math.max(0, dc.life / (dc.maxLife || 0.6));
+      const prog = 1 - frac;
+      const scale = (dc.scaleStart ?? 1) + ((dc.scaleEnd ?? 1) - (dc.scaleStart ?? 1)) * prog;
+      const drawSize = dc.sizePx * scale;
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, frac * 1.25);
+      ctx.imageSmoothingEnabled = false;
+      ctx.translate(dc.x, dc.y);
+      if (dc.angle) ctx.rotate(dc.angle);
+      ctx.drawImage(img, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+      ctx.restore();
+    }
+  }
+
   // Enemy Delayed Hazards (Void Acolyte sigils, Boss Phase 2 hazards)
   if (Array.isArray(s.enemyHazards)) {
     for (const hz of s.enemyHazards) {
@@ -710,23 +729,30 @@ export function renderFrame(ts) {
       } else if (pr.isSlashWave) {
         const lifeFrac = Math.max(0.25, pr.life / (pr.maxLife || 0.6));
         const rad = Math.max(24, pr.radius * TILE_SIZE);
-        ctx.globalAlpha = Math.min(1, lifeFrac + 0.2);
-        ctx.strokeStyle = "#f97316";
-        ctx.lineWidth = 11;
-        ctx.lineCap = "round";
-        ctx.beginPath();
-        ctx.arc(-10, 0, rad, -1.08, 1.08);
-        ctx.stroke();
-        ctx.strokeStyle = "#facc15";
-        ctx.lineWidth = 6;
-        ctx.beginPath();
-        ctx.arc(-6, 0, rad, -1.0, 1.0);
-        ctx.stroke();
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.arc(-3, 0, rad, -0.92, 0.92);
-        ctx.stroke();
+        ctx.globalAlpha = Math.min(1, lifeFrac + 0.25);
+        if (assets.vfx_radiant_wave) {
+          ctx.imageSmoothingEnabled = false;
+          ctx.scale(-1, 1);
+          const sz = rad * 2.2;
+          ctx.drawImage(assets.vfx_radiant_wave, -sz * 0.45, -sz / 2, sz, sz);
+        } else {
+          ctx.strokeStyle = "#f97316";
+          ctx.lineWidth = 11;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.arc(-10, 0, rad, -1.08, 1.08);
+          ctx.stroke();
+          ctx.strokeStyle = "#facc15";
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          ctx.arc(-6, 0, rad, -1.0, 1.0);
+          ctx.stroke();
+          ctx.strokeStyle = "#ffffff";
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.arc(-3, 0, rad, -0.92, 0.92);
+          ctx.stroke();
+        }
       } else if (pr.isMagicOrb) {
         const rad = pr.radius * TILE_SIZE;
         ctx.globalAlpha = 0.32;
@@ -770,25 +796,20 @@ export function renderFrame(ts) {
       const zy = z.y * TILE_SIZE;
       const radPx = z.radius * TILE_SIZE;
       ctx.save();
-      ctx.globalAlpha = fade;
-      ctx.fillStyle = "rgba(56, 189, 248, 0.16)";
-      ctx.strokeStyle = `rgba(186, 230, 253, ${0.55 + Math.sin(ts * 0.012) * 0.2})`;
-      ctx.lineWidth = 2;
+      ctx.globalAlpha = fade * 0.92;
+      ctx.fillStyle = "rgba(56, 189, 248, 0.14)";
       ctx.beginPath();
       ctx.arc(zx, zy, radPx, 0, Math.PI * 2);
       ctx.fill();
-      ctx.stroke();
-      ctx.strokeStyle = "rgba(125, 211, 252, 0.38)";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(zx, zy, radPx * 0.58, 0, Math.PI * 2);
-      ctx.stroke();
-      const rot = ts * 0.0012;
-      for (let k = 0; k < 3; k++) {
-        const a = rot + (k * Math.PI) / 3;
-        ctx.beginPath();
-        ctx.moveTo(zx + Math.cos(a) * radPx * 0.85, zy + Math.sin(a) * radPx * 0.85);
-        ctx.lineTo(zx - Math.cos(a) * radPx * 0.85, zy - Math.sin(a) * radPx * 0.85);
+      if (assets.vfx_frost_zone) {
+        ctx.imageSmoothingEnabled = false;
+        ctx.translate(zx, zy);
+        ctx.rotate(ts * 0.00055);
+        const sz = radPx * 2.08;
+        ctx.drawImage(assets.vfx_frost_zone, -sz / 2, -sz / 2, sz, sz);
+      } else {
+        ctx.strokeStyle = `rgba(186, 230, 253, ${0.55 + Math.sin(ts * 0.012) * 0.2})`;
+        ctx.lineWidth = 2;
         ctx.stroke();
       }
       ctx.restore();
@@ -827,14 +848,21 @@ export function renderFrame(ts) {
   for (const bm of s.beams) {
     const alpha = Math.max(0, bm.life / bm.maxLife);
     ctx.save();
-    ctx.globalAlpha = alpha;
-    const w = 18 * alpha + 6;
-    const grad = ctx.createLinearGradient(bm.x - w / 2, bm.y - 160, bm.x + w / 2, bm.y);
-    grad.addColorStop(0, "rgba(253, 224, 71, 0)");
-    grad.addColorStop(0.5, bm.color);
-    grad.addColorStop(1, "#ffffff");
-    ctx.fillStyle = grad;
-    ctx.fillRect(bm.x - w / 2, bm.y - 160, w, 160);
+    ctx.globalAlpha = Math.min(1, alpha * 1.15);
+    if (assets.vfx_holy_beam) {
+      ctx.imageSmoothingEnabled = false;
+      const bw = 42 * alpha + 18;
+      const bh = 176;
+      ctx.drawImage(assets.vfx_holy_beam, bm.x - bw / 2, bm.y - bh + 6, bw, bh);
+    } else {
+      const w = 18 * alpha + 6;
+      const grad = ctx.createLinearGradient(bm.x - w / 2, bm.y - 160, bm.x + w / 2, bm.y);
+      grad.addColorStop(0, "rgba(253, 224, 71, 0)");
+      grad.addColorStop(0.5, bm.color);
+      grad.addColorStop(1, "#ffffff");
+      ctx.fillStyle = grad;
+      ctx.fillRect(bm.x - w / 2, bm.y - 160, w, 160);
+    }
     ctx.restore();
   }
 
@@ -843,7 +871,6 @@ export function renderFrame(ts) {
     const prog = Math.min(1, 1 - rc.timer / rc.duration);
     const pxCenter = p.x * TILE_SIZE;
     const pyCenter = p.y * TILE_SIZE;
-    const arcRad = 22 + prog * 14;
     ctx.save();
     ctx.strokeStyle = `rgba(251, 146, 60, ${0.4 + prog * 0.45})`;
     ctx.fillStyle = `rgba(250, 204, 21, ${0.08 + prog * 0.14})`;
@@ -853,18 +880,22 @@ export function renderFrame(ts) {
     ctx.fill();
     ctx.stroke();
     ctx.translate(pxCenter, pyCenter);
-    ctx.rotate(rc.angle);
-    ctx.strokeStyle = `rgba(249, 115, 22, ${0.5 + prog * 0.5})`;
-    ctx.lineWidth = 5 + prog * 5;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.arc(6, 0, arcRad, -1.05, 1.05);
-    ctx.stroke();
-    ctx.strokeStyle = `rgba(254, 240, 138, ${0.45 + prog * 0.55})`;
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.arc(9, 0, arcRad, -0.95 * prog, 0.95 * prog);
-    ctx.stroke();
+    if (assets.vfx_ground_slam_shockwave) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.rotate(rc.angle - Math.PI / 2);
+      const sz = 44 + prog * 36;
+      ctx.globalAlpha = 0.55 + prog * 0.45;
+      ctx.drawImage(assets.vfx_ground_slam_shockwave, -sz / 2, -sz * 0.15, sz, sz);
+    } else {
+      const arcRad = 22 + prog * 14;
+      ctx.rotate(rc.angle);
+      ctx.strokeStyle = `rgba(249, 115, 22, ${0.5 + prog * 0.5})`;
+      ctx.lineWidth = 5 + prog * 5;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.arc(6, 0, arcRad, -1.05, 1.05);
+      ctx.stroke();
+    }
     ctx.restore();
   }
 
@@ -882,6 +913,16 @@ export function renderFrame(ts) {
     ctx.arc(pxCenter, pyCenter, radPx, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+    if (assets.vfx_holy_ground_impact) {
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalAlpha = 0.45 + prog * 0.45;
+      ctx.translate(pxCenter, pyCenter);
+      ctx.rotate(ts * 0.0012);
+      const curSz = Math.max(24, radPx * 2 * prog);
+      ctx.drawImage(assets.vfx_holy_ground_impact, -curSz / 2, -curSz / 2, curSz, curSz);
+      ctx.restore();
+    }
     ctx.strokeStyle = "#fef08a";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -913,19 +954,19 @@ export function renderFrame(ts) {
     const ang = Math.atan2(vc.dirY, vc.dirX);
     const sx = vc.startX * TILE_SIZE;
     const sy = vc.startY * TILE_SIZE;
-    const spearMaxPx = (vc.spearDistMax || 1.35) * TILE_SIZE;
+    const spearMaxPx = (vc.spearDistMax || 1.65) * TILE_SIZE;
     const spearEx = sx + Math.cos(ang) * spearMaxPx;
     const spearEy = sy + Math.sin(ang) * spearMaxPx;
 
     if (vc.phase === "windup") {
       const prog = Math.min(1, 1 - vc.timer / vc.windupDur);
       const eased = 1 - Math.pow(1 - prog, 2.2);
-      const spearLen = (0.55 + ((vc.spearDistMax || 1.35) - 0.55) * eased) * TILE_SIZE;
+      const spearLen = (0.65 + ((vc.spearDistMax || 1.65) - 0.65) * eased) * TILE_SIZE;
       const tipX = sx + Math.cos(ang) * spearLen;
       const tipY = sy + Math.sin(ang) * spearLen;
 
       ctx.save();
-      ctx.strokeStyle = `rgba(56, 189, 248, ${0.28 + prog * 0.25})`;
+      ctx.strokeStyle = `rgba(56, 189, 248, ${0.35 + prog * 0.3})`;
       ctx.lineWidth = 2;
       ctx.setLineDash([6, 6]);
       ctx.beginPath();
@@ -934,60 +975,42 @@ export function renderFrame(ts) {
       ctx.stroke();
 
       ctx.setLineDash([]);
-      ctx.strokeStyle = `rgba(250, 204, 21, ${0.5 + prog * 0.45})`;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(spearEx, spearEy, 11 + (1 - eased) * 10, 0, Math.PI * 2);
-      ctx.stroke();
+      if (assets.vfx_spear_impact_crater) {
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.globalAlpha = 0.55 + prog * 0.45;
+        ctx.translate(spearEx, spearEy);
+        ctx.rotate(ts * 0.003);
+        const reticleSz = 38 + (1 - eased) * 16;
+        ctx.drawImage(assets.vfx_spear_impact_crater, -reticleSz / 2, -reticleSz / 2, reticleSz, reticleSz);
+        ctx.restore();
+      } else {
+        ctx.strokeStyle = `rgba(250, 204, 21, ${0.5 + prog * 0.45})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(spearEx, spearEy, 11 + (1 - eased) * 10, 0, Math.PI * 2);
+        ctx.stroke();
+      }
 
-      const grad = ctx.createLinearGradient(sx, sy, tipX, tipY);
-      grad.addColorStop(0, "rgba(56, 189, 248, 0.25)");
-      grad.addColorStop(0.55, "rgba(250, 204, 21, 0.85)");
-      grad.addColorStop(1, "#ffffff");
-      ctx.strokeStyle = grad;
-      ctx.lineWidth = 7;
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.moveTo(sx, sy);
-      ctx.lineTo(tipX, tipY);
-      ctx.stroke();
-
-      ctx.strokeStyle = "#e0f2fe";
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(sx, sy);
-      ctx.lineTo(tipX, tipY);
-      ctx.stroke();
-
-      ctx.translate(tipX, tipY);
-      ctx.rotate(ang);
-      ctx.strokeStyle = "rgba(56, 189, 248, 0.8)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(-14, -13);
-      ctx.lineTo(6, 0);
-      ctx.lineTo(-14, 13);
-      ctx.stroke();
-
-      ctx.fillStyle = "#fde047";
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(16, 0);
-      ctx.lineTo(-10, -8);
-      ctx.lineTo(-5, 0);
-      ctx.lineTo(-10, 8);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = "#38bdf8";
-      ctx.beginPath();
-      ctx.moveTo(10, 0);
-      ctx.lineTo(-4, -3.5);
-      ctx.lineTo(-4, 3.5);
-      ctx.closePath();
-      ctx.fill();
+      if (assets.vfx_spear_charge_lunge) {
+        ctx.imageSmoothingEnabled = false;
+        ctx.translate(sx, sy);
+        ctx.rotate(ang - Math.PI / 2);
+        const wPx = 46;
+        ctx.drawImage(assets.vfx_spear_charge_lunge, 0, 0, 128, 316, -wPx / 2, 0, wPx, spearLen + 6);
+      } else {
+        const grad = ctx.createLinearGradient(sx, sy, tipX, tipY);
+        grad.addColorStop(0, "rgba(56, 189, 248, 0.25)");
+        grad.addColorStop(0.55, "rgba(250, 204, 21, 0.85)");
+        grad.addColorStop(1, "#ffffff");
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 7;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(tipX, tipY);
+        ctx.stroke();
+      }
       ctx.restore();
     } else {
       const hx = p.x * TILE_SIZE;
@@ -1013,35 +1036,24 @@ export function renderFrame(ts) {
       ctx.lineTo(hx, hy);
       ctx.stroke();
 
-      ctx.translate(hx, hy - pz * 0.5);
-      ctx.rotate(ang);
-      ctx.strokeStyle = "rgba(56, 189, 248, 0.9)";
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(-4, -18);
-      ctx.lineTo(24, 0);
-      ctx.lineTo(-4, 18);
-      ctx.stroke();
-
-      ctx.fillStyle = "#fde047";
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(38, 0);
-      ctx.lineTo(6, -13);
-      ctx.lineTo(12, 0);
-      ctx.lineTo(6, 13);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = "#38bdf8";
-      ctx.beginPath();
-      ctx.moveTo(30, 0);
-      ctx.lineTo(13, -5);
-      ctx.lineTo(13, 5);
-      ctx.closePath();
-      ctx.fill();
+      if (assets.vfx_spear_charge_lunge) {
+        ctx.imageSmoothingEnabled = false;
+        ctx.translate(hx, hy - pz * 0.5);
+        ctx.rotate(ang - Math.PI / 2);
+        const wPx = 54;
+        const lenPx = 112;
+        ctx.drawImage(assets.vfx_spear_charge_lunge, 0, 0, 128, 384, -wPx / 2, -lenPx * 0.22, wPx, lenPx);
+      } else {
+        ctx.translate(hx, hy - pz * 0.5);
+        ctx.rotate(ang);
+        ctx.fillStyle = "#fde047";
+        ctx.beginPath();
+        ctx.moveTo(38, 0);
+        ctx.lineTo(6, -13);
+        ctx.lineTo(6, 13);
+        ctx.closePath();
+        ctx.fill();
+      }
       ctx.restore();
     }
   }
@@ -1053,26 +1065,37 @@ export function renderFrame(ts) {
     const ly = p.y * TILE_SIZE;
     const frac = Math.max(0, 1 - (p.leap.progress || 0));
     ctx.save();
-    ctx.fillStyle = "rgba(249, 115, 22, 0.12)";
+    ctx.fillStyle = "rgba(249, 115, 22, 0.1)";
     ctx.beginPath();
     ctx.arc(lx, ly, radPx, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = "rgba(249, 115, 22, 0.85)";
-    ctx.lineWidth = 2;
-    ctx.setLineDash([7, 5]);
-    ctx.beginPath();
-    ctx.arc(lx, ly, radPx, 0, Math.PI * 2);
-    ctx.stroke();
+    if (assets.vfx_skyfall_reticle) {
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalAlpha = 0.85;
+      ctx.translate(lx, ly);
+      ctx.rotate(ts * 0.0012);
+      const sz = radPx * 2.1;
+      ctx.drawImage(assets.vfx_skyfall_reticle, -sz / 2, -sz / 2, sz, sz);
+      ctx.restore();
+    } else {
+      ctx.strokeStyle = "rgba(249, 115, 22, 0.85)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([7, 5]);
+      ctx.beginPath();
+      ctx.arc(lx, ly, radPx, 0, Math.PI * 2);
+      ctx.stroke();
+    }
 
     ctx.setLineDash([]);
-    ctx.strokeStyle = "rgba(253, 224, 71, 0.9)";
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(253, 224, 71, 0.92)";
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
     ctx.arc(lx, ly, Math.max(8, radPx * frac), 0, Math.PI * 2);
     ctx.stroke();
 
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.72)";
     ctx.lineWidth = 1.25;
     ctx.beginPath();
     ctx.arc(lx, ly, radPx * 0.45, 0, Math.PI * 2);
@@ -1081,31 +1104,57 @@ export function renderFrame(ts) {
   }
 
   if (p.retributionTimer > 0) {
+    const radPx = (p.retributionRadius || 2.1) * TILE_SIZE;
     ctx.save();
-    ctx.strokeStyle = `rgba(239, 68, 68, ${0.55 + Math.sin(ts * 0.012) * 0.25})`;
-    ctx.lineWidth = 2.2;
-    ctx.setLineDash([6, 4]);
-    ctx.beginPath();
-    ctx.arc(p.x * TILE_SIZE, p.y * TILE_SIZE, (p.retributionRadius || 2.1) * TILE_SIZE, 0, Math.PI * 2);
-    ctx.stroke();
+    if (assets.vfx_damage_aoe_field) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalAlpha = 0.72 + Math.sin(ts * 0.01) * 0.15;
+      ctx.translate(p.x * TILE_SIZE, p.y * TILE_SIZE);
+      ctx.rotate(ts * 0.001);
+      const sz = radPx * 2.12;
+      ctx.drawImage(assets.vfx_damage_aoe_field, -sz / 2, -sz / 2, sz, sz);
+    } else {
+      ctx.strokeStyle = `rgba(239, 68, 68, ${0.55 + Math.sin(ts * 0.012) * 0.25})`;
+      ctx.lineWidth = 2.2;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.arc(p.x * TILE_SIZE, p.y * TILE_SIZE, radPx, 0, Math.PI * 2);
+      ctx.stroke();
+    }
     ctx.restore();
   }
   if (p.hasteTimer > 0) {
     ctx.save();
-    ctx.strokeStyle = `rgba(52, 211, 153, ${0.55 + Math.sin(ts * 0.014) * 0.25})`;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(p.x * TILE_SIZE, p.y * TILE_SIZE - pz * 0.5, 22, 0, Math.PI * 2);
-    ctx.stroke();
+    if (assets.vfx_heal_haste_aura) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalAlpha = 0.8 + Math.sin(ts * 0.014) * 0.15;
+      ctx.translate(p.x * TILE_SIZE, p.y * TILE_SIZE - pz * 0.5);
+      ctx.rotate(-ts * 0.0018);
+      ctx.drawImage(assets.vfx_heal_haste_aura, -34, -34, 68, 68);
+    } else {
+      ctx.strokeStyle = `rgba(52, 211, 153, ${0.55 + Math.sin(ts * 0.014) * 0.25})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(p.x * TILE_SIZE, p.y * TILE_SIZE - pz * 0.5, 22, 0, Math.PI * 2);
+      ctx.stroke();
+    }
     ctx.restore();
   }
   if (p.tempDefTimer > 0) {
     ctx.save();
-    ctx.strokeStyle = `rgba(250, 204, 21, ${0.55 + Math.sin(ts * 0.01) * 0.25})`;
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.arc(p.x * TILE_SIZE, p.y * TILE_SIZE - pz * 0.5, 19, 0, Math.PI * 2);
-    ctx.stroke();
+    if (assets.vfx_aegis_guard) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalAlpha = 0.85 + Math.sin(ts * 0.01) * 0.12;
+      ctx.translate(p.x * TILE_SIZE, p.y * TILE_SIZE - pz * 0.5);
+      ctx.rotate(ts * 0.0022);
+      ctx.drawImage(assets.vfx_aegis_guard, -32, -32, 64, 64);
+    } else {
+      ctx.strokeStyle = `rgba(250, 204, 21, ${0.55 + Math.sin(ts * 0.01) * 0.25})`;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.arc(p.x * TILE_SIZE, p.y * TILE_SIZE - pz * 0.5, 19, 0, Math.PI * 2);
+      ctx.stroke();
+    }
     ctx.restore();
   }
 
