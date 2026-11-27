@@ -1,8 +1,16 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.0.3.3 Beta";
+export const GAME_VERSION = "v.1.0.3.4 Beta";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.0.3.4 Beta",
+    title: "Restructured RPG Main Menu",
+    notes: [
+      "Resume First & Compact Label: When a saved run exists, Resume Quest now appears at the very top as the primary gold action with a clean floor indicator (Resume Quest · Fl. X).",
+      "Balanced Utility Grid: Paired Check Update and Exit side-by-side on mobile (and full-width Exit when Check Update is hidden) with refreshed RPG button accents.",
+    ],
+  },
   {
     version: "v.1.0.3.3 Beta",
     title: "In-Game Pause Menu & Mobile Name Input Fix",

@@ -691,15 +691,24 @@ export function showMainMenu() {
   bgm.play("town");
   const menu = document.getElementById("main-menu");
   const resumeBtn = document.getElementById("menu-btn-resume");
+  const playBtn = document.getElementById("menu-btn-play");
   const saved = loadSavedRun();
   const hasRealProgress = saved && (saved.floor > 1 || saved.kills > 0 || (saved.elapsed || 0) > 1);
   if (hasRealProgress) {
     resumeBtn.hidden = false;
     resumeBtn.disabled = false;
-    resumeBtn.textContent = `Resume (Floor ${saved.floor} — ${saved.player?.name || "Sir Aldric"})`;
+    resumeBtn.textContent = `Resume Quest · Fl. ${saved.floor}`;
+    if (playBtn) {
+      playBtn.classList.remove("btn-primary");
+      playBtn.classList.add("btn-secondary", "new-quest-secondary");
+    }
   } else {
     resumeBtn.hidden = true;
     resumeBtn.disabled = true;
+    if (playBtn) {
+      playBtn.classList.add("btn-primary");
+      playBtn.classList.remove("btn-secondary", "new-quest-secondary");
+    }
   }
   const checkUpdBtn = document.getElementById("menu-btn-check-update");
   if (checkUpdBtn) {

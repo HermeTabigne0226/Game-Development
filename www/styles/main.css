@@ -2035,12 +2035,29 @@ body.pvp-active .canvas-frame {
 .menu-buttons .btn {
   justify-content: center;
   width: 100%;
+  min-block-size: 40px;
 }
 
+.menu-buttons #menu-btn-resume,
 .menu-buttons #menu-btn-play,
-.menu-buttons #menu-btn-pvp,
-.menu-buttons #menu-btn-resume {
+.menu-buttons #menu-btn-pvp {
   grid-column: 1 / -1;
+}
+
+.resume-menu-btn {
+  border-color: #fde047;
+  box-shadow: 0 0 14px rgba(250, 204, 21, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.new-quest-secondary {
+  border-color: rgba(250, 204, 21, 0.55);
+  background: linear-gradient(135deg, rgba(161, 98, 7, 0.28), rgba(20, 24, 36, 0.96));
+  color: #fef08a;
+}
+
+.new-quest-secondary:hover {
+  border-color: #fde047;
+  color: #ffffff;
 }
 
 .pvp-menu-btn {
@@ -2055,7 +2072,22 @@ body.pvp-active .canvas-frame {
 }
 
 .menu-buttons #menu-btn-exit {
+  grid-column: auto;
+}
+
+.menu-buttons #menu-btn-check-update[hidden] + #menu-btn-exit {
   grid-column: 1 / -1;
+}
+
+.exit-menu-btn {
+  border-color: rgba(248, 113, 113, 0.4);
+  color: #fecaca;
+}
+
+.exit-menu-btn:hover {
+  border-color: #f87171;
+  background: linear-gradient(135deg, rgba(127, 29, 29, 0.45), rgba(20, 24, 36, 0.95));
+  color: #ffffff;
 }
 
 .menu-version-badge {
