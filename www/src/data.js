@@ -1,22 +1,20 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.3.14 Beta Test";
+export const GAME_VERSION = "v.1.0 Beta";
 
 export const PATCH_NOTES = [
   {
-    version: "v.1.3.14 Beta Test",
-    title: "PvP Countdown Fix, Full Skill VFX Sync, No MP Limits & Lobby Flow",
+    version: "v.1.0 Beta",
+    title: "Beta Launch — Rebalanced 1,000 HP PvP, Power-Up Vials & Full VFX Sync",
     notes: [
-      "PvP Round Countdown & Sync Fix: Switched PvP 3-2-1 round countdowns to wall-clock timing, disabled content-visibility skipping in PvP, forced instant HUD round/score sync, and guarded against stale round-end packets.",
-      "No PvP Mana Restrictions & 6s Dodge Cooldown: Skills and Dash cost 0 MP in 1v1 PvP Arena (no Out of Mana locks), while Dodge/Dash has a balanced 6-second cooldown in PvP only (1.05s in Dungeon runs).",
-      "PvP Vision Fog & Skill VFX Sync: Enabled consistent 6-tile line-of-sight vision fog from the very start of every PvP round and synced all Gilded Knight & Sylvan Ranger skill visuals (Divine Cataclysm, Valiant Charge, Radiant Cleave, Skyfall Judgment, Aegis Bulwark, Arrow Storm, Frost Zones, and buff auras) to your rival's screen.",
-      "Auto-Return Lobby Countdown & Lobby Confirmation: Added a 5-second auto-return countdown to the PvP Lobby after match victory/defeat, renamed the PvP Menu button to Lobby, and added a confirmation dialog to Go to PvP Lobby or Exit Match.",
+      "1,000 HP PvP Rebalance & No Mana Limits: Standardized all 3 classes to 1,000 HP with balanced gear, scaled PvP damage & healing for longer tactical duels, removed PvP skill/dash MP restrictions, and set PvP Dodge/Dash cooldown to 6 seconds.",
       "PvP Power-Up Vials (15s Arena Spawns): Replaced static PvP shrines/wells with color-coded walk-over Vials spawning every 15s — Red (+5%–20% HP), Green (2.5%/s Regen for 5s), Yellow (+30% DMG for 7s), Purple (+30% Speed for 6s), and Cyan (+8 DEF & -1.5s CD).",
-      "1,000 HP PvP Hero Rebalance: Standardized all 3 classes to 1,000 HP with valid balanced gear (fixing missing Knight/Ranger gear & Archmage over-scaling), tuned PvP damage/healing for longer tactical duels, trimmed Archmage spell burst & Mana Shield DEF, and sped up Divine Cataclysm charge to 1.35s in PvP.",
+      "Full Skill VFX Sync & Round-Start Vision Fog: Synced all Gilded Knight & Sylvan Ranger skill animations/telegraphs to your rival's screen and enabled consistent 6-tile line-of-sight fog from frame 1.",
+      "Round Countdown, Auto-Return Lobby & Empty Lobby Cleanup: Fixed Round 2+ countdown & KO sync, added a 3s auto-return countdown to the PvP Lobby, added Lobby/Exit Match confirmation, pruned empty/stale lobbies automatically, and fixed background loading screen stalls.",
     ],
   },
   {
-    version: "v.1.3.13",
+    version: "v.1.3.13 (Alpha Test)",
     title: "Street Fighter PvP HUD, Lobby-First Flow, Round KO & Zero-HP Fix",
     notes: [
       "Zero-HP Defeat Fix: Fixed a hook bug where reaching 0 HP in dungeon runs failed to trigger the Game Over screen.",
@@ -26,7 +24,7 @@ export const PATCH_NOTES = [
     ],
   },
   {
-    version: "v.1.3.12",
+    version: "v.1.3.12 (Alpha Test)",
     title: "Mobile In-Menu Check Update, Download, Install & Restart",
     notes: [
       "Check Update Button (Mobile + Online): Added a dedicated Check Update button on the Main Menu whenever you are on Mobile / APK with an active Internet connection.",
@@ -35,7 +33,7 @@ export const PATCH_NOTES = [
     ],
   },
   {
-    version: "v.1.3.11",
+    version: "v.1.3.11 (Alpha Test)",
     title: "PvP Auto-Start Countdown, VS Matchup Loading Screen & 5,000 HP",
     notes: [
       "PvP Auto-Start Timer: When both fighters press Ready Up, a live 3-second countdown automatically starts the duel (Hosts can also click Start Now anytime).",
@@ -44,7 +42,7 @@ export const PATCH_NOTES = [
     ],
   },
   {
-    version: "v.1.3.10",
+    version: "v.1.3.10 (Alpha Test)",
     title: "Simplified 1-Click Online & Clean IP-Only LAN PvP",
     notes: [
       "Cleaner Main Menu & PvP Guide: Moved How to Play PvP cleanly inside the PvP Arena header so the Main Menu stays crisp.",
@@ -52,7 +50,7 @@ export const PATCH_NOTES = [
     ],
   },
   {
-    version: "v.1.3.9",
+    version: "v.1.3.9 (Alpha Test)",
     title: "Directional & Realistic Meteor Strike Landing",
     notes: [
       "Directional Meteor Strike: Meteor Strike now targets where the hero faces/aims (never behind you) and dynamically mirrors its streak trajectory to fall left-to-right when facing right or right-to-left when facing left.",
@@ -60,14 +58,14 @@ export const PATCH_NOTES = [
     ],
   },
   {
-    version: "v.1.3.8",
+    version: "v.1.3.8 (Alpha Test)",
     title: "Hotfix — Stop Ground Item Duplication When Satchel Is Full",
     notes: [
       "Ground Item Pickup Fix: Removed a leftover duplicate pickup loop in the simulation tick that respawned copies of ground drops every frame whenever your Satchel was full.",
     ],
   },
   {
-    version: "v.1.3.7",
+    version: "v.1.3.7 (Alpha Test)",
     title: "Sub-Weapon Dash Skills, Menu Fix, APK In-Place Updates & PvP Guide",
     notes: [
       "Sub-Weapon Dash Overhaul: Dash now adapts to your equipped Sub-Weapon! Shield = Shield Bash Dash (slams & stuns enemies), Arrows/Quiver = Fires 3 Bouncing Arrows (ricochet 3 times across walls & enemies), Grimoire/Book = Blink Step Teleport.",
@@ -76,7 +74,7 @@ export const PATCH_NOTES = [
     ],
   },
   {
-    version: "v.1.3.6",
+    version: "v.1.3.6 (Alpha Test)",
     title: "Arcane Archmage Class, Magic Staves, Grimoires & Animated Spell VFX",
     notes: [
       "New Hero Class — Arcane Archmage: Replaces Paladin alongside Gilded Knight and Sylvan Ranger! Features Blink Step teleport dash, Arcane Resonance passive (every 3rd cast launches a piercing Arcane Orb + restores 2 MP), and starter Apprentice Staff + Apprentice Tome.",
@@ -85,7 +83,7 @@ export const PATCH_NOTES = [
     ],
   },
   {
-    version: "v.1.3.5",
+    version: "v.1.3.5 (Alpha Test)",
     title: "Pixel-Art 1-Screen Quest Setup Wizard",
     notes: [
       "Pixel-Art Quest Setup Theme: Styled the Quest Details, Hero Select, and Skill Loadout screens with crisp pixel stone/gold borders, beveled pixel buttons, and a step-by-step progress bar (1. Details -> 2. Hero -> 3. Skills -> Play).",
@@ -93,7 +91,7 @@ export const PATCH_NOTES = [
     ],
   },
   {
-    version: "v.1.3.4",
+    version: "v.1.3.4 (Alpha Test)",
     title: "Network vs LAN Mode Tabs & Phone-to-Phone LAN Hosting",
     notes: [
       "Network vs LAN Mode Switcher: Separated Online Network PvP (Render Cloud / Vercel) from Local LAN PvP (localhost / Wi-Fi IP).",
@@ -102,7 +100,7 @@ export const PATCH_NOTES = [
     ],
   },
   {
-    version: "v.1.3.3",
+    version: "v.1.3.3 (Alpha Test)",
     title: "Built-In Cloud PvP Relay (1-Click Connect)",
     notes: [
       "1-Click Cloud PvP: Connected the live Render WebSocket relay (wss://game-development-v1fo.onrender.com/ws) as the automatic default for both Vercel Web and Android APK players.",
@@ -110,7 +108,7 @@ export const PATCH_NOTES = [
     ],
   },
   {
-    version: "v.1.3.2",
+    version: "v.1.3.2 (Alpha Test)",
     title: "Interact Prompt [F], Clear Doorways & Android LAN PvP Fix",
     notes: [
       "Manual [F] / Tap Interact Prompt: Forges, Shrines, Wells, Shops, and Buff NPCs no longer auto-pop while walking past — walk near and press [F] or tap the on-screen Interact pill anytime.",
@@ -119,7 +117,7 @@ export const PATCH_NOTES = [
     ],
   },
   {
-    version: "v.1.3.1",
+    version: "v.1.3.1 (Alpha Test)",
     title: "Spike Trap & Slash Sprites, Non-Blocking Forge/Shrines",
     notes: [
       "Non-Blocking Forges, Shrines & Wells: Foundry Forges, Ancient Shrines, and Wells no longer block dungeon movement or doorways.",
@@ -129,7 +127,7 @@ export const PATCH_NOTES = [
     ],
   },
   {
-    version: "v.1.3.0",
+    version: "v.1.3.0 (Alpha Test)",
     title: "Multiplayer 1v1 PvP Dungeon Arena & 4 Arenas",
     notes: [
       "1v1 PvP Dungeon Arena: Real-time PvP combat with WebSocket sync across Hero classes, weapons, skills, dashes, freezes, stuns, and Best-of-3 rounds.",
@@ -138,14 +136,14 @@ export const PATCH_NOTES = [
     ],
   },
   {
-    version: "v.1.2.4.4",
+    version: "v.1.2.4.4 (Alpha Test)",
     title: "Hotfix — Mobile FPS & Ping Alignment",
     notes: [
       "Mobile FPS & Ping Layout: Stacked the FPS and Ping readout vertically directly beneath the Menu button so it never overlaps the dungeon minimap.",
     ],
   },
   {
-    version: "v.1.2.4.3",
+    version: "v.1.2.4.3 (Alpha Test)",
     title: "Hotfix — Shrine Removal, Smooth Skyfall & New Icon",
     notes: [
       "Claimed Shrines Unblock Path: Claiming an Ancient Shrine now cleanly removes the altar with a burst of shrine sparks so corridors never stay blocked.",
@@ -153,21 +151,21 @@ export const PATCH_NOTES = [
     ],
   },
   {
-    version: "v.1.2.4.2",
+    version: "v.1.2.4.2 (Alpha Test)",
     title: "Hotfix — Live FPS & Ping HUD Monitor",
     notes: [
       "FPS & Ping Overlay: Added a color-coded real-time FPS and network Ping indicator in the corner HUD (toggleable anytime inside Settings).",
     ],
   },
   {
-    version: "v.1.2.4.1",
+    version: "v.1.2.4.1 (Alpha Test)",
     title: "Hotfix — Skyfall Judgment 4-Stage VFX",
     notes: [
       "Skyfall Judgment 4-Stage VFX: Upgraded leap telegraph into 3 progressive pixel-art expansion frames (Small -> Medium -> Full Max Radius) followed by a blazing fiery Skyfall Impact starburst decal on landing.",
     ],
   },
   {
-    version: "v.1.2.4",
+    version: "v.1.2.4 (Alpha Test)",
     title: "Frozen Crystal, Rain Storm VFX, Skyfall & Menu Showcase",
     notes: [
       "Frozen Block Crystal: Enemies frozen by Frost Lance are now encased in a pixel-art Frozen Crystal block.",
@@ -178,7 +176,7 @@ export const PATCH_NOTES = [
     ],
   },
   {
-    version: "v.1.2.3",
+    version: "v.1.2.3 (Alpha Test)",
     title: "Shrine Sprites, Divine Sword Charge & Smart Bag Indicators",
     notes: [
       "Ancient Shrines Overhaul: Added custom pixel-art Shrine of Magic (Cyan), Shrine of Aegis (Gold — grants +3 DEF/+12 Max HP & relic blessings), Shrine of Blood (Crimson), and Depleted Altar sprites.",
@@ -187,7 +185,7 @@ export const PATCH_NOTES = [
     ],
   },
   {
-    version: "v.1.2.2",
+    version: "v.1.2.2 (Alpha Test)",
     title: "Pixel-Art Skill VFX Upgrade & Valiant Charge Polish",
     notes: [
       "Custom Pixel-Art Skill VFX: Upgraded Frost Nova crystal glyphs, Radiant Cleave flame waves & chevrons, Holy Smite / Divine Cataclysm beams & sunburst ground sigils, Skyfall Judgment reticles & slam shockwaves, Heal/Haste emerald cross auras, Aegis guard rings, Seal of Retribution hazard fields, and Valiant Charge war-lance + puncture craters.",
@@ -195,7 +193,7 @@ export const PATCH_NOTES = [
     ],
   },
   {
-    version: "v.1.2.1",
+    version: "v.1.2.1 (Alpha Test)",
     title: "Hotfixes — Skill VFX, Mobile Controls & Menu Fit",
     notes: [
       "Restored Skill VFX & Telegraphs: Brought back Radiant Cleave solar charge & crisp blade edge, Valiant Charge extending spear & dash wake, Divine Cataclysm expanding radius & raised greatsword, Skyfall Judgment AOE reticle & 5-ring impact, and Frost Nova crystal rings.",
@@ -204,7 +202,7 @@ export const PATCH_NOTES = [
     ],
   },
   {
-    version: "v.1.2.0",
+    version: "v.1.2.0 (Alpha Test)",
     title: "Sylvan Ranger, Relics, Elites & Endless Abyss",
     notes: [
       "New 3rd Hero: Replaced Oakhaven Soldier with Sylvan Ranger (full-sized pixel-art sprites & animations matching Paladin and Gilded Knight).",
@@ -216,7 +214,7 @@ export const PATCH_NOTES = [
     ],
   },
   {
-    version: "v.1.0.0",
+    version: "v.1.0.0 (Alpha Test)",
     title: "Initial Release — Chronicles of the Shattered Crown",
     notes: [
       "12-floor dungeon descent across 3 Acts with King Grak, Sir Aurelius, and Malakor.",

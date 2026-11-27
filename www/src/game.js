@@ -390,15 +390,19 @@ function setupControls() {
   window.addEventListener("offline", refreshUpdateBtnVisibility);
 
   const parseSemver = (str) => {
-    const m = String(str || "").match(/(\d+)\.(\d+)\.(\d+)/);
-    return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null;
+    const raw = String(str || "");
+    const m = raw.match(/(\d+)\.(\d+)(?:\.(\d+))?/);
+    if (!m) return null;
+    const isBeta = /beta/i.test(raw);
+    return { tier: isBeta ? 1 : 0, nums: [Number(m[1]), Number(m[2]), Number(m[3] || 0)] };
   };
   const isNewerVersion = (candidate, current) => {
     const a = parseSemver(candidate);
     const b = parseSemver(current);
     if (!a || !b) return false;
+    if (a.tier !== b.tier) return a.tier > b.tier;
     for (let i = 0; i < 3; i++) {
-      if (a[i] !== b[i]) return a[i] > b[i];
+      if (a.nums[i] !== b.nums[i]) return a.nums[i] > b.nums[i];
     }
     return false;
   };
@@ -498,7 +502,7 @@ function setupControls() {
         let sizeText = "";
         if (relRes.ok) {
           const rel = await relRes.json();
-          const m = String(rel.body || "").match(/Version:\s*(v?\.?\d+\.\d+\.\d+)/i);
+          const m = String(rel.body || "").match(/Version:\s*(v?\.?\d+\.\d+(?:\.\d+)?(?:-[\w.]+)?)/i);
           if (m) latestVer = m[1];
           const apkAsset = Array.isArray(rel.assets)
             ? rel.assets.find((a) => String(a.name || "").endsWith(".apk"))
