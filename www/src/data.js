@@ -1,8 +1,16 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.0.2 Beta";
+export const GAME_VERSION = "v.1.0.2.1 Beta";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.0.2.1 Beta",
+    title: "In-Modal Update Refresh, Menu Update Highlight & 4-Part Version Support",
+    notes: [
+      "Check for Updates Refresh & Menu Highlight: Added a Refresh button directly inside the Check for Updates modal and automatic golden highlight on the Main Menu Check Update button whenever a newer build is released.",
+      "4-Part Version Parsing: Updated semver detection to support 4-segment versions (e.g. v.1.0.2.1 Beta) alongside upcoming 2.2+ builds.",
+    ],
+  },
   {
     version: "v.1.0.2 Beta",
     title: "5s VS Matchup Screen, Side-Accurate Badges & Compact Mobile PvP Lobby",

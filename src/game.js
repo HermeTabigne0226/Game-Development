@@ -410,16 +410,21 @@ function setupControls() {
 
   const parseSemver = (str) => {
     const raw = String(str || "");
-    const m = raw.match(/(\d+)\.(\d+)(?:\.(\d+))?/);
+    const m = raw.match(/(\d+)\.(\d+)(?:\.(\d+))?(?:\.(\d+))?/);
     if (!m) return null;
     const isBeta = /beta/i.test(raw);
-    return { tier: isBeta ? 1 : 0, nums: [Number(m[1]), Number(m[2]), Number(m[3] || 0)] };
+    return {
+      tier: isBeta ? 1 : 0,
+      nums: [Number(m[1]), Number(m[2]), Number(m[3] || 0), Number(m[4] || 0)],
+    };
   };
   const formatDisplayVer = (str) => {
     const raw = String(str || "").trim();
-    const m = raw.match(/(\d+)\.(\d+)(?:\.(\d+))?/);
+    const m = raw.match(/(\d+)\.(\d+)(?:\.(\d+))?(?:\.(\d+))?/);
     if (!m) return raw || GAME_VERSION;
-    const base = `v.${m[1]}.${m[2]}.${m[3] || 0}`;
+    const base = m[4]
+      ? `v.${m[1]}.${m[2]}.${m[3] || 0}.${m[4]}`
+      : `v.${m[1]}.${m[2]}.${m[3] || 0}`;
     if (/beta/i.test(raw)) return `${base} Beta`;
     if (/alpha/i.test(raw)) return `${base} Alpha`;
     return base;
@@ -429,7 +434,7 @@ function setupControls() {
     const b = parseSemver(current);
     if (!a || !b) return false;
     if (a.tier !== b.tier) return a.tier > b.tier;
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
       if (a.nums[i] !== b.nums[i]) return a.nums[i] > b.nums[i];
     }
     return false;
@@ -537,7 +542,7 @@ function setupControls() {
         let sizeText = "";
         if (relOut.status === "fulfilled" && relOut.value.ok) {
           const rel = await relOut.value.json();
-          const m = String(rel.body || "").match(/Version:\s*(v?\.?\d+\.\d+(?:\.\d+)?(?:-[\w.]+)?)/i);
+          const m = String(rel.body || "").match(/Version:\s*(v?\.?\d+\.\d+(?:\.\d+)*(?:-[\w.]+)?)/i);
           if (m) apkVer = m[1];
           const apkAsset = Array.isArray(rel.assets)
             ? rel.assets.find((a) => String(a.name || "").endsWith(".apk"))
@@ -620,7 +625,7 @@ function setupControls() {
         let candidate = null;
         if (relOut.status === "fulfilled" && relOut.value.ok) {
           const rel = await relOut.value.json();
-          const m = String(rel.body || "").match(/Version:\s*(v?\.?\d+\.\d+(?:\.\d+)?(?:-[\w.]+)?)/i);
+          const m = String(rel.body || "").match(/Version:\s*(v?\.?\d+\.\d+(?:\.\d+)*(?:-[\w.]+)?)/i);
           if (m) candidate = m[1];
         }
         if (!isNative && pkgOut.status === "fulfilled" && pkgOut.value.ok) {
