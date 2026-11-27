@@ -539,19 +539,26 @@ export function renderFrame(ts) {
 
     if ((e.frozenTimer || 0) > 0) {
       ctx.save();
-      ctx.fillStyle = "rgba(125, 211, 252, 0.42)";
-      ctx.strokeStyle = "#e0f2fe";
-      ctx.lineWidth = 2;
-      const r = size * 0.44;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy - r * 1.15);
-      ctx.lineTo(cx + r * 0.85, cy - r * 0.25);
-      ctx.lineTo(cx + r * 0.65, cy + r * 0.9);
-      ctx.lineTo(cx - r * 0.65, cy + r * 0.9);
-      ctx.lineTo(cx - r * 0.85, cy - r * 0.25);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
+      if (assets.vfx_frozen_crystal) {
+        ctx.imageSmoothingEnabled = false;
+        ctx.globalAlpha = e.frozenTimer < 0.3 ? Math.max(0.45, e.frozenTimer / 0.3) : 0.92;
+        const fz = size * 1.18;
+        ctx.drawImage(assets.vfx_frozen_crystal, cx - fz / 2, cy - fz / 2 - ez, fz, fz);
+      } else {
+        ctx.fillStyle = "rgba(125, 211, 252, 0.42)";
+        ctx.strokeStyle = "#e0f2fe";
+        ctx.lineWidth = 2;
+        const r = size * 0.44;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - r * 1.15);
+        ctx.lineTo(cx + r * 0.85, cy - r * 0.25);
+        ctx.lineTo(cx + r * 0.65, cy + r * 0.9);
+        ctx.lineTo(cx - r * 0.65, cy + r * 0.9);
+        ctx.lineTo(cx - r * 0.85, cy - r * 0.25);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
       ctx.restore();
     } else if (e.hurtTimer > 0) {
       ctx.fillStyle = "rgba(255,255,255,0.5)";
@@ -832,18 +839,30 @@ export function renderFrame(ts) {
     }
   }
 
-  // Siege Barrage zones & falling arrows
+  // Siege Barrage (Rain Storm) zones & falling volley
   if (s.arrowStorms?.length) {
     for (const st of s.arrowStorms) {
+      const sx = st.x * TILE_SIZE;
+      const sy = st.y * TILE_SIZE;
+      const radPx = st.radius * TILE_SIZE;
       ctx.save();
-      ctx.strokeStyle = `rgba(250, 204, 21, ${0.45 + Math.sin(ts * 0.015) * 0.2})`;
-      ctx.fillStyle = "rgba(250, 204, 21, 0.08)";
-      ctx.lineWidth = 2;
-      ctx.setLineDash([6, 4]);
-      ctx.beginPath();
-      ctx.arc(st.x * TILE_SIZE, st.y * TILE_SIZE, st.radius * TILE_SIZE, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
+      if (assets.vfx_arrow_storm_reticle) {
+        ctx.imageSmoothingEnabled = false;
+        ctx.globalAlpha = 0.85 + Math.sin(ts * 0.012) * 0.12;
+        ctx.translate(sx, sy);
+        ctx.rotate(ts * 0.0008);
+        const sz = radPx * 2.08;
+        ctx.drawImage(assets.vfx_arrow_storm_reticle, -sz / 2, -sz / 2, sz, sz);
+      } else {
+        ctx.strokeStyle = `rgba(250, 204, 21, ${0.45 + Math.sin(ts * 0.015) * 0.2})`;
+        ctx.fillStyle = "rgba(250, 204, 21, 0.08)";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.arc(sx, sy, radPx, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
       ctx.restore();
     }
   }
@@ -852,11 +871,18 @@ export function renderFrame(ts) {
       const t = 1 - Math.max(0, fa.life / fa.maxLife);
       const cx = fa.x + (fa.targetX - fa.x) * t;
       const cy = fa.y + (fa.targetY - fa.y) * t;
-      const ang = Math.atan2(fa.targetY - fa.y, fa.targetX - fa.x);
       ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(ang);
-      if (assets.arrow_proj) ctx.drawImage(assets.arrow_proj, -11, -11, 22, 22);
+      ctx.globalAlpha = Math.min(1, (1 - t * 0.25) * 0.95);
+      if (assets.vfx_arrow_storm_volley) {
+        ctx.imageSmoothingEnabled = false;
+        const sz = fa.sizePx || 88;
+        ctx.drawImage(assets.vfx_arrow_storm_volley, cx - sz / 2, cy - sz / 2, sz, sz);
+      } else if (assets.arrow_proj) {
+        const ang = Math.atan2(fa.targetY - fa.y, fa.targetX - fa.x);
+        ctx.translate(cx, cy);
+        ctx.rotate(ang);
+        ctx.drawImage(assets.arrow_proj, -11, -11, 22, 22);
+      }
       ctx.restore();
     }
   }
@@ -980,6 +1006,8 @@ export function renderFrame(ts) {
     const spearMaxPx = (vc.spearDistMax || 1.65) * TILE_SIZE;
     const spearEx = sx + Math.cos(ang) * spearMaxPx;
     const spearEy = sy + Math.sin(ang) * spearMaxPx;
+    const markX = vc.travelDist > 0.5 ? vc.targetX * TILE_SIZE : spearEx;
+    const markY = vc.travelDist > 0.5 ? vc.targetY * TILE_SIZE : spearEy;
 
     if (vc.phase === "windup") {
       const prog = Math.min(1, 1 - vc.timer / vc.windupDur);
@@ -994,7 +1022,7 @@ export function renderFrame(ts) {
       ctx.setLineDash([6, 6]);
       ctx.beginPath();
       ctx.moveTo(sx, sy);
-      ctx.lineTo(spearEx, spearEy);
+      ctx.lineTo(markX, markY);
       ctx.stroke();
 
       ctx.setLineDash([]);
@@ -1002,16 +1030,16 @@ export function renderFrame(ts) {
         ctx.save();
         ctx.imageSmoothingEnabled = false;
         ctx.globalAlpha = 0.55 + prog * 0.45;
-        ctx.translate(spearEx, spearEy);
+        ctx.translate(markX, markY);
         ctx.rotate(ts * 0.003);
-        const reticleSz = 38 + (1 - eased) * 16;
+        const reticleSz = 42 + (1 - eased) * 16;
         ctx.drawImage(assets.vfx_spear_impact_crater, -reticleSz / 2, -reticleSz / 2, reticleSz, reticleSz);
         ctx.restore();
       } else {
         ctx.strokeStyle = `rgba(250, 204, 21, ${0.5 + prog * 0.45})`;
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(spearEx, spearEy, 11 + (1 - eased) * 10, 0, Math.PI * 2);
+        ctx.arc(markX, markY, 11 + (1 - eased) * 10, 0, Math.PI * 2);
         ctx.stroke();
       }
 
@@ -1019,8 +1047,8 @@ export function renderFrame(ts) {
         ctx.imageSmoothingEnabled = false;
         ctx.translate(sx, sy);
         ctx.rotate(ang - Math.PI / 2);
-        const wPx = 46;
-        ctx.drawImage(assets.vfx_spear_charge_lunge, 0, 0, 128, 316, -wPx / 2, 0, wPx, spearLen + 6);
+        const wPx = 42;
+        ctx.drawImage(assets.vfx_spear_charge_lunge, 0, 0, 128, 316, -wPx / 2, 0, wPx, spearLen + 4);
       } else {
         const grad = ctx.createLinearGradient(sx, sy, tipX, tipY);
         grad.addColorStop(0, "rgba(56, 189, 248, 0.25)");
@@ -1044,8 +1072,18 @@ export function renderFrame(ts) {
       wakeGrad.addColorStop(1, "rgba(250, 204, 21, 0.95)");
 
       ctx.save();
+      if (assets.vfx_spear_impact_crater) {
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.globalAlpha = 0.85;
+        ctx.translate(markX, markY);
+        ctx.rotate(ts * 0.004);
+        ctx.drawImage(assets.vfx_spear_impact_crater, -22, -22, 44, 44);
+        ctx.restore();
+      }
+
       ctx.strokeStyle = wakeGrad;
-      ctx.lineWidth = 14;
+      ctx.lineWidth = 12;
       ctx.lineCap = "round";
       ctx.beginPath();
       ctx.moveTo(sx, sy);
@@ -1053,7 +1091,7 @@ export function renderFrame(ts) {
       ctx.stroke();
 
       ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 3.5;
+      ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(sx, sy);
       ctx.lineTo(hx, hy);
@@ -1061,19 +1099,20 @@ export function renderFrame(ts) {
 
       if (assets.vfx_spear_charge_lunge) {
         ctx.imageSmoothingEnabled = false;
+        const remPx = Math.max(16, Math.hypot(markX - hx, markY - hy));
+        const lenPx = Math.min(54, remPx + 14);
+        const wPx = 30;
         ctx.translate(hx, hy - pz * 0.5);
         ctx.rotate(ang - Math.PI / 2);
-        const wPx = 54;
-        const lenPx = 112;
-        ctx.drawImage(assets.vfx_spear_charge_lunge, 0, 0, 128, 384, -wPx / 2, -lenPx * 0.22, wPx, lenPx);
+        ctx.drawImage(assets.vfx_spear_charge_lunge, 0, 0, 128, 316, -wPx / 2, -6, wPx, lenPx);
       } else {
         ctx.translate(hx, hy - pz * 0.5);
         ctx.rotate(ang);
         ctx.fillStyle = "#fde047";
         ctx.beginPath();
-        ctx.moveTo(38, 0);
-        ctx.lineTo(6, -13);
-        ctx.lineTo(6, 13);
+        ctx.moveTo(28, 0);
+        ctx.lineTo(4, -9);
+        ctx.lineTo(4, 9);
         ctx.closePath();
         ctx.fill();
       }
@@ -1081,16 +1120,16 @@ export function renderFrame(ts) {
     }
   }
 
-  // Skyfall Judgment airborne landing AOE reticle & countdown indicator
+  // Skyfall Judgment airborne landing AOE reticle & expanding max-radius wave indicator
   if (p.leap) {
     const radPx = p.leap.spell.radii[p.leap.rankIdx] * TILE_SIZE;
     const lx = p.x * TILE_SIZE;
     const ly = p.y * TILE_SIZE;
-    const frac = Math.max(0, 1 - (p.leap.progress || 0));
+    const prog = Math.min(1, p.leap.progress || 0);
     ctx.save();
-    ctx.fillStyle = "rgba(249, 115, 22, 0.1)";
+    ctx.fillStyle = `rgba(249, 115, 22, ${0.08 + prog * 0.14})`;
     ctx.beginPath();
-    ctx.arc(lx, ly, radPx, 0, Math.PI * 2);
+    ctx.arc(lx, ly, Math.max(8, radPx * prog), 0, Math.PI * 2);
     ctx.fill();
 
     if (assets.vfx_skyfall_reticle) {
@@ -1112,10 +1151,10 @@ export function renderFrame(ts) {
     }
 
     ctx.setLineDash([]);
-    ctx.strokeStyle = "rgba(253, 224, 71, 0.92)";
-    ctx.lineWidth = 2.2;
+    ctx.strokeStyle = "rgba(253, 224, 71, 0.96)";
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.arc(lx, ly, Math.max(8, radPx * frac), 0, Math.PI * 2);
+    ctx.arc(lx, ly, Math.max(8, radPx * prog), 0, Math.PI * 2);
     ctx.stroke();
 
     ctx.strokeStyle = "rgba(255, 255, 255, 0.72)";

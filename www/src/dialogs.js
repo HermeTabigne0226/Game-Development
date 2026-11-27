@@ -1080,6 +1080,20 @@ export function renderPatchNotes() {
   const badge = document.getElementById("menu-version-badge");
   if (badge) badge.textContent = GAME_VERSION;
 
+  const isUnread = !runtime.meta?.lastSeenPatchVersion || runtime.meta.lastSeenPatchVersion !== GAME_VERSION;
+  const patchBtn = document.getElementById("menu-btn-patch-notes");
+  const patchNewBadge = document.getElementById("menu-patch-new-badge");
+  if (patchBtn) patchBtn.classList.toggle("has-new-patch", isUnread);
+  if (patchNewBadge) patchNewBadge.hidden = !isUnread;
+
+  const recEl = document.getElementById("menu-records-strip");
+  if (recEl && runtime.meta) {
+    const bestFl = runtime.meta.bestFloor || 1;
+    const wins = runtime.meta.victories || 0;
+    const shards = runtime.meta.soulShards || 0;
+    recEl.textContent = wins > 0 ? `Best Floor ${bestFl} · ${wins} Clear · ${shards} Shards` : `Best Floor ${bestFl} · ${shards} Shards`;
+  }
+
   const latest = PATCH_NOTES[0];
   const patchTitle = document.getElementById("menu-patch-title");
   if (patchTitle && latest) {
@@ -1106,6 +1120,15 @@ export function renderPatchNotes() {
       listEl.appendChild(card);
     }
   }
+}
+
+export function markPatchNotesSeen() {
+  if (!runtime.meta) return;
+  if (runtime.meta.lastSeenPatchVersion !== GAME_VERSION) {
+    runtime.meta.lastSeenPatchVersion = GAME_VERSION;
+    saveMeta();
+  }
+  renderPatchNotes();
 }
 
 export function openHeroDialog(onSelectHero) {

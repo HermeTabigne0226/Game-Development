@@ -53,6 +53,7 @@ export function loadMeta() {
     bestFloor: 1,
     endlessBestFloor: 0,
     victories: 0,
+    lastSeenPatchVersion: "",
     settings: { sfxLevel: "high", musicLevel: "low", screenShake: true },
   };
   if (!loaded || typeof loaded !== "object") return base;

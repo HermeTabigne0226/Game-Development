@@ -3,6 +3,7 @@ import { bgm, sfx } from "./audio.js";
 import { castSpell, performDash, performMeleeAttack } from "./combat.js";
 import { DEFAULT_LOADOUT } from "./data.js";
 import {
+  markPatchNotesSeen,
   openHeroDialog,
   openLoadoutDialog,
   openSkillDialog,
@@ -297,7 +298,7 @@ function setupControls() {
   });
 
   const openPatchModal = () => {
-    renderPatchNotes();
+    markPatchNotesSeen();
     document.getElementById("patch-notes-dialog").showModal();
   };
   document.getElementById("menu-btn-patch-notes")?.addEventListener("click", openPatchModal);

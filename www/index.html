@@ -37,7 +37,7 @@
       <div class="title-hero-banner medieval-banner">
         <img src="spritecook-isometric-buildings/castle.webp" alt="Oakhaven Bastion" class="bastion-img" />
         <div class="title-overlay medieval-overlay">
-          <span id="menu-version-badge" class="menu-version-badge">v.1.2.3</span>
+          <span id="menu-version-badge" class="menu-version-badge">v.1.2.4</span>
           <img src="assets/generated/game_logo.png" alt="" class="menu-crest-logo" />
           <span class="eyebrow">Aethelgard Chronicles</span>
           <h1>Chronicles of the Shattered Crown</h1>
@@ -53,17 +53,39 @@
             <button type="button" id="menu-btn-play" class="btn btn-primary btn-lg medieval-btn">New Quest</button>
             <button type="button" id="menu-btn-resume" class="btn btn-secondary btn-lg medieval-btn" hidden>Resume</button>
             <button type="button" id="menu-btn-settings" class="btn btn-secondary btn-lg medieval-btn">Settings</button>
-            <button type="button" id="menu-btn-patch-notes" class="btn btn-secondary btn-lg medieval-btn">Patch Notes</button>
+            <button type="button" id="menu-btn-patch-notes" class="btn btn-secondary btn-lg medieval-btn patch-btn has-new-patch">
+              <span>Patch Notes</span>
+              <span id="menu-patch-new-badge" class="menu-patch-badge">NEW</span>
+            </button>
             <button type="button" id="menu-btn-exit" class="btn btn-secondary btn-lg medieval-btn">Exit</button>
           </div>
         </div>
         <div class="menu-col-info">
-          <div class="menu-patch-box">
-            <div class="menu-patch-head">
-              <strong id="menu-patch-title">Latest Update — v.1.2.3</strong>
-              <button type="button" id="menu-btn-patch-more" class="btn btn-secondary btn-sm">View All</button>
+          <div class="menu-feature-box">
+            <div class="menu-feature-head">
+              <strong>Realm Highlights</strong>
+              <span id="menu-records-strip" class="menu-records-strip">Floor 1 · 0 Shards</span>
             </div>
-            <ul id="menu-patch-highlights" class="menu-patch-list"></ul>
+            <div class="menu-heroes-row">
+              <div class="menu-hero-pill">
+                <img src="spritecook-inventory-icons/shield.png" alt="" class="pixel-icon" />
+                <div><strong>Paladin</strong><span>Holy Bastion</span></div>
+              </div>
+              <div class="menu-hero-pill">
+                <img src="spritecook-inventory-icons/sword.png" alt="" class="pixel-icon" />
+                <div><strong>Gilded Knight</strong><span>Crit Blade</span></div>
+              </div>
+              <div class="menu-hero-pill">
+                <img src="assets/bow_icon.svg" alt="" class="pixel-icon" />
+                <div><strong>Sylvan Ranger</strong><span>Pierce &amp; Kite</span></div>
+              </div>
+            </div>
+            <div class="menu-highlights-grid">
+              <span><strong>3 Acts + Abyss:</strong> 12 Floors &amp; Endless 13+</span>
+              <span><strong>Custom Builds:</strong> 15 Skills, Relics &amp; Sets</span>
+              <span><strong>Shrines &amp; Anvil:</strong> Buffs, Salvage &amp; Forge</span>
+              <span><strong>Twin-Stick Ready:</strong> Full Desktop &amp; Mobile</span>
+            </div>
           </div>
           <div id="menu-mobile-app-box" class="menu-mobile-app" hidden>
             <div class="menu-mobile-app-info">

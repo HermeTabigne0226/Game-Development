@@ -1,8 +1,19 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.2.3";
+export const GAME_VERSION = "v.1.2.4";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.2.4",
+    title: "Frozen Crystal, Rain Storm VFX, Skyfall & Menu Showcase",
+    notes: [
+      "Frozen Block Crystal: Enemies frozen by Frost Lance are now encased in a pixel-art Frozen Crystal block.",
+      "Skyfall Judgment Circle: Inner charge ring now expands smoothly from small center outward up to full max landing radius right before impact.",
+      "Rain Storm / Siege Barrage Overhaul: Added rotating golden Archery Target Reticle, 0.2s falling arrow volley waves, and stuck-arrow Ground Impact decals.",
+      "Valiant Charge Precision Spear: Trimmed the dashing spearhead slightly smaller so it stays razor-sharp and visibly lands squarely on the marked puncture crater.",
+      "Main Menu & Animated Patch Alert: Added Hero Classes & Realm Highlights showcase on the one-screen Main Menu plus an animated glowing NEW indicator on the dedicated Patch Notes button.",
+    ],
+  },
   {
     version: "v.1.2.3",
     title: "Shrine Sprites, Divine Sword Charge & Smart Bag Indicators",

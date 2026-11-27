@@ -107,6 +107,10 @@ export async function loadAllAssets(onProgress = null) {
     shrine_aegis: "assets/generated/vfx/shrine_aegis.png",
     shrine_blood: "assets/generated/vfx/shrine_blood.png",
     shrine_depleted: "assets/generated/vfx/shrine_depleted.png",
+    vfx_frozen_crystal: "assets/generated/vfx/vfx_frozen_crystal.png",
+    vfx_arrow_storm_reticle: "assets/generated/vfx/vfx_arrow_storm_reticle.png",
+    vfx_arrow_storm_volley: "assets/generated/vfx/vfx_arrow_storm_volley.png",
+    vfx_arrow_storm_impact: "assets/generated/vfx/vfx_arrow_storm_impact.png",
   };
 
   const list = Object.entries(manifest);

@@ -1447,21 +1447,32 @@ export function updateSimulation(dt) {
       st.tickTimer -= dt;
       st.spawnTimer -= dt;
       if (st.spawnTimer <= 0) {
-        st.spawnTimer = 0.065;
-        if (s.fallingArrows.length < 24) {
-          for (let k = 0; k < 2; k++) {
-            const ang = Math.random() * Math.PI * 2;
-            const r = Math.sqrt(Math.random()) * st.radius * TILE_SIZE;
-            const landX = st.x * TILE_SIZE + Math.cos(ang) * r;
-            const landY = st.y * TILE_SIZE + Math.sin(ang) * r;
-            s.fallingArrows.push({ x: landX - 24, y: landY - 96, targetX: landX, targetY: landY, life: 0.18, maxLife: 0.18 });
-          }
+        st.spawnTimer = 0.14;
+        if (s.fallingArrows.length < 10) {
+          const jx = (Math.random() - 0.5) * st.radius * TILE_SIZE * 0.35;
+          const jy = (Math.random() - 0.5) * st.radius * TILE_SIZE * 0.35;
+          const landX = st.x * TILE_SIZE + jx;
+          const landY = st.y * TILE_SIZE + jy;
+          s.fallingArrows.push({
+            x: landX - 28,
+            y: landY - 96,
+            targetX: landX,
+            targetY: landY,
+            sizePx: Math.max(72, st.radius * TILE_SIZE * 1.85),
+            life: 0.2,
+            maxLife: 0.2,
+          });
         }
       }
       if (st.tickTimer <= 0) {
         st.tickTimer = st.tickInterval;
         sfx.slash();
+        s.shake = Math.max(s.shake, 3.2);
         spawnRing(st.x, st.y, st.radius * TILE_SIZE, "rgba(250, 204, 21, 0.7)", 0.28);
+        spawnGroundDecal(st.x, st.y, "vfx_arrow_storm_impact", st.radius * TILE_SIZE * 2.05, 0.44, {
+          scaleStart: 0.85,
+          scaleEnd: 1.05,
+        });
         for (const e of [...s.level.enemies]) {
           if (Math.hypot(e.x - st.x, e.y - st.y) <= st.radius + 0.35) {
             e.chilled = Math.max(e.chilled || 0, st.chillDur);
