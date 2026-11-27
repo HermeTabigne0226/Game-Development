@@ -933,7 +933,7 @@ function setupPvpMatchEntities(room, mySlot, isNextRound = false) {
   level.enemies = [opp];
   computeFOV(level, mySpawn.x, mySpawn.y, 6);
 
-  const introDur = isNextRound ? 3.0 : 4.5;
+  const introDur = isNextRound ? 3.0 : 6.5;
   runtime.state = {
     startedByUser: true,
     isPvp: true,
@@ -999,7 +999,7 @@ function setupPvpMatchEntities(room, mySlot, isNextRound = false) {
   };
 }
 
-function showPvpVsLoadingScreen(room, mySlot, durationMs = 3000) {
+function showPvpVsLoadingScreen(room, mySlot, durationMs = 5000) {
   const overlay = document.getElementById("pvp-vs-screen");
   if (!overlay) return;
   const leftInfo = room.players[0] || {};
@@ -1027,11 +1027,29 @@ function showPvpVsLoadingScreen(room, mySlot, durationMs = 3000) {
   document.getElementById("pvp-vs-map-name").textContent = map.name;
   document.getElementById("pvp-vs-map-sub").textContent = map.subtitle;
 
-  document.getElementById("pvp-vs-left-name").textContent = `${leftInfo.heroName || leftCls.name}${mySlot === 0 ? " (You)" : ""}`;
+  const leftIsYou = mySlot === 0;
+  const rightIsYou = mySlot === 1;
+  const leftCard = document.getElementById("pvp-vs-card-left");
+  const rightCard = document.getElementById("pvp-vs-card-right");
+  const leftBadge = document.getElementById("pvp-vs-left-badge");
+  const rightBadge = document.getElementById("pvp-vs-right-badge");
+
+  if (leftCard) leftCard.className = `pvp-vs-fighter ${leftIsYou ? "you" : "rival"}`;
+  if (rightCard) rightCard.className = `pvp-vs-fighter ${rightIsYou ? "you" : "rival"}`;
+  if (leftBadge) {
+    leftBadge.textContent = leftIsYou ? "YOUR HERO" : "OPPONENT";
+    leftBadge.className = `pvp-vs-side-badge ${leftIsYou ? "you" : "rival"}`;
+  }
+  if (rightBadge) {
+    rightBadge.textContent = rightIsYou ? "YOUR HERO" : "OPPONENT";
+    rightBadge.className = `pvp-vs-side-badge ${rightIsYou ? "you" : "rival"}`;
+  }
+
+  document.getElementById("pvp-vs-left-name").textContent = `${leftInfo.heroName || leftCls.name}${leftIsYou ? " (You)" : ""}`;
   document.getElementById("pvp-vs-left-class").textContent = `${leftCls.name} · 1,000 HP`;
   document.getElementById("pvp-vs-left-skills").innerHTML = renderSkillsHtml(leftIds);
 
-  document.getElementById("pvp-vs-right-name").textContent = `${rightInfo.heroName || rightCls.name}${mySlot === 1 ? " (You)" : ""}`;
+  document.getElementById("pvp-vs-right-name").textContent = `${rightInfo.heroName || rightCls.name}${rightIsYou ? " (You)" : ""}`;
   document.getElementById("pvp-vs-right-class").textContent = `${rightCls.name} · 1,000 HP`;
   document.getElementById("pvp-vs-right-skills").innerHTML = renderSkillsHtml(rightIds);
 
@@ -1101,7 +1119,7 @@ export function startPvpMatchSession(room, mySlot) {
   setupPvpMatchEntities(room, mySlot, false);
   startPvpBgHeartbeat();
   const st = runtime.state;
-  setTimeout(() => { if (runtime.state === st) syncPvpIntroTimer(st); }, 4560);
+  setTimeout(() => { if (runtime.state === st) syncPvpIntroTimer(st); }, 6560);
   runtime.isCanvasVisible = true;
   runtime.lastFrameTime = performance.now();
   document.body.classList.add("pvp-active");
@@ -1112,7 +1130,7 @@ export function startPvpMatchSession(room, mySlot) {
   if (pvpHooks.updateUI) pvpHooks.updateUI();
   if (pvpHooks.updateRoomAndBossHUD) pvpHooks.updateRoomAndBossHUD();
   runtime.uiDirty = true;
-  showPvpVsLoadingScreen(room, mySlot, 3000);
+  showPvpVsLoadingScreen(room, mySlot, 5000);
   addLog(`PvP Duel started on ${runtime.state.level.pvpMap.name}! Best of 3 rounds (1,000 HP).`, "story");
 }
 

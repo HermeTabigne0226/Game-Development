@@ -3049,11 +3049,95 @@ body.pvp-active .canvas-frame {
   justify-content: flex-end;
 }
 
-@media (max-width: 680px) {
+@media (max-width: 540px) {
   .pvp-split,
   .pvp-vs-row,
   .pvp-hero-select-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-height: 540px), (max-width: 960px) and (pointer: coarse) {
+  .pvp-card {
+    padding: 10px 12px;
+    gap: 6px;
+    max-height: calc(100dvh - 12px);
+  }
+  .pvp-card .dialog-header h1 {
+    font-size: 1.02rem;
+  }
+  .pvp-room-banner {
+    padding: 6px 10px;
+    gap: 8px;
+  }
+  .pvp-room-banner h3 {
+    font-size: 0.88rem;
+  }
+  #pvp-room-meta {
+    font-size: 0.7rem;
+    line-height: 1.2;
+  }
+  .pvp-vs-row {
+    margin: 4px 0;
+    gap: 8px;
+  }
+  .pvp-vs-card {
+    padding: 6px 8px;
+    gap: 2px;
+  }
+  .pvp-vs-card strong {
+    font-size: 0.86rem;
+  }
+  .pvp-hero-role {
+    font-size: 0.68rem;
+  }
+  .pvp-ready-pill {
+    margin-top: 2px;
+    padding: 1px 8px;
+    font-size: 0.65rem;
+  }
+  .pvp-lobby-countdown {
+    padding: 5px 10px;
+    font-size: 0.74rem;
+    margin: 2px 0;
+  }
+  .pvp-char-setup-panel {
+    padding: 7px 9px;
+    gap: 5px;
+  }
+  .pvp-char-setup-title .hint-text {
+    display: none;
+  }
+  .pvp-hero-select-grid {
+    gap: 6px;
+  }
+  .pvp-hero-card-btn {
+    padding: 4px 6px;
+    gap: 6px;
+  }
+  .pvp-hero-card-btn canvas {
+    width: 34px;
+    height: 34px;
+  }
+  .pvp-hero-card-meta strong {
+    font-size: 0.74rem;
+  }
+  .pvp-hero-card-meta span {
+    font-size: 0.64rem;
+  }
+  .pvp-room-skills-bar {
+    gap: 6px;
+  }
+  .pvp-room-skill-chip {
+    padding: 3px 6px;
+    font-size: 0.68rem;
+  }
+  .pvp-room-actions {
+    gap: 6px;
+  }
+  .pvp-room-actions .btn {
+    padding: 6px 12px;
+    font-size: 0.78rem;
   }
 }
 
@@ -4114,12 +4198,14 @@ kbd {
   text-align: center;
 }
 
-.pvp-vs-fighter.left {
+.pvp-vs-fighter.left,
+.pvp-vs-fighter.you {
   border-color: #38bdf8;
   box-shadow: inset 0 0 20px rgba(56, 189, 248, 0.14);
 }
 
-.pvp-vs-fighter.right {
+.pvp-vs-fighter.right,
+.pvp-vs-fighter.rival {
   border-color: #f87171;
   box-shadow: inset 0 0 20px rgba(248, 113, 113, 0.14);
 }
