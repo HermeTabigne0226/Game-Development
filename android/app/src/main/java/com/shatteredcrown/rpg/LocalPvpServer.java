@@ -71,14 +71,16 @@ public final class LocalPvpServer {
         final Client client;
         String heroName;
         String heroClass;
+        String appVersion;
         JSONArray loadout;
         boolean ready;
 
-        PlayerSlot(String id, Client client, String heroName, String heroClass, JSONArray loadout) {
+        PlayerSlot(String id, Client client, String heroName, String heroClass, String appVersion, JSONArray loadout) {
             this.id = id;
             this.client = client;
             this.heroName = heroName;
             this.heroClass = heroClass;
+            this.appVersion = appVersion != null ? appVersion : "unknown";
             this.loadout = loadout;
             this.ready = false;
         }
@@ -590,6 +592,17 @@ public final class LocalPvpServer {
         return obj;
     }
 
+    private static String normalizeVer(String v) {
+        if (v == null) return "unknown";
+        String clean = v.replaceFirst("(?i)^v\\.?", "").trim();
+        return clean.isEmpty() ? "unknown" : clean;
+    }
+
+    private static boolean hasVersionMismatch(Room r) {
+        if (r == null || r.players.size() < 2) return false;
+        return !normalizeVer(r.players.get(0).appVersion).equals(normalizeVer(r.players.get(1).appVersion));
+    }
+
     private JSONObject serializeRoomDetail(Room r) {
         JSONObject obj = new JSONObject();
         try {
@@ -599,6 +612,7 @@ public final class LocalPvpServer {
             obj.put("hasPassword", !r.passwordHash.isEmpty());
             obj.put("status", r.status);
             obj.put("round", r.round);
+            obj.put("versionMismatch", hasVersionMismatch(r));
             int autoSec = r.autoStartAt > 0 ? Math.max(0, (int) Math.ceil((r.autoStartAt - System.currentTimeMillis()) / 1000.0)) : 0;
             obj.put("autoStartSec", autoSec);
             JSONArray sc = new JSONArray();
@@ -614,6 +628,7 @@ public final class LocalPvpServer {
                 pObj.put("isHost", i == 0);
                 pObj.put("heroName", pl.heroName);
                 pObj.put("heroClass", pl.heroClass);
+                pObj.put("appVersion", pl.appVersion);
                 pObj.put("loadout", pl.loadout != null ? pl.loadout : JSONObject.NULL);
                 pObj.put("ready", pl.ready);
                 pls.put(pObj);
@@ -758,10 +773,11 @@ public final class LocalPvpServer {
             String pwHash = hashPassword(msg.optString("password", ""));
             String heroClass = msg.optString("heroClass", "gilded");
             if (!"mage".equals(heroClass) && !"gilded".equals(heroClass) && !"ranger".equals(heroClass)) heroClass = "gilded";
+            String appVersion = msg.optString("appVersion", "unknown").trim();
             JSONArray loadout = msg.optJSONArray("loadout");
 
             Room r = new Room(id, name, mapId, pwHash, client.ip);
-            r.players.add(new PlayerSlot(client.id, client, heroName, heroClass, loadout));
+            r.players.add(new PlayerSlot(client.id, client, heroName, heroClass, appVersion, loadout));
             rooms.put(id, r);
             client.roomId = id;
             try {
@@ -796,8 +812,9 @@ public final class LocalPvpServer {
                 if (heroName.length() > 20) heroName = heroName.substring(0, 20);
                 String heroClass = msg.optString("heroClass", "gilded");
                 if (!"mage".equals(heroClass) && !"gilded".equals(heroClass) && !"ranger".equals(heroClass)) heroClass = "gilded";
+                String appVersion = msg.optString("appVersion", "unknown").trim();
                 JSONArray loadout = msg.optJSONArray("loadout");
-                r.players.add(new PlayerSlot(client.id, client, heroName, heroClass, loadout));
+                r.players.add(new PlayerSlot(client.id, client, heroName, heroClass, appVersion, loadout));
                 client.roomId = r.id;
                 try {
                     JSONObject res = new JSONObject();
@@ -844,17 +861,21 @@ public final class LocalPvpServer {
                     String hc = msg.optString("heroClass", pl.heroClass);
                     if ("mage".equals(hc) || "gilded".equals(hc) || "ranger".equals(hc)) pl.heroClass = hc;
                 }
+                if (msg.has("appVersion")) {
+                    String av = msg.optString("appVersion", "").trim();
+                    if (!av.isEmpty()) pl.appVersion = av;
+                }
                 if (msg.has("loadout")) pl.loadout = msg.optJSONArray("loadout");
                 if (msg.has("ready")) pl.ready = msg.optBoolean("ready", pl.ready);
                 if (pIdx == 0 && msg.has("mapId")) {
                     r.mapId = Math.max(0, Math.min(3, msg.optInt("mapId", r.mapId)));
                 }
-                boolean allReady = "lobby".equals(r.status) && r.players.size() == 2 && r.players.get(0).ready && r.players.get(1).ready;
+                boolean allReady = "lobby".equals(r.status) && r.players.size() == 2 && r.players.get(0).ready && r.players.get(1).ready && !hasVersionMismatch(r);
                 if (allReady && r.autoStartTimer == null && scheduler != null) {
                     r.autoStartAt = System.currentTimeMillis() + 3200L;
                     r.autoStartTimer = scheduler.schedule(() -> {
                         synchronized (r) {
-                            if (rooms.containsKey(r.id) && "lobby".equals(r.status) && r.players.size() == 2 && r.players.get(0).ready && r.players.get(1).ready) {
+                            if (rooms.containsKey(r.id) && "lobby".equals(r.status) && r.players.size() == 2 && r.players.get(0).ready && r.players.get(1).ready && !hasVersionMismatch(r)) {
                                 launchRoomMatch(r);
                             } else {
                                 clearAutoStart(r);
@@ -872,6 +893,10 @@ public final class LocalPvpServer {
             if ("start_match".equals(type) && pIdx == 0) {
                 if (r.players.size() < 2) {
                     sendError(client, null, "Waiting for a challenger to join!");
+                    return;
+                }
+                if (hasVersionMismatch(r)) {
+                    sendError(client, "version_mismatch", "Game version didn't match! Please update the game before starting.");
                     return;
                 }
                 for (PlayerSlot pl : r.players) {

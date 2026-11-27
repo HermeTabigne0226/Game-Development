@@ -53,12 +53,18 @@ jobs:
           name: Chronicles-of-the-Shattered-Crown-apk
           path: android/app/build/outputs/apk/debug/Chronicles-of-the-Shattered-Crown.apk
 
+      - name: Read app version from package.json
+        id: pkg
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
       - name: Publish Latest Android APK Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest-apk
           name: Chronicles of the Shattered Crown (Android APK)
-          body: Latest Android APK build from main branch.
+          body: |
+            Version: v.${{ steps.pkg.outputs.version }}
+            Latest Android APK build from main branch.
           files: android/app/build/outputs/apk/debug/Chronicles-of-the-Shattered-Crown.apk
           prerelease: false
           draft: false

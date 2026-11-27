@@ -1,19 +1,32 @@
 package com.shatteredcrown.rpg;
 
+import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import androidx.core.content.FileProvider;
 import androidx.core.content.pm.PackageInfoCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import com.getcapacitor.BridgeActivity;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import org.json.JSONObject;
 
 public class MainActivity extends BridgeActivity {
@@ -136,9 +149,164 @@ public class MainActivity extends BridgeActivity {
                 public String discoverLanHosts() {
                     return LocalPvpServer.discoverLanHosts(850).toString();
                 }
+
+                @JavascriptInterface
+                public boolean isOnline() {
+                    try {
+                        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                        if (cm == null) return false;
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            Network net = cm.getActiveNetwork();
+                            if (net == null) return false;
+                            NetworkCapabilities caps = cm.getNetworkCapabilities(net);
+                            return caps != null && (
+                                caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+                                    || caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+                                    || caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+                            );
+                        }
+                        NetworkInfo ni = cm.getActiveNetworkInfo();
+                        return ni != null && ni.isConnected();
+                    } catch (Exception ignored) {
+                        return false;
+                    }
+                }
+
+                @JavascriptInterface
+                public String getAppVersion() {
+                    JSONObject obj = new JSONObject();
+                    try {
+                        PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+                        obj.put("versionName", pInfo.versionName != null ? pInfo.versionName : "1.0.0");
+                        obj.put("versionCode", PackageInfoCompat.getLongVersionCode(pInfo));
+                    } catch (Exception ignored) {}
+                    return obj.toString();
+                }
+
+                @JavascriptInterface
+                public void restartApp() {
+                    runOnUiThread(() -> {
+                        try {
+                            Intent launch = getPackageManager().getLaunchIntentForPackage(getPackageName());
+                            if (launch != null) {
+                                launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                startActivity(launch);
+                            }
+                            finishAffinity();
+                        } catch (Exception ignored) {}
+                    });
+                }
+
+                @JavascriptInterface
+                public void downloadAndInstallUpdate(String apkUrl) {
+                    if (apkUrl == null || apkUrl.trim().isEmpty()) return;
+                    new Thread(() -> {
+                        try {
+                            emitUpdateJs("downloading", 0, "Connecting to GitHub release...");
+                            File dir = new File(getCacheDir(), "updates");
+                            if (!dir.exists()) dir.mkdirs();
+                            File outFile = new File(dir, "Chronicles-of-the-Shattered-Crown.apk");
+                            if (outFile.exists()) outFile.delete();
+
+                            HttpURLConnection conn = null;
+                            String currentUrl = apkUrl.trim();
+                            for (int hop = 0; hop < 6; hop++) {
+                                URL url = new URL(currentUrl);
+                                conn = (HttpURLConnection) url.openConnection();
+                                conn.setInstanceFollowRedirects(false);
+                                conn.setConnectTimeout(15000);
+                                conn.setReadTimeout(30000);
+                                conn.setRequestProperty("User-Agent", "ShatteredCrown-Updater");
+                                int code = conn.getResponseCode();
+                                if (code == HttpURLConnection.HTTP_MOVED_PERM
+                                    || code == HttpURLConnection.HTTP_MOVED_TEMP
+                                    || code == HttpURLConnection.HTTP_SEE_OTHER
+                                    || code == 307
+                                    || code == 308) {
+                                    String loc = conn.getHeaderField("Location");
+                                    conn.disconnect();
+                                    if (loc == null || loc.isEmpty()) break;
+                                    currentUrl = new URL(url, loc).toString();
+                                    conn = null;
+                                    continue;
+                                }
+                                break;
+                            }
+                            if (conn == null || conn.getResponseCode() < 200 || conn.getResponseCode() >= 300) {
+                                int code = conn != null ? conn.getResponseCode() : 0;
+                                if (conn != null) conn.disconnect();
+                                emitUpdateJs("error", 0, "Download failed (HTTP " + code + "). Check Internet connection.");
+                                return;
+                            }
+
+                            long total = conn.getContentLengthLong();
+                            long downloaded = 0L;
+                            int lastPct = -1;
+                            try (InputStream in = conn.getInputStream(); FileOutputStream fos = new FileOutputStream(outFile)) {
+                                byte[] buf = new byte[16384];
+                                int n;
+                                while ((n = in.read(buf)) != -1) {
+                                    fos.write(buf, 0, n);
+                                    downloaded += n;
+                                    if (total > 0) {
+                                        int pct = (int) Math.min(100, (downloaded * 100L) / total);
+                                        if (pct != lastPct && (pct % 2 == 0 || pct == 100)) {
+                                            lastPct = pct;
+                                            String mb = String.format(java.util.Locale.ROOT, "%.1f / %.1f MB", downloaded / 1048576.0, total / 1048576.0);
+                                            emitUpdateJs("downloading", pct, "Downloading update (" + mb + ")...");
+                                        }
+                                    }
+                                }
+                            } finally {
+                                conn.disconnect();
+                            }
+
+                            if (!outFile.exists() || outFile.length() < 500000L) {
+                                emitUpdateJs("error", 0, "Downloaded APK appears incomplete. Try again.");
+                                return;
+                            }
+
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !getPackageManager().canRequestPackageInstalls()) {
+                                emitUpdateJs("need_permission", 100, "Allow 'Install unknown apps' in Android settings, then tap Download & Update again.");
+                                runOnUiThread(() -> {
+                                    try {
+                                        Intent permIntent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName()));
+                                        permIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                        startActivity(permIntent);
+                                    } catch (Exception ignored) {}
+                                });
+                                return;
+                            }
+
+                            Uri apkUri = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".fileprovider", outFile);
+                            Intent installIntent = new Intent(Intent.ACTION_VIEW);
+                            installIntent.setDataAndType(apkUri, "application/vnd.android.package-archive");
+                            installIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                            emitUpdateJs("ready_install", 100, "Installer opened! Tap Update, then tap Open / Restart Game.");
+                            runOnUiThread(() -> startActivity(installIntent));
+                        } catch (Exception e) {
+                            emitUpdateJs("error", 0, e.getMessage() != null ? e.getMessage() : "Update download failed.");
+                        }
+                    }, "ShatteredCrown-ApkUpdater").start();
+                }
             }, "AndroidApp");
         }
         enableImmersiveFullscreen();
+    }
+
+    private void emitUpdateJs(String state, int pct, String message) {
+        try {
+            JSONObject obj = new JSONObject();
+            obj.put("state", state);
+            obj.put("pct", pct);
+            obj.put("message", message);
+            final String js = "window.__onApkUpdateEvent && window.__onApkUpdateEvent(" + obj.toString() + ");";
+            runOnUiThread(() -> {
+                if (this.bridge != null && this.bridge.getWebView() != null) {
+                    this.bridge.getWebView().evaluateJavascript(js, null);
+                }
+            });
+        } catch (Exception ignored) {}
     }
 
     @Override

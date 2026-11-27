@@ -1,7 +1,7 @@
 import { loadAllAssets } from "./assets.js";
 import { bgm, sfx } from "./audio.js";
 import { castSpell, performDash, performMeleeAttack } from "./combat.js";
-import { DEFAULT_LOADOUT } from "./data.js";
+import { DEFAULT_LOADOUT, GAME_VERSION } from "./data.js";
 import {
   markPatchNotesSeen,
   openHeroDialog,
@@ -346,6 +346,175 @@ function setupControls() {
   document.getElementById("menu-btn-patch-notes")?.addEventListener("click", openPatchModal);
   document.getElementById("menu-btn-patch-more")?.addEventListener("click", openPatchModal);
   renderPatchNotes();
+
+  const checkUpdateBtn = document.getElementById("menu-btn-check-update");
+  const refreshUpdateBtnVisibility = () => {
+    if (!checkUpdateBtn) return;
+    const isNative = Boolean(window.Capacitor || window.AndroidApp);
+    const isMobile = isNative || isMobileLayout();
+    const isOnline = navigator.onLine && (!window.AndroidApp?.isOnline || window.AndroidApp.isOnline());
+    checkUpdateBtn.hidden = !(isMobile && isOnline);
+  };
+  window.addEventListener("online", refreshUpdateBtnVisibility);
+  window.addEventListener("offline", refreshUpdateBtnVisibility);
+
+  const parseSemver = (str) => {
+    const m = String(str || "").match(/(\d+)\.(\d+)\.(\d+)/);
+    return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null;
+  };
+  const isNewerVersion = (candidate, current) => {
+    const a = parseSemver(candidate);
+    const b = parseSemver(current);
+    if (!a || !b) return false;
+    for (let i = 0; i < 3; i++) {
+      if (a[i] !== b[i]) return a[i] > b[i];
+    }
+    return false;
+  };
+
+  if (checkUpdateBtn) {
+    const updDlg = document.getElementById("update-dialog");
+    const curVerEl = document.getElementById("update-current-ver");
+    const latestBadgeEl = document.getElementById("update-latest-badge");
+    const statusEl = document.getElementById("update-status-msg");
+    const progWrap = document.getElementById("update-progress-wrap");
+    const progFill = document.getElementById("update-progress-fill");
+    const dlBtn = document.getElementById("btn-update-download");
+    const restartBtn = document.getElementById("btn-update-restart");
+    const laterBtn = document.getElementById("btn-update-later");
+
+    let pendingApkUrl = "https://github.com/HermeTabigne0226/Game-Development/releases/latest/download/Chronicles-of-the-Shattered-Crown.apk";
+    let pendingWebReload = false;
+
+    window.__onApkUpdateEvent = (ev) => {
+      if (!ev || !updDlg) return;
+      if (progWrap) progWrap.hidden = ev.state !== "downloading" && ev.state !== "ready_install";
+      if (progFill && typeof ev.pct === "number") progFill.style.width = `${ev.pct}%`;
+      if (statusEl && ev.message) statusEl.textContent = ev.message;
+      if (ev.state === "downloading") {
+        if (dlBtn) { dlBtn.disabled = true; dlBtn.textContent = `Downloading ${ev.pct || 0}%...`; }
+      } else if (ev.state === "need_permission") {
+        if (dlBtn) { dlBtn.disabled = false; dlBtn.hidden = false; dlBtn.textContent = "Download & Update"; }
+      } else if (ev.state === "ready_install") {
+        if (dlBtn) dlBtn.hidden = true;
+        if (restartBtn) restartBtn.hidden = false;
+      } else if (ev.state === "error") {
+        if (dlBtn) { dlBtn.disabled = false; dlBtn.textContent = "Retry Download"; }
+      }
+    };
+
+    if (laterBtn) laterBtn.onclick = () => updDlg?.close("later");
+    if (restartBtn) {
+      restartBtn.onclick = () => {
+        saveRun();
+        if (window.AndroidApp?.restartApp) {
+          window.AndroidApp.restartApp();
+        } else {
+          window.location.reload();
+        }
+      };
+    }
+
+    if (dlBtn) {
+      dlBtn.onclick = async () => {
+        if (window.AndroidApp?.downloadAndInstallUpdate) {
+          dlBtn.disabled = true;
+          dlBtn.textContent = "Starting Download...";
+          if (progWrap) progWrap.hidden = false;
+          if (progFill) progFill.style.width = "0%";
+          window.AndroidApp.downloadAndInstallUpdate(pendingApkUrl);
+          return;
+        }
+        if (pendingWebReload) {
+          try {
+            if ("serviceWorker" in navigator) {
+              const regs = await navigator.serviceWorker.getRegistrations();
+              await Promise.all(regs.map((r) => r.update()));
+            }
+          } catch {}
+          window.location.reload();
+          return;
+        }
+        window.open(pendingApkUrl, "_blank", "noopener");
+        if (restartBtn) restartBtn.hidden = false;
+      };
+    }
+
+    const triggerCheckUpdate = async () => {
+      if (!updDlg) return;
+      const isNative = Boolean(window.Capacitor || window.AndroidApp);
+      let installedVer = GAME_VERSION;
+      try {
+        if (window.AndroidApp?.getAppVersion) {
+          const info = JSON.parse(window.AndroidApp.getAppVersion());
+          if (info?.versionName) installedVer = `v.${info.versionName.replace(/^v\.?/i, "")}`;
+        }
+      } catch {}
+
+      pendingWebReload = false;
+      if (curVerEl) curVerEl.textContent = installedVer;
+      if (latestBadgeEl) latestBadgeEl.textContent = "Checking...";
+      if (statusEl) statusEl.textContent = "Checking GitHub for the latest release...";
+      if (progWrap) progWrap.hidden = true;
+      if (progFill) progFill.style.width = "0%";
+      if (dlBtn) { dlBtn.hidden = true; dlBtn.disabled = false; dlBtn.textContent = "Download & Update"; }
+      if (restartBtn) restartBtn.hidden = true;
+      updDlg.showModal();
+
+      try {
+        const relRes = await fetch("https://api.github.com/repos/HermeTabigne0226/Game-Development/releases/tags/latest-apk", { cache: "no-store" });
+        let latestVer = null;
+        let sizeText = "";
+        if (relRes.ok) {
+          const rel = await relRes.json();
+          const m = String(rel.body || "").match(/Version:\s*(v?\.?\d+\.\d+\.\d+)/i);
+          if (m) latestVer = m[1];
+          const apkAsset = Array.isArray(rel.assets)
+            ? rel.assets.find((a) => String(a.name || "").endsWith(".apk"))
+            : null;
+          if (apkAsset?.browser_download_url) pendingApkUrl = apkAsset.browser_download_url;
+          if (apkAsset?.size) sizeText = ` (${(apkAsset.size / 1048576).toFixed(1)} MB)`;
+        }
+        if (!latestVer) {
+          const pkgRes = await fetch("https://raw.githubusercontent.com/HermeTabigne0226/Game-Development/main/package.json", { cache: "no-store" });
+          if (pkgRes.ok) {
+            const pkg = await pkgRes.json();
+            if (pkg?.version) latestVer = `v.${pkg.version}`;
+          }
+        }
+
+        if (!latestVer) {
+          if (latestBadgeEl) latestBadgeEl.textContent = "Unavailable";
+          if (statusEl) statusEl.textContent = "Could not verify version from GitHub right now. Check your connection and try again.";
+          return;
+        }
+
+        const normLatest = `v.${latestVer.replace(/^v\.?/i, "")}`;
+        if (latestBadgeEl) latestBadgeEl.textContent = normLatest;
+
+        if (isNewerVersion(normLatest, installedVer)) {
+          if (statusEl) {
+            statusEl.textContent = isNative
+              ? `New APK update ${normLatest}${sizeText} is ready! Tap Download & Update to install and restart.`
+              : `New update ${normLatest}${sizeText} is available! Tap Download & Update to get the latest build.`;
+          }
+          pendingWebReload = !isNative;
+          if (dlBtn) dlBtn.hidden = false;
+        } else {
+          if (statusEl) statusEl.textContent = `You already have the latest version (${installedVer})!`;
+          if (dlBtn && !isNative) {
+            dlBtn.hidden = false;
+            dlBtn.textContent = "Download APK";
+          }
+        }
+      } catch {
+        if (latestBadgeEl) latestBadgeEl.textContent = "Offline";
+        if (statusEl) statusEl.textContent = "No Internet connection detected. Connect to Wi-Fi or Mobile Data to check for updates.";
+      }
+    };
+    window.__openCheckUpdateModal = triggerCheckUpdate;
+    checkUpdateBtn.addEventListener("click", triggerCheckUpdate);
+  }
 
   document.getElementById("menu-btn-exit").addEventListener("click", () => {
     saveRun();

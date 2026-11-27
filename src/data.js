@@ -1,8 +1,17 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.3.11";
+export const GAME_VERSION = "v.1.3.12";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.3.12",
+    title: "Mobile In-Menu Check Update, Download, Install & Restart",
+    notes: [
+      "Check Update Button (Mobile + Online): Added a dedicated Check Update button on the Main Menu whenever you are on Mobile / APK with an active Internet connection.",
+      "1-Tap Download, Update & Restart: Fetches the latest GitHub APK release with live download progress, opens Android's in-app Update installer, and provides a 1-tap Restart Game button once complete.",
+      "PvP Version Sync Check: PvP lobbies verify that both fighters are on the exact same game version before starting and show a direct Update Game button if versions don't match.",
+    ],
+  },
   {
     version: "v.1.3.11",
     title: "PvP Auto-Start Countdown, VS Matchup Loading Screen & 5,000 HP",

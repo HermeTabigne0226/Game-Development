@@ -1712,6 +1712,7 @@ export function openPvpDialog() {
               password: pass,
               heroName: getFighterName(),
               heroClass: pvpHeroClass,
+              appVersion: GAME_VERSION,
               loadout: pvpLoadout,
             });
           });
@@ -1736,12 +1737,13 @@ export function openPvpDialog() {
           const box = document.createElement("div");
           box.className = `pvp-vs-card ${pl ? (pl.ready ? "ready" : "") : "waiting"}`;
           if (pl) {
-            const cls = HERO_CLASSES[pl.heroClass] || HERO_CLASSES.paladin;
+            const cls = HERO_CLASSES[pl.heroClass] || HERO_CLASSES.gilded;
             const youTag = slot === pvpNet.mySlot ? " (You)" : "";
+            const verTag = pl.appVersion && pl.appVersion !== "unknown" ? ` · ${pl.appVersion}` : "";
             box.innerHTML = `
               <span class="pvp-slot-tag">${slot === 0 ? "HOST" : "CHALLENGER"}${youTag}</span>
               <strong>${pl.heroName}</strong>
-              <span class="pvp-hero-role">${cls.name}</span>
+              <span class="pvp-hero-role">${cls.name}${verTag}</span>
               <span class="pvp-ready-pill ${pl.ready ? "is-ready" : ""}">${pl.ready ? "READY" : "Not Ready"}</span>
             `;
           } else {
@@ -1757,14 +1759,42 @@ export function openPvpDialog() {
 
       const myPl = rm.players[pvpNet.mySlot];
       readyState = Boolean(myPl?.ready);
-      const allReady = rm.players.length === 2 && rm.players.every((pl) => pl.ready);
+      const normV = (v) => String(v || "").replace(/^v\.?/i, "").trim();
+      const hasOpp = rm.players.length === 2;
+      const versionMismatch = Boolean(
+        rm.versionMismatch ||
+        (hasOpp && normV(rm.players[0].appVersion) !== normV(rm.players[1].appVersion))
+      );
+      const allReady = hasOpp && !versionMismatch && rm.players.every((pl) => pl.ready);
       const cdEl = document.getElementById("pvp-lobby-countdown");
+      const updGameBtn = document.getElementById("btn-pvp-update-game");
       if (renderPvpUI._cdInterval) {
         clearInterval(renderPvpUI._cdInterval);
         renderPvpUI._cdInterval = null;
       }
+      if (updGameBtn) {
+        updGameBtn.hidden = !versionMismatch;
+        updGameBtn.onclick = () => {
+          if (typeof window.__openCheckUpdateModal === "function") {
+            window.__openCheckUpdateModal();
+          } else {
+            document.getElementById("update-dialog")?.showModal();
+          }
+        };
+      }
       if (cdEl) {
-        if (allReady) {
+        cdEl.style.borderColor = "";
+        cdEl.style.color = "";
+        cdEl.style.background = "";
+        if (versionMismatch) {
+          const v0 = rm.players[0]?.appVersion || "unknown";
+          const v1 = rm.players[1]?.appVersion || "unknown";
+          cdEl.hidden = false;
+          cdEl.style.borderColor = "#ef4444";
+          cdEl.style.color = "#fecaca";
+          cdEl.style.background = "rgba(153, 27, 27, 0.35)";
+          cdEl.textContent = `Version didn't match (${v0} vs ${v1}) — Please update the game to play PvP!`;
+        } else if (allReady) {
           let sec = Math.max(1, rm.autoStartSec || 3);
           cdEl.hidden = false;
           cdEl.textContent = `All Fighters Ready! Match starting in ${sec}...`;
@@ -1949,6 +1979,7 @@ export function openPvpDialog() {
       mapId: selectedMapId,
       heroName: getFighterName(),
       heroClass: pvpHeroClass,
+      appVersion: GAME_VERSION,
       loadout: pvpLoadout,
     });
   };
@@ -1963,6 +1994,7 @@ export function openPvpDialog() {
       type: "update_player",
       heroName: getFighterName(),
       heroClass: pvpHeroClass,
+      appVersion: GAME_VERSION,
       loadout: pvpLoadout,
       ready: !readyState,
     });
@@ -1981,6 +2013,7 @@ export function openPvpDialog() {
             type: "update_player",
             heroName: getFighterName(),
             heroClass: pvpHeroClass,
+            appVersion: GAME_VERSION,
             loadout: pvpLoadout,
             ready: false,
           });

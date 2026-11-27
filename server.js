@@ -115,6 +115,15 @@ function serializeRoomFor(room, viewerIp) {
   };
 }
 
+function normalizeAppVer(v) {
+  return String(v || "").replace(/^v\.?/i, "").trim() || "unknown";
+}
+
+function hasVersionMismatch(room) {
+  if (!room || room.players.length < 2) return false;
+  return normalizeAppVer(room.players[0].appVersion) !== normalizeAppVer(room.players[1].appVersion);
+}
+
 function serializeRoomDetail(room) {
   return {
     id: room.id,
@@ -123,6 +132,7 @@ function serializeRoomDetail(room) {
     hasPassword: Boolean(room.passwordHash),
     status: room.status,
     round: room.round,
+    versionMismatch: hasVersionMismatch(room),
     autoStartSec: room.autoStartAt ? Math.max(0, Math.ceil((room.autoStartAt - Date.now()) / 1000)) : 0,
     scores: [...room.scores],
     players: room.players.map((pl, idx) => ({
@@ -131,6 +141,7 @@ function serializeRoomDetail(room) {
       isHost: idx === 0,
       heroName: pl.heroName,
       heroClass: pl.heroClass,
+      appVersion: pl.appVersion || "unknown",
       loadout: pl.loadout,
       ready: pl.ready,
     })),
@@ -251,6 +262,7 @@ function handleClientMessage(client, msg) {
           client,
           heroName: String(msg.heroName || "Sir Aldric").trim().slice(0, 20) || "Sir Aldric",
           heroClass: ["mage", "gilded", "ranger"].includes(msg.heroClass) ? msg.heroClass : "gilded",
+          appVersion: String(msg.appVersion || "unknown").trim().slice(0, 20),
           loadout: Array.isArray(msg.loadout) ? msg.loadout.slice(0, 4) : null,
           ready: false,
         },
@@ -283,6 +295,7 @@ function handleClientMessage(client, msg) {
       client,
       heroName: String(msg.heroName || "Challenger").trim().slice(0, 20) || "Challenger",
       heroClass: ["mage", "gilded", "ranger"].includes(msg.heroClass) ? msg.heroClass : "gilded",
+      appVersion: String(msg.appVersion || "unknown").trim().slice(0, 20),
       loadout: Array.isArray(msg.loadout) ? msg.loadout.slice(0, 4) : null,
       ready: false,
     });
@@ -308,16 +321,17 @@ function handleClientMessage(client, msg) {
     const pl = room.players[pIdx];
     if (typeof msg.heroName === "string") pl.heroName = msg.heroName.trim().slice(0, 20) || pl.heroName;
     if (["mage", "gilded", "ranger"].includes(msg.heroClass)) pl.heroClass = msg.heroClass;
+    if (typeof msg.appVersion === "string" && msg.appVersion.trim()) pl.appVersion = msg.appVersion.trim().slice(0, 20);
     if (Array.isArray(msg.loadout)) pl.loadout = msg.loadout.slice(0, 4);
     if (typeof msg.ready === "boolean") pl.ready = msg.ready;
     if (pIdx === 0 && msg.mapId !== undefined) {
       room.mapId = Math.max(0, Math.min(3, Number(msg.mapId) || 0));
     }
-    const allReady = room.status === "lobby" && room.players.length === 2 && room.players.every((x) => x.ready);
+    const allReady = room.status === "lobby" && room.players.length === 2 && room.players.every((x) => x.ready) && !hasVersionMismatch(room);
     if (allReady && !room.autoStartTimer) {
       room.autoStartAt = Date.now() + 3200;
       room.autoStartTimer = setTimeout(() => {
-        if (rooms.has(room.id) && room.status === "lobby" && room.players.length === 2 && room.players.every((x) => x.ready)) {
+        if (rooms.has(room.id) && room.status === "lobby" && room.players.length === 2 && room.players.every((x) => x.ready) && !hasVersionMismatch(room)) {
           launchPvpRoomMatch(room);
         } else {
           clearRoomAutoStart(room);
@@ -334,6 +348,10 @@ function handleClientMessage(client, msg) {
   if (msg.type === "start_match" && pIdx === 0) {
     if (room.players.length < 2) {
       sendWsJson(client, { type: "error", message: "Waiting for a challenger to join!" });
+      return;
+    }
+    if (hasVersionMismatch(room)) {
+      sendWsJson(client, { type: "error", code: "version_mismatch", message: "Game version didn't match! Please update the game before starting." });
       return;
     }
     if (!room.players.every((pl) => pl.ready)) {

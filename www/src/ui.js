@@ -588,6 +588,13 @@ export function showMainMenu() {
     resumeBtn.hidden = true;
     resumeBtn.disabled = true;
   }
+  const checkUpdBtn = document.getElementById("menu-btn-check-update");
+  if (checkUpdBtn) {
+    const isNativeApk = Boolean(window.Capacitor || window.AndroidApp);
+    const isMobile = isNativeApk || window.innerWidth <= 960 || window.matchMedia?.("(pointer: coarse)")?.matches;
+    const isOnline = navigator.onLine && (!window.AndroidApp?.isOnline || window.AndroidApp.isOnline());
+    checkUpdBtn.hidden = !(isMobile && isOnline);
+  }
   menu.hidden = false;
 }
 
