@@ -1599,7 +1599,7 @@ export function openPvpDialog() {
       modeLanBtn.classList.toggle("active", isLan);
       modeLanBtn.setAttribute("aria-selected", String(isLan));
     }
-    if (netBar) netBar.hidden = isLan;
+    if (netBar) netBar.hidden = isLan || pvpNet.connected || pvpNet.connecting || pvpNet.waking;
     if (lanPanel) lanPanel.hidden = !isLan;
 
     const hasApkLan = Boolean(window.AndroidApp?.startLanServer);
@@ -1734,23 +1734,27 @@ export function openPvpDialog() {
       }
     }
 
+    if (netBar) {
+      netBar.hidden = activeMode === "lan" || pvpNet.connected || pvpNet.connecting || pvpNet.waking;
+    }
+
     if (statusEl) {
       if (pvpNet.lastError) {
+        statusEl.hidden = false;
         statusEl.textContent = pvpNet.lastError;
         statusEl.className = "pvp-status-msg error";
       } else if (pvpNet.connected) {
-        statusEl.textContent = activeMode === "lan"
-          ? `LAN Connected (${pvpNet.clientIp || "Wi-Fi"}). Create a LAN match or join a friend on your Wi-Fi!`
-          : `Network Connected (${pvpNet.clientIp || "Online"}). Same-Wi-Fi lobbies appear first with a Same Network badge.`;
-        statusEl.className = "pvp-status-msg ok";
+        statusEl.hidden = true;
       } else if (pvpNet.waking) {
+        statusEl.hidden = false;
         statusEl.textContent = `Waking PvP server, retrying automatically... (Attempt ${pvpNet.retryAttempt}/${pvpNet.maxRetries})`;
         statusEl.className = "pvp-status-msg waking";
-      } else {
-        statusEl.textContent = activeMode === "lan"
-          ? "Tap Host LAN on Phone, tap Scan Wi-Fi, or type your friend's IP (e.g. 192.168.1.5)."
-          : "Connecting automatically to Online PvP Arena...";
+      } else if (activeMode === "lan") {
+        statusEl.hidden = false;
+        statusEl.textContent = "Tap Host LAN on Phone, tap Scan Wi-Fi, or type your friend's IP (e.g. 192.168.1.5).";
         statusEl.className = "pvp-status-msg";
+      } else {
+        statusEl.hidden = true;
       }
     }
 
@@ -1837,7 +1841,7 @@ export function openPvpDialog() {
 
       if (roomNetBadgeEl) {
         const pingTxt = typeof runtime.netPingMs === "number" ? ` · ${Math.round(runtime.netPingMs)} ms` : "";
-        roomNetBadgeEl.textContent = `${activeMode === "lan" ? "📡 LAN / Wi-Fi" : "🌐 Online Cloud"}${pingTxt}`;
+        roomNetBadgeEl.textContent = `${activeMode === "lan" ? "📡 LAN (Wi-Fi)" : "🌐 Online"}${pingTxt}`;
       }
       if (roomTitleEl) roomTitleEl.textContent = `${rm.name}${rm.hasPassword ? " 🔒" : ""}`;
       if (roomMetaEl) roomMetaEl.textContent = `Map: ${m.name} — ${m.desc}`;

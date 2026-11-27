@@ -857,8 +857,8 @@
     <div class="dialog-card pvp-card pixel-quest-card">
       <div class="dialog-header">
         <div>
-          <span class="eyebrow">Real-Time 1v1 Multiplayer</span>
-          <h1 id="pvp-dialog-title">PvP Dungeon Arena</h1>
+          <span class="eyebrow">1v1 Arena</span>
+          <h1 id="pvp-dialog-title">PvP Dungeon</h1>
         </div>
         <div class="pvp-header-right">
           <span id="pvp-conn-pill" class="pvp-conn-pill offline">Offline</span>
@@ -872,15 +872,15 @@
       <div id="pvp-connection-shell" class="pvp-connection-shell">
         <div class="pvp-mode-tabs" role="tablist" aria-label="Multiplayer Connection Mode">
           <button type="button" id="btn-pvp-mode-network" class="pvp-mode-tab active" role="tab" aria-selected="true">
-            🌐 Online (Auto Cloud)
+            🌐 Online
           </button>
           <button type="button" id="btn-pvp-mode-lan" class="pvp-mode-tab" role="tab" aria-selected="false">
-            📡 LAN / Offline (Wi-Fi)
+            📡 LAN (Wi-Fi)
           </button>
         </div>
 
-        <div id="pvp-network-bar" class="pvp-server-bar">
-          <span class="hint-text" style="flex:1">Auto-connects to the Online PvP Server — no setup required.</span>
+        <div id="pvp-network-bar" class="pvp-server-bar" hidden>
+          <span class="hint-text" style="flex:1">Disconnected from Online server.</span>
           <button type="button" id="btn-pvp-connect" class="btn btn-primary btn-sm">Reconnect</button>
         </div>
 
@@ -929,7 +929,7 @@
               <input id="pvp-room-name" type="text" maxlength="26" placeholder="Room Name (e.g. Friday Duel)" />
               <input id="pvp-room-pass" type="password" maxlength="20" placeholder="Password (optional)" />
               <div id="pvp-map-grid" class="pvp-map-grid"></div>
-              <button type="button" id="btn-pvp-create" class="btn btn-primary">Create PvP Lobby</button>
+              <button type="button" id="btn-pvp-create" class="btn btn-primary">Create Lobby</button>
             </div>
           </section>
         </div>
