@@ -26,43 +26,51 @@ export const PVP_MAPS = [
   {
     id: 0,
     name: "Goblin Catacombs Pit",
-    subtitle: "Stone Pillars & Center Well",
+    subtitle: "Stone Pillars & Power Vials",
     floorTileIdx: 0,
     accentTileIdx: 0,
     w: 22,
     h: 16,
-    desc: "Classic 4-pillar stone chamber with breakable crates and a central healing well.",
+    desc: "Classic 4-pillar stone chamber with breakable crates and 15s arena power-up vials.",
   },
   {
     id: 1,
     name: "Sunken Foundry Crucible",
-    subtitle: "Forge Lanes & Twin Shrines",
+    subtitle: "Forge Lanes & Arena Vials",
     floorTileIdx: 1,
     accentTileIdx: 0,
     w: 24,
     h: 16,
-    desc: "Gilded metal arena with forge choke points plus top Aegis and bottom Magic shrines.",
+    desc: "Gilded metal arena with forge choke points and rotating top/center/bottom power-up vials.",
   },
   {
     id: 2,
     name: "Abyssal Sanctum Arena",
-    subtitle: "Open Void Kiting Grounds",
+    subtitle: "Open Void & Power Vials",
     floorTileIdx: 3,
     accentTileIdx: 0,
     w: 26,
     h: 18,
-    desc: "Spacious dark obsidian sanctum with staggered cover obelisks built for ranged duels.",
+    desc: "Spacious dark obsidian sanctum with staggered cover obelisks and 15s power-up vials.",
   },
   {
     id: 3,
     name: "Crimson Courtyard",
-    subtitle: "3-Lane Fortress & Blood Altar",
+    subtitle: "3-Lane Fortress & Center Vial",
     floorTileIdx: 0,
     accentTileIdx: 0,
     w: 24,
     h: 16,
-    desc: "Bastion courtyard split into 3 tactical lanes guarding a central Shrine of Blood.",
+    desc: "Bastion courtyard split into 3 tactical lanes contesting 15s arena power-up vials.",
   },
+];
+
+export const PVP_POWERUP_TYPES = [
+  { kind: "hp", name: "Vitality Vial", color: "#ef4444", glow: "rgba(239, 68, 68, 0.36)" },
+  { kind: "regen", name: "Regen Vial", color: "#22c55e", glow: "rgba(34, 197, 94, 0.36)", label: "2.5%/s REGEN · 5s" },
+  { kind: "damage", name: "Fury Vial", color: "#facc15", glow: "rgba(250, 204, 21, 0.38)", label: "+30% DMG · 7s" },
+  { kind: "haste", name: "Haste Vial", color: "#a855f7", glow: "rgba(168, 85, 247, 0.38)", label: "+30% SPEED · 6s" },
+  { kind: "ward", name: "Aegis Vial", color: "#38bdf8", glow: "rgba(56, 189, 248, 0.36)", label: "+8 DEF · -1.5s CD" },
 ];
 
 export function getPvpMode() {
@@ -212,38 +220,45 @@ export function buildPvpArenaLevel(mapId = 0) {
   addProp({ kind: "torch", x: x0, y: y1, solid: false });
   addProp({ kind: "torch", x: x1, y: y1, solid: false });
 
+  let powerupSpots = [
+    { x: cx, y: cy },
+    { x: cx, y: y0 + 2 },
+    { x: cx, y: y1 - 2 },
+  ];
+
   if (cfg.id === 0) {
-    // Goblin Catacombs Pit: 4 symmetrical 2x2 stone pillars + mid Healing Well + corner crates
+    // Goblin Catacombs Pit: 4 symmetrical 2x2 stone pillars + power-up vial spots
     for (const [ox, oy] of [[-4, -3], [3, -3], [-4, 2], [3, 2]]) {
       setWall(cx + ox, cy + oy);
       setWall(cx + ox + 1, cy + oy);
       setWall(cx + ox, cy + oy + 1);
       setWall(cx + ox + 1, cy + oy + 1);
     }
-    addProp({ id: "pvp_well", kind: "well", x: cx, y: cy, solid: false, used: false });
     addProp({ kind: "crate", x: cx, y: y0 + 2, solid: true, broken: false });
     addProp({ kind: "barrel", x: cx, y: y1 - 2, solid: true, broken: false });
+    powerupSpots = [
+      { x: cx, y: cy },
+      { x: cx, y: y0 + 3 },
+      { x: cx, y: y1 - 3 },
+    ];
   } else if (cfg.id === 1) {
-    // Sunken Foundry Crucible: staggered forge walls + Top Aegis & Bottom Magic Shrines
+    // Sunken Foundry Crucible: staggered forge walls + rotating arena power-up vials
     for (const [ox, oy] of [[-5, -2], [-5, -1], [-5, 1], [-5, 2], [5, -2], [5, -1], [5, 1], [5, 2]]) {
       setWall(cx + ox, cy + oy);
     }
     setWall(cx - 1, cy - 4);
     setWall(cx + 1, cy + 4);
-    addProp({ id: "pvp_shrine_top", kind: "shrine", shrineId: "aegis", x: cx, y: y0 + 2, solid: false, used: false });
-    addProp({ id: "pvp_shrine_bot", kind: "shrine", shrineId: "sanctum", x: cx, y: y1 - 2, solid: false, used: false });
     addProp({ kind: "barrel", x: cx - 2, y: cy, solid: true, broken: false });
     addProp({ kind: "barrel", x: cx + 2, y: cy, solid: true, broken: false });
   } else if (cfg.id === 2) {
-    // Abyssal Sanctum Arena: open kiting grounds + diagonal void obelisks
+    // Abyssal Sanctum Arena: open kiting grounds + diagonal void obelisks + power-up vials
     for (const [ox, oy] of [[-6, -4], [6, -4], [-6, 4], [6, 4], [-3, 0], [3, 0], [0, -4], [0, 4]]) {
       setWall(cx + ox, cy + oy);
     }
-    addProp({ id: "pvp_well", kind: "well", x: cx, y: cy, solid: false, used: false });
     addProp({ kind: "urn", x: cx - 5, y: cy, solid: true, broken: false });
     addProp({ kind: "urn", x: cx + 5, y: cy, solid: true, broken: false });
   } else {
-    // Crimson Courtyard: 3 lanes guarded by horizontal bastion walls & central Blood Shrine
+    // Crimson Courtyard: 3 lanes guarded by horizontal bastion walls & power-up vials
     for (let dx = -4; dx <= -2; dx++) {
       setWall(cx + dx, cy - 3);
       setWall(cx + dx, cy + 3);
@@ -252,7 +267,6 @@ export function buildPvpArenaLevel(mapId = 0) {
       setWall(cx + dx, cy - 3);
       setWall(cx + dx, cy + 3);
     }
-    addProp({ id: "pvp_shrine_blood", kind: "shrine", shrineId: "blood", x: cx, y: cy, solid: false, used: false });
     addProp({ kind: "crate", x: cx - 6, y: cy - 1, solid: true, broken: false });
     addProp({ kind: "crate", x: cx + 6, y: cy + 1, solid: true, broken: false });
   }
@@ -274,6 +288,7 @@ export function buildPvpArenaLevel(mapId = 0) {
     rooms: [{ id: 0, x: x0, y: y0, w: cfg.w, h: cfg.h, cx, cy }],
     playerStart: spawns[0],
     pvpSpawns: spawns,
+    pvpPowerupSpots: powerupSpots,
     stairsPos: null,
     props,
     traps: [],
@@ -684,6 +699,8 @@ export function createOpponentEntity(playerData, spawn) {
     tempDefTimer: 0,
     hasteTimer: 0,
     retributionTimer: 0,
+    pvpDmgTimer: 0,
+    regenTimer: 0,
     bobPhase: 0,
   };
 }
@@ -719,6 +736,10 @@ function setupPvpMatchEntities(room, mySlot, isNextRound = false) {
     pvpRoundBanner: null,
     pvpIntroTimer: introDur,
     pvpIntroEndsAt: performance.now() + introDur * 1000,
+    pvpPowerups: [],
+    pvpPowerupTimer: 0.25,
+    pvpNextPowerupId: 1,
+    pvpClaimedPowerupIds: new Set(),
     pvpOpponent: opp,
     pvpMyInfo: myInfo,
     pvpOppInfo: oppInfo,
@@ -971,6 +992,10 @@ export function updatePvpFrame(dt) {
     }
   }
 
+  if (!s.pvpRoundEnded && !s.runEnded && (s.pvpIntroTimer || 0) <= 0) {
+    updatePvpPowerups(dt);
+  }
+
   // Broadcast local player snapshot ~22Hz (skip once round has ended so stale hp:0 cannot leak into next round)
   pvpNet.syncAccum += dt;
   if (!s.pvpRoundEnded && !s.runEnded && pvpNet.syncAccum >= 0.045 && pvpNet.connected && s.player) {
@@ -992,8 +1017,114 @@ export function updatePvpFrame(dt) {
       hasteTimer: p.hasteTimer > 0 ? 1 : 0,
       retributionTimer: p.retributionTimer > 0 ? 1 : 0,
       manaShieldTimer: p.manaShieldTimer > 0 ? 1 : 0,
+      pvpDmgTimer: (p.pvpDmgTimer || 0) > 0 ? 1 : 0,
+      regenTimer: (p.regenTimer || 0) > 0 ? 1 : 0,
     });
   }
+}
+
+/** Spawn a random arena vial every 15s (host-authoritative) and handle walk-over claims. */
+function updatePvpPowerups(dt) {
+  const s = runtime.state;
+  const p = s?.player;
+  if (!s || !p) return;
+
+  if (s.pvpMySlot === 0) {
+    s.pvpPowerupTimer = (s.pvpPowerupTimer ?? 15) - dt;
+    if (s.pvpPowerupTimer <= 0) {
+      s.pvpPowerupTimer = 15.0;
+      const active = s.pvpPowerups || [];
+      if (active.length < 3) {
+        const spots = (s.level?.pvpPowerupSpots || []).filter(
+          (sp) => !active.some((pu) => pu.x === sp.x && pu.y === sp.y)
+        );
+        if (spots.length > 0) {
+          const spot = s.pvpNextPowerupId === 1
+            ? spots[0]
+            : spots[Math.floor(Math.random() * spots.length)];
+          const tpl = PVP_POWERUP_TYPES[Math.floor(Math.random() * PVP_POWERUP_TYPES.length)];
+          const hpPct = tpl.kind === "hp" ? 5 + Math.floor(Math.random() * 16) : 0;
+          const powerup = {
+            id: s.pvpNextPowerupId++,
+            kind: tpl.kind,
+            name: tpl.name,
+            color: tpl.color,
+            glow: tpl.glow,
+            hpPct,
+            label: tpl.kind === "hp" ? `+${hpPct}% HP` : tpl.label,
+            x: spot.x,
+            y: spot.y,
+          };
+          s.pvpPowerups.push(powerup);
+          spawnRing(spot.x + 0.5, spot.y + 0.5, 28, powerup.color, 0.35);
+          spawnBurst(spot.x + 0.5, spot.y + 0.5, powerup.color, 10, 0.9);
+          broadcastPvpAction({ kind: "powerup_spawn", powerup });
+        }
+      }
+    }
+  }
+
+  for (let i = (s.pvpPowerups || []).length - 1; i >= 0; i--) {
+    const pu = s.pvpPowerups[i];
+    if (Math.hypot(p.x - (pu.x + 0.5), p.y - (pu.y + 0.5)) <= 0.85) {
+      s.pvpPowerups.splice(i, 1);
+      s.pvpClaimedPowerupIds?.add(pu.id);
+      applyPvpPowerupToPlayer(pu);
+      broadcastPvpAction({
+        kind: "powerup_claim",
+        id: pu.id,
+        x: pu.x + 0.5,
+        y: pu.y + 0.5,
+        color: pu.color,
+        label: pu.label,
+        byName: p.name,
+      });
+    }
+  }
+}
+
+function applyPvpPowerupToPlayer(pu) {
+  const s = runtime.state;
+  const p = s?.player;
+  if (!s || !p) return;
+  const stats = getPlayerStats(p);
+  sfx.heal();
+  spawnRing(pu.x + 0.5, pu.y + 0.5, 38, pu.color, 0.35);
+  spawnBurst(pu.x + 0.5, pu.y + 0.5, pu.color, 16, 1.15);
+
+  if (pu.kind === "hp") {
+    const pct = pu.hpPct || 12;
+    const heal = Math.max(1, Math.round(stats.maxHp * (pct / 100)));
+    p.hp = Math.min(stats.maxHp, p.hp + heal);
+    addFloat(p.x, p.y - 0.5, `+${heal} HP (${pct}%)`, pu.color);
+    addLog(`Picked up ${pu.name}: restored +${heal} HP (${pct}%).`, "heal");
+  } else if (pu.kind === "regen") {
+    p.regenTimer = 5.0;
+    p.regenTickTimer = 0.5;
+    p.regenPctPerSec = 0.025;
+    addFloat(p.x, p.y - 0.5, "2.5%/s REGEN (5s)!", pu.color);
+    addLog(`Picked up ${pu.name}: regenerating 2.5% HP/s for 5s.`, "heal");
+  } else if (pu.kind === "damage") {
+    p.pvpDmgTimer = 7.0;
+    p.pvpDmgMult = 1.3;
+    sfx.levelUp();
+    addFloat(p.x, p.y - 0.5, "+30% DMG (7s)!", pu.color);
+    addLog(`Picked up ${pu.name}: +30% damage dealt for 7s!`, "story");
+  } else if (pu.kind === "haste") {
+    p.hasteTimer = 6.0;
+    p.hasteBonus = 1.35;
+    addFloat(p.x, p.y - 0.5, "+30% SPEED (6s)!", pu.color);
+    addLog(`Picked up ${pu.name}: +30% movement speed for 6s!`, "story");
+  } else if (pu.kind === "ward") {
+    p.tempDef = Math.max(p.tempDef || 0, 8);
+    p.tempDefTimer = Math.max(p.tempDefTimer || 0, 6.0);
+    for (const key of Object.keys(s.spellCooldowns || {})) {
+      if (s.spellCooldowns[key] > 0) s.spellCooldowns[key] = Math.max(0, s.spellCooldowns[key] - 1.5);
+    }
+    addFloat(p.x, p.y - 0.5, "+8 DEF · -1.5s CD!", pu.color);
+    addLog(`Picked up ${pu.name}: +8 DEF for 6s and -1.5s skill cooldowns!`, "story");
+  }
+  runtime.uiDirty = true;
 }
 
 export function broadcastPvpAction(action) {
@@ -1024,6 +1155,8 @@ function applyRemoteOpponentSync(msg) {
   opp.hasteTimer = msg.hasteTimer ? 1 : 0;
   opp.retributionTimer = msg.retributionTimer ? 1 : 0;
   opp.manaShieldTimer = msg.manaShieldTimer ? 1 : 0;
+  opp.pvpDmgTimer = msg.pvpDmgTimer ? 1 : 0;
+  opp.regenTimer = msg.regenTimer ? 1 : 0;
 }
 
 function applyRemoteOpponentAction(msg) {
@@ -1225,6 +1358,25 @@ function applyRemoteOpponentAction(msg) {
     s.beams.push({ x: act.x * TILE_SIZE, y: act.y * TILE_SIZE, color: "#fde047", life: 0.44, maxLife: 0.44 });
     spawnBurst(act.x, act.y, "#f97316", 32, 1.7);
     spawnBurst(act.x, act.y, "#fde047", 20, 1.35);
+  } else if (act.kind === "powerup_spawn" && act.powerup) {
+    const pu = act.powerup;
+    if (!s.pvpPowerups) s.pvpPowerups = [];
+    if (!s.pvpClaimedPowerupIds?.has(pu.id) && !s.pvpPowerups.some((x) => x.id === pu.id)) {
+      s.pvpPowerups.push(pu);
+      spawnRing(pu.x + 0.5, pu.y + 0.5, 28, pu.color, 0.35);
+      spawnBurst(pu.x + 0.5, pu.y + 0.5, pu.color, 10, 0.9);
+    }
+  } else if (act.kind === "powerup_claim") {
+    s.pvpClaimedPowerupIds?.add(act.id);
+    if (Array.isArray(s.pvpPowerups)) {
+      const idx = s.pvpPowerups.findIndex((x) => x.id === act.id);
+      if (idx >= 0) s.pvpPowerups.splice(idx, 1);
+    }
+    spawnRing(act.x, act.y, 34, act.color || "#facc15", 0.32);
+    spawnBurst(act.x, act.y, act.color || "#facc15", 12, 1.0);
+    if (act.byName && act.label) {
+      addFloat(act.x, act.y - 0.35, `${act.byName}: ${act.label}`, act.color || "#fde047");
+    }
   } else if (act.kind === "clear_charges" && opp) {
     opp.ultCharge = null;
     opp.radiantCharge = null;

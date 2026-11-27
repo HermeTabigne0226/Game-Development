@@ -244,7 +244,7 @@ export function getPlayerStats(p = runtime.state?.player) {
     crit: Math.min(75, crit),
     maxHp: p.maxHp + bonusHp,
     maxMp: p.maxMp + bonusMp,
-    moveSpeed: 4.5 + speedBonus + (p.hasteTimer > 0 ? 0.7 : 0),
+    moveSpeed: 4.5 + speedBonus + (p.hasteTimer > 0 ? (p.hasteBonus || 0.7) : 0),
     setPassives: sets.passives,
   };
 }

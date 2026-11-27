@@ -373,6 +373,60 @@ export function renderFrame(ts) {
     }
   }
 
+  // PvP Arena Power-Up Vials (color-coded glass flasks with floating buff label)
+  if (s.isPvp && Array.isArray(s.pvpPowerups)) {
+    for (const pu of s.pvpPowerups) {
+      const vx = (pu.x + 0.5) * TILE_SIZE;
+      const vy = (pu.y + 0.5) * TILE_SIZE;
+      const bob = Math.sin(ts * 0.0055 + pu.id) * 2.5;
+      ctx.save();
+      ctx.fillStyle = pu.glow || "rgba(250, 204, 21, 0.32)";
+      ctx.beginPath();
+      ctx.ellipse(vx, vy + 8, 13, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = pu.color;
+      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = 0.65 + Math.sin(ts * 0.008 + pu.id) * 0.25;
+      ctx.beginPath();
+      ctx.arc(vx, vy + bob, 14, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      // Pixel-style potion vial silhouette with dynamic color
+      const fy = vy + bob;
+      ctx.fillStyle = "#b45309";
+      ctx.fillRect(vx - 2.5, fy - 11, 5, 3);
+      ctx.fillStyle = "rgba(226, 232, 240, 0.9)";
+      ctx.fillRect(vx - 3.5, fy - 8, 7, 3);
+      ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+      ctx.strokeStyle = "#cbd5e1";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(vx, fy + 2, 7.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = pu.color;
+      ctx.beginPath();
+      ctx.arc(vx, fy + 2.5, 5.8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(vx - 2, fy - 5, 4, 4);
+
+      ctx.fillStyle = "rgba(255, 255, 255, 0.72)";
+      ctx.fillRect(vx - 4, fy - 1, 2, 4);
+
+      ctx.font = "bold 9px sans-serif";
+      ctx.textAlign = "center";
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "#090b10";
+      const lbl = pu.label || pu.name || "BUFF";
+      ctx.strokeText(lbl, vx, fy - 15);
+      ctx.fillStyle = pu.color;
+      ctx.fillText(lbl, vx, fy - 15);
+      ctx.restore();
+    }
+  }
+
   // Shops
   if (Array.isArray(lvl.shops)) {
     const nonBossLeft = lvl.enemies.filter((e) => !e.isBoss && !e.isClone).length;
@@ -1610,6 +1664,27 @@ function drawEntityChargesAndAuras(ctx, assets, ts, entity) {
       ctx.arc(entity.x * TILE_SIZE, entity.y * TILE_SIZE - ez * 0.5, 19, 0, Math.PI * 2);
       ctx.stroke();
     }
+    ctx.restore();
+  }
+
+  if ((entity.pvpDmgTimer || 0) > 0) {
+    ctx.save();
+    ctx.strokeStyle = `rgba(250, 204, 21, ${0.65 + Math.sin(ts * 0.014) * 0.25})`;
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.arc(entity.x * TILE_SIZE, entity.y * TILE_SIZE - ez * 0.5, 22, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  if ((entity.regenTimer || 0) > 0) {
+    ctx.save();
+    ctx.strokeStyle = `rgba(34, 197, 94, ${0.65 + Math.sin(ts * 0.012) * 0.25})`;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.arc(entity.x * TILE_SIZE, entity.y * TILE_SIZE - ez * 0.5, 20, 0, Math.PI * 2);
+    ctx.stroke();
     ctx.restore();
   }
 }

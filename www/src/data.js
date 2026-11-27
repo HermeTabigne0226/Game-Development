@@ -11,6 +11,7 @@ export const PATCH_NOTES = [
       "No PvP Mana Restrictions & 6s Dodge Cooldown: Skills and Dash cost 0 MP in 1v1 PvP Arena (no Out of Mana locks), while Dodge/Dash has a balanced 6-second cooldown in PvP only (1.05s in Dungeon runs).",
       "PvP Full Arena Visibility & Skill VFX Sync: Fixed PvP fog-of-war regression after moving and synced all Gilded Knight & Sylvan Ranger skill visuals (Divine Cataclysm, Valiant Charge, Radiant Cleave, Skyfall Judgment, Aegis Bulwark, Arrow Storm, Frost Zones, and buff auras) to your rival's screen.",
       "Auto-Return Lobby Countdown & Lobby Confirmation: Added a 5-second auto-return countdown to the PvP Lobby after match victory/defeat, renamed the PvP Menu button to Lobby, and added a confirmation dialog to Go to PvP Lobby or Exit Match.",
+      "PvP Power-Up Vials (15s Arena Spawns): Replaced static PvP shrines/wells with color-coded walk-over Vials spawning every 15s — Red (+5%–20% HP), Green (2.5%/s Regen for 5s), Yellow (+30% DMG for 7s), Purple (+30% Speed for 6s), and Cyan (+8 DEF & -1.5s CD).",
     ],
   },
   {

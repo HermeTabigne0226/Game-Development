@@ -200,6 +200,7 @@ export function damageEnemy(enemy, rawDmg, isCrit = false, sourceLabel = "strike
   }
 
   if (enemy.isPvpPlayer) {
+    if ((p.pvpDmgTimer || 0) > 0) modDmg *= p.pvpDmgMult || 1.3;
     const outDmg = Math.max(10, Math.round(modDmg * 10));
     enemy.hurtTimer = 0.16;
     s.shake = Math.max(s.shake, isCrit ? 5 : 2.5);

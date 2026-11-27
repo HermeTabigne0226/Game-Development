@@ -791,7 +791,25 @@ export function updateSimulation(dt) {
     p.tempAtkTimer = Math.max(0, p.tempAtkTimer - dt);
     if (p.tempAtkTimer <= 0) { p.tempAtk = 0; runtime.uiDirty = true; }
   }
-  if (p.hasteTimer > 0) p.hasteTimer = Math.max(0, p.hasteTimer - dt);
+  if (p.hasteTimer > 0) {
+    p.hasteTimer = Math.max(0, p.hasteTimer - dt);
+    if (p.hasteTimer <= 0) p.hasteBonus = 0;
+  }
+  if ((p.pvpDmgTimer || 0) > 0) {
+    p.pvpDmgTimer = Math.max(0, p.pvpDmgTimer - dt);
+    if (p.pvpDmgTimer <= 0) p.pvpDmgMult = 1;
+  }
+  if ((p.regenTimer || 0) > 0) {
+    p.regenTimer = Math.max(0, p.regenTimer - dt);
+    p.regenTickTimer = (p.regenTickTimer ?? 0.5) - dt;
+    if (p.regenTickTimer <= 0) {
+      p.regenTickTimer += 0.5;
+      const heal = Math.max(1, Math.round(stats.maxHp * (p.regenPctPerSec || 0.025) * 0.5));
+      p.hp = Math.min(stats.maxHp, p.hp + heal);
+      addFloat(p.x, p.y - 0.35, `+${heal}`, "#4ade80");
+      runtime.uiDirty = true;
+    }
+  }
   if ((p.manaShieldTimer || 0) > 0) p.manaShieldTimer = Math.max(0, p.manaShieldTimer - dt);
 
   if (p.aegisBlast) {
