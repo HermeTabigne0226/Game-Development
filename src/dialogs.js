@@ -1163,7 +1163,31 @@ export function renderTitleSanctum() {
   const nameInput = document.getElementById("hero-name-input");
   if (nameInput && !nameInput.value.trim()) nameInput.value = m.heroName || "Sir Aldric";
   const diffSel = document.getElementById("difficulty-select");
-  if (diffSel) diffSel.value = m.difficulty || "normal";
+  const curDiff = m.difficulty || "normal";
+  if (diffSel) diffSel.value = curDiff;
+  const diffCardsWrap = document.getElementById("difficulty-cards");
+  if (diffCardsWrap) {
+    const syncDiffCards = (val) => {
+      if (diffSel) diffSel.value = val;
+      for (const btn of diffCardsWrap.querySelectorAll(".difficulty-card")) {
+        const active = (btn.dataset.diff || "normal") === val;
+        btn.classList.toggle("active", active);
+        btn.setAttribute("aria-checked", String(active));
+      }
+    };
+    syncDiffCards(curDiff);
+    if (!diffCardsWrap.dataset.bound) {
+      diffCardsWrap.dataset.bound = "1";
+      for (const btn of diffCardsWrap.querySelectorAll(".difficulty-card")) {
+        btn.addEventListener("click", () => {
+          const val = btn.dataset.diff || "normal";
+          m.difficulty = val;
+          saveMeta();
+          syncDiffCards(val);
+        });
+      }
+    }
+  }
   document.getElementById("sanctum-shards").textContent = m.soulShards;
 
   const tabBlessings = document.getElementById("btn-sanctum-tab-blessings");

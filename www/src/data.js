@@ -1,8 +1,18 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.0.3.1 Beta";
+export const GAME_VERSION = "v.1.0.3.2 Beta";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.0.3.2 Beta",
+    title: "Responsive Mobile HUD/Menus, Difficulty Cards & APK v1+v2 Signing",
+    notes: [
+      "All-Phone Responsive HUD: Added automatic viewport-height HUD scaling (--hud-auto-scale) so shorter phones no longer overlap the Minimap with the Ult button while keeping taller phones unchanged, synced 1:1 with joystick & attack wheel drag.",
+      "Responsive Menu, Hero & Skill Selection: Enabled clean flex scrolling and compact spacing across Main Menu, Quest Details, Hero Selection, and Skill Loadout on all phone resolutions.",
+      "Themed Difficulty Cards: Replaced the native Android dropdown popup with readable Normal, Hard, and Nightmare cards.",
+      "APK Compatibility: Enabled explicit v1 + v2 APK signing for wider Android 7/8+ support.",
+    ],
+  },
   {
     version: "v.1.0.3.1 Beta",
     title: "PvP Arena Map Splash Art & VS Screen Backdrops",

@@ -7,8 +7,8 @@ android {
         applicationId "com.shatteredcrown.rpg"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 20005
-        versionName "1.0.3.1-beta"
+        versionCode 20006
+        versionName "1.0.3.2-beta"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -31,6 +31,8 @@ android {
             storePassword 'android'
             keyAlias 'androiddebugkey'
             keyPassword 'android'
+            v1SigningEnabled true
+            v2SigningEnabled true
         }
         release {
             if (hasReleaseKeystore) {
@@ -38,6 +40,8 @@ android {
                 storePassword(System.getenv('ANDROID_KEYSTORE_PASSWORD') ?: keystoreProps.getProperty('storePassword'))
                 keyAlias(System.getenv('ANDROID_KEY_ALIAS') ?: keystoreProps.getProperty('keyAlias'))
                 keyPassword(System.getenv('ANDROID_KEY_PASSWORD') ?: keystoreProps.getProperty('keyPassword'))
+                v1SigningEnabled true
+                v2SigningEnabled true
             }
         }
     }

@@ -118,8 +118,10 @@ function setupControls() {
   let joyOriginX = 0;
   let joyOriginY = 0;
   const getTouchCtrlScale = () => {
+    const autoScale = Math.min(1.15, Math.max(0.72, (window.innerHeight || 415) / 415));
     const sz = runtime.meta?.settings?.mobileButtonSize;
-    return sz === "big" ? 1.32 : sz === "medium" ? 1.16 : 1;
+    const userScale = sz === "big" ? 1.32 : sz === "medium" ? 1.16 : 1;
+    return autoScale * userScale;
   };
 
   const updateJoystick = (clientX, clientY) => {
