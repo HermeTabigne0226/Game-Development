@@ -721,6 +721,15 @@ export function updateSimulation(dt) {
     return;
   }
 
+  if ((s.pvpIntroTimer || 0) > 0) {
+    s.pvpIntroTimer = Math.max(0, s.pvpIntroTimer - dt);
+    if (s.pvpIntroTimer <= 0) {
+      sfx.nova();
+      addFloat(s.player.x, s.player.y - 0.55, "FIGHT!", "#fde047");
+    }
+    return;
+  }
+
   const p = s.player;
   const stats = getPlayerStats();
 

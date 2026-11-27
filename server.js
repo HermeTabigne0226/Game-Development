@@ -123,6 +123,7 @@ function serializeRoomDetail(room) {
     hasPassword: Boolean(room.passwordHash),
     status: room.status,
     round: room.round,
+    autoStartSec: room.autoStartAt ? Math.max(0, Math.ceil((room.autoStartAt - Date.now()) / 1000)) : 0,
     scores: [...room.scores],
     players: room.players.map((pl, idx) => ({
       id: pl.id,
@@ -146,6 +147,31 @@ function broadcastLobbies() {
   }
 }
 
+function clearRoomAutoStart(room) {
+  if (room?.autoStartTimer) {
+    clearTimeout(room.autoStartTimer);
+    room.autoStartTimer = null;
+  }
+  if (room) room.autoStartAt = 0;
+}
+
+function launchPvpRoomMatch(room) {
+  clearRoomAutoStart(room);
+  room.status = "playing";
+  room.round = 1;
+  room.roundEnded = false;
+  room.scores = [0, 0];
+  const detail = serializeRoomDetail(room);
+  for (let i = 0; i < room.players.length; i++) {
+    sendWsJson(room.players[i].client, {
+      type: "match_start",
+      slot: i,
+      room: detail,
+    });
+  }
+  broadcastLobbies();
+}
+
 function broadcastRoomUpdate(room) {
   const detail = serializeRoomDetail(room);
   for (const pl of room.players) {
@@ -160,6 +186,7 @@ function removeClientFromRoom(client) {
   if (!room) return;
 
   const wasPlaying = room.status === "playing";
+  clearRoomAutoStart(room);
   room.players = room.players.filter((pl) => pl.id !== client.id);
   if (room.roundTimer) {
     clearTimeout(room.roundTimer);
@@ -215,6 +242,8 @@ function handleClientMessage(client, msg) {
       round: 1,
       roundEnded: false,
       roundTimer: null,
+      autoStartTimer: null,
+      autoStartAt: 0,
       scores: [0, 0],
       players: [
         {
@@ -284,6 +313,19 @@ function handleClientMessage(client, msg) {
     if (pIdx === 0 && msg.mapId !== undefined) {
       room.mapId = Math.max(0, Math.min(3, Number(msg.mapId) || 0));
     }
+    const allReady = room.status === "lobby" && room.players.length === 2 && room.players.every((x) => x.ready);
+    if (allReady && !room.autoStartTimer) {
+      room.autoStartAt = Date.now() + 3200;
+      room.autoStartTimer = setTimeout(() => {
+        if (rooms.has(room.id) && room.status === "lobby" && room.players.length === 2 && room.players.every((x) => x.ready)) {
+          launchPvpRoomMatch(room);
+        } else {
+          clearRoomAutoStart(room);
+        }
+      }, 3200);
+    } else if (!allReady) {
+      clearRoomAutoStart(room);
+    }
     broadcastRoomUpdate(room);
     broadcastLobbies();
     return;
@@ -298,19 +340,7 @@ function handleClientMessage(client, msg) {
       sendWsJson(client, { type: "error", message: "Both fighters must press Ready first!" });
       return;
     }
-    room.status = "playing";
-    room.round = 1;
-    room.roundEnded = false;
-    room.scores = [0, 0];
-    const detail = serializeRoomDetail(room);
-    for (let i = 0; i < room.players.length; i++) {
-      sendWsJson(room.players[i].client, {
-        type: "match_start",
-        slot: i,
-        room: detail,
-      });
-    }
-    broadcastLobbies();
+    launchPvpRoomMatch(room);
     return;
   }
 

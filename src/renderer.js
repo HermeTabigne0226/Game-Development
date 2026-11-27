@@ -1506,6 +1506,30 @@ export function renderFrame(ts) {
 
   ctx.restore();
 
+  if (s.isPvp && (s.pvpIntroTimer || 0) > 0 && s.pvpIntroTimer <= 1.55) {
+    const num = Math.max(1, Math.ceil(s.pvpIntroTimer * 2));
+    const label = num >= 3 ? "3" : num === 2 ? "2" : "1";
+    ctx.save();
+    ctx.fillStyle = "rgba(6, 8, 15, 0.35)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const pulse = 1 + Math.sin(ts * 0.02) * 0.08;
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.scale(pulse, pulse);
+    ctx.font = "900 72px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.strokeStyle = "#090b10";
+    ctx.lineWidth = 8;
+    ctx.strokeText(label, 0, -10);
+    ctx.fillStyle = "#fde047";
+    ctx.fillText(label, 0, -10);
+    ctx.font = "800 18px system-ui, sans-serif";
+    ctx.fillStyle = "#e2e8f0";
+    ctx.strokeText("GET READY!", 0, 42);
+    ctx.fillText("GET READY!", 0, 42);
+    ctx.restore();
+  }
+
   const pAnimSheet = assets[`${heroPrefix}_${p.anim}`] || assets[`${heroPrefix}_idle`] || assets.gilded_idle;
   portraitCtx.clearRect(0, 0, 64, 64);
   portraitCtx.imageSmoothingEnabled = false;

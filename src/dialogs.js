@@ -1757,15 +1757,42 @@ export function openPvpDialog() {
 
       const myPl = rm.players[pvpNet.mySlot];
       readyState = Boolean(myPl?.ready);
+      const allReady = rm.players.length === 2 && rm.players.every((pl) => pl.ready);
+      const cdEl = document.getElementById("pvp-lobby-countdown");
+      if (renderPvpUI._cdInterval) {
+        clearInterval(renderPvpUI._cdInterval);
+        renderPvpUI._cdInterval = null;
+      }
+      if (cdEl) {
+        if (allReady) {
+          let sec = Math.max(1, rm.autoStartSec || 3);
+          cdEl.hidden = false;
+          cdEl.textContent = `All Fighters Ready! Match starting in ${sec}...`;
+          renderPvpUI._cdInterval = setInterval(() => {
+            if (!dlg.open || !pvpNet.room || pvpNet.room.status !== "lobby") {
+              clearInterval(renderPvpUI._cdInterval);
+              renderPvpUI._cdInterval = null;
+              return;
+            }
+            sec = Math.max(1, sec - 1);
+            cdEl.textContent = sec <= 1 ? "Launching Arena..." : `All Fighters Ready! Match starting in ${sec}...`;
+          }, 950);
+        } else if (rm.players.length === 2) {
+          cdEl.hidden = false;
+          cdEl.textContent = `Press Ready Up (${rm.players.filter((x) => x.ready).length}/2 Ready) — Match auto-starts when both are Ready!`;
+        } else {
+          cdEl.hidden = true;
+        }
+      }
       if (readyBtn) {
         readyBtn.textContent = readyState ? "Unready" : "Ready Up";
         readyBtn.className = `btn ${readyState ? "btn-primary" : "btn-secondary"}`;
       }
       if (startBtn) {
         const isHost = pvpNet.mySlot === 0;
-        const canStart = isHost && rm.players.length === 2 && rm.players.every((pl) => pl.ready);
-        startBtn.hidden = !isHost;
-        startBtn.disabled = !canStart;
+        startBtn.hidden = !isHost || !allReady;
+        startBtn.disabled = !allReady;
+        startBtn.textContent = "Start Now";
       }
     }
 

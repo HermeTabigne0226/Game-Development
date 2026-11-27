@@ -94,6 +94,8 @@ public final class LocalPvpServer {
         int round = 1;
         boolean roundEnded = false;
         ScheduledFuture<?> roundTimer;
+        ScheduledFuture<?> autoStartTimer;
+        long autoStartAt = 0L;
         final int[] scores = new int[]{0, 0};
         final List<PlayerSlot> players = new ArrayList<>();
 
@@ -597,6 +599,8 @@ public final class LocalPvpServer {
             obj.put("hasPassword", !r.passwordHash.isEmpty());
             obj.put("status", r.status);
             obj.put("round", r.round);
+            int autoSec = r.autoStartAt > 0 ? Math.max(0, (int) Math.ceil((r.autoStartAt - System.currentTimeMillis()) / 1000.0)) : 0;
+            obj.put("autoStartSec", autoSec);
             JSONArray sc = new JSONArray();
             sc.put(r.scores[0]);
             sc.put(r.scores[1]);
@@ -671,6 +675,7 @@ public final class LocalPvpServer {
                 r.roundTimer.cancel(false);
                 r.roundTimer = null;
             }
+            clearAutoStart(r);
             if (r.players.isEmpty()) {
                 rooms.remove(r.id);
             } else {
@@ -688,6 +693,35 @@ public final class LocalPvpServer {
                     broadcastRoomUpdate(r);
                 }
             }
+        }
+        broadcastLobbies();
+    }
+
+    private static void clearAutoStart(Room r) {
+        if (r == null) return;
+        if (r.autoStartTimer != null) {
+            r.autoStartTimer.cancel(false);
+            r.autoStartTimer = null;
+        }
+        r.autoStartAt = 0L;
+    }
+
+    private void launchRoomMatch(Room r) {
+        clearAutoStart(r);
+        r.status = "playing";
+        r.round = 1;
+        r.roundEnded = false;
+        r.scores[0] = 0;
+        r.scores[1] = 0;
+        JSONObject detail = serializeRoomDetail(r);
+        for (int i = 0; i < r.players.size(); i++) {
+            try {
+                JSONObject start = new JSONObject();
+                start.put("type", "match_start");
+                start.put("slot", i);
+                start.put("room", detail);
+                sendWsJson(r.players.get(i).client, start);
+            } catch (Exception ignored) {}
         }
         broadcastLobbies();
     }
@@ -815,6 +849,21 @@ public final class LocalPvpServer {
                 if (pIdx == 0 && msg.has("mapId")) {
                     r.mapId = Math.max(0, Math.min(3, msg.optInt("mapId", r.mapId)));
                 }
+                boolean allReady = "lobby".equals(r.status) && r.players.size() == 2 && r.players.get(0).ready && r.players.get(1).ready;
+                if (allReady && r.autoStartTimer == null && scheduler != null) {
+                    r.autoStartAt = System.currentTimeMillis() + 3200L;
+                    r.autoStartTimer = scheduler.schedule(() -> {
+                        synchronized (r) {
+                            if (rooms.containsKey(r.id) && "lobby".equals(r.status) && r.players.size() == 2 && r.players.get(0).ready && r.players.get(1).ready) {
+                                launchRoomMatch(r);
+                            } else {
+                                clearAutoStart(r);
+                            }
+                        }
+                    }, 3200L, TimeUnit.MILLISECONDS);
+                } else if (!allReady) {
+                    clearAutoStart(r);
+                }
                 broadcastRoomUpdate(r);
                 broadcastLobbies();
                 return;
@@ -831,22 +880,7 @@ public final class LocalPvpServer {
                         return;
                     }
                 }
-                r.status = "playing";
-                r.round = 1;
-                r.roundEnded = false;
-                r.scores[0] = 0;
-                r.scores[1] = 0;
-                JSONObject detail = serializeRoomDetail(r);
-                for (int i = 0; i < r.players.size(); i++) {
-                    try {
-                        JSONObject start = new JSONObject();
-                        start.put("type", "match_start");
-                        start.put("slot", i);
-                        start.put("room", detail);
-                        sendWsJson(r.players.get(i).client, start);
-                    } catch (Exception ignored) {}
-                }
-                broadcastLobbies();
+                launchRoomMatch(r);
                 return;
             }
 

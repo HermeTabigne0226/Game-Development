@@ -1,4 +1,5 @@
 import { sfx } from "./audio.js";
+import { drawSheetFrame } from "./assets.js";
 import { CLASS_DEFAULT_LOADOUTS, DEFAULT_LOADOUT, HERO_CLASSES, ITEMS, SPELLS } from "./data.js";
 import { MAP_H, MAP_W, TILE } from "./dungeon.js";
 import {
@@ -362,8 +363,8 @@ export function buildBalancedPvpPlayer(heroName, heroClassId, loadoutIds) {
     skillPoints: 0,
     loadout: chosen,
     skillRanks,
-    maxHp: 74 + cls.bonusHp * 2,
-    hp: 74 + cls.bonusHp * 2,
+    maxHp: 5000,
+    hp: 5000,
     maxMp: 38 + cls.bonusMp * 2,
     mp: 38 + cls.bonusMp * 2,
     baseAtk: 8 + cls.bonusAtk,
@@ -386,6 +387,8 @@ export function buildBalancedPvpPlayer(heroName, heroClassId, loadoutIds) {
     rapidSlash: null,
     aegisBlast: null,
   };
+  const gearBonusStats = getPlayerStats({ ...player, maxHp: 0 });
+  player.maxHp = Math.max(1000, 5000 - gearBonusStats.maxHp);
   const stats = getPlayerStats(player);
   player.hp = stats.maxHp;
   player.mp = stats.maxMp;
@@ -613,7 +616,7 @@ export const pvpNet = new PvpNetworkClient();
 export function createOpponentEntity(playerData, spawn) {
   const safeId = playerData.heroClass === "paladin" ? "gilded" : playerData.heroClass;
   const cls = HERO_CLASSES[safeId] || HERO_CLASSES.gilded;
-  const maxHp = 74 + cls.bonusHp * 2 + (cls.id === "gilded" ? 6 : cls.id === "mage" ? 2 : 4);
+  const maxHp = 5000;
   return {
     uid: `pvp_rival_${playerData.id || playerData.slot}`,
     id: `pvp_${cls.id}`,
@@ -677,6 +680,7 @@ function setupPvpMatchEntities(room, mySlot) {
     pvpRound: room.round || 1,
     pvpScores: [...(room.scores || [0, 0])],
     pvpRoundEnded: false,
+    pvpIntroTimer: 4.5,
     pvpOpponent: opp,
     floor: 1,
     difficulty: "normal",
@@ -722,6 +726,85 @@ function setupPvpMatchEntities(room, mySlot) {
   };
 }
 
+function showPvpVsLoadingScreen(room, mySlot, durationMs = 3000) {
+  const overlay = document.getElementById("pvp-vs-screen");
+  if (!overlay) return;
+  const myInfo = room.players[mySlot] || {};
+  const oppInfo = room.players[mySlot === 0 ? 1 : 0] || {};
+  const myClsId = myInfo.heroClass === "paladin" ? "gilded" : myInfo.heroClass || "gilded";
+  const oppClsId = oppInfo.heroClass === "paladin" ? "gilded" : oppInfo.heroClass || "gilded";
+  const myCls = HERO_CLASSES[myClsId] || HERO_CLASSES.gilded;
+  const oppCls = HERO_CLASSES[oppClsId] || HERO_CLASSES.gilded;
+  const map = PVP_MAPS[room.mapId] || PVP_MAPS[0];
+
+  const myIds = Array.isArray(myInfo.loadout) && myInfo.loadout.length >= 4 ? myInfo.loadout : (CLASS_DEFAULT_LOADOUTS[myCls.id] || DEFAULT_LOADOUT);
+  const oppIds = Array.isArray(oppInfo.loadout) && oppInfo.loadout.length >= 4 ? oppInfo.loadout : (CLASS_DEFAULT_LOADOUTS[oppCls.id] || DEFAULT_LOADOUT);
+
+  const renderSkillsHtml = (ids) =>
+    ids
+      .map((id) => SPELLS.find((sp) => sp.id === id))
+      .filter(Boolean)
+      .map(
+        (sp) =>
+          `<div class="pvp-vs-skill-pill"><img src="${sp.icon}" alt="" /><span>${sp.name}</span></div>`
+      )
+      .join("");
+
+  document.getElementById("pvp-vs-round").textContent = `ROUND ${room.round || 1} — 1V1 ARENA`;
+  document.getElementById("pvp-vs-map-name").textContent = map.name;
+  document.getElementById("pvp-vs-map-sub").textContent = map.subtitle;
+
+  document.getElementById("pvp-vs-left-name").textContent = myInfo.heroName || myCls.name;
+  document.getElementById("pvp-vs-left-class").textContent = `${myCls.name} · 5,000 HP`;
+  document.getElementById("pvp-vs-left-skills").innerHTML = renderSkillsHtml(myIds);
+
+  document.getElementById("pvp-vs-right-name").textContent = oppInfo.heroName || oppCls.name;
+  document.getElementById("pvp-vs-right-class").textContent = `${oppCls.name} · 5,000 HP`;
+  document.getElementById("pvp-vs-right-skills").innerHTML = renderSkillsHtml(oppIds);
+
+  const barEl = document.getElementById("pvp-vs-bar-fill");
+  const statusEl = document.getElementById("pvp-vs-status");
+  if (barEl) barEl.style.width = "0%";
+  if (statusEl) statusEl.textContent = "Entering Arena...";
+  overlay.hidden = false;
+  sfx.levelUp();
+
+  const leftCtx = document.getElementById("pvp-vs-canvas-left")?.getContext("2d");
+  const rightCtx = document.getElementById("pvp-vs-canvas-right")?.getContext("2d");
+  const startTs = performance.now();
+  let animIdx = 0;
+  let lastSprTick = startTs;
+
+  const tick = (now) => {
+    const elapsed = now - startTs;
+    const pct = Math.min(100, (elapsed / durationMs) * 100);
+    if (barEl) barEl.style.width = `${pct.toFixed(1)}%`;
+    const remSec = Math.max(1, Math.ceil((durationMs - elapsed) / 1000));
+    if (statusEl) statusEl.textContent = pct >= 96 ? "Arena Ready!" : `Preparing Arena... ${remSec}s`;
+
+    if (now - lastSprTick >= 120) {
+      lastSprTick = now;
+      animIdx = (animIdx + 1) % 24;
+    }
+    const drawSide = (c, clsId, flip) => {
+      if (!c) return;
+      c.clearRect(0, 0, 112, 112);
+      c.imageSmoothingEnabled = false;
+      const sheet = runtime.assets[`${clsId}_walk`] || runtime.assets[`${clsId}_idle`] || runtime.assets.gilded_idle;
+      if (sheet) drawSheetFrame(c, sheet, animIdx, 8, 8, 96, 96, flip);
+    };
+    drawSide(leftCtx, myCls.id, false);
+    drawSide(rightCtx, oppCls.id, true);
+
+    if (elapsed < durationMs && !overlay.hidden) {
+      requestAnimationFrame(tick);
+    } else {
+      overlay.hidden = true;
+    }
+  };
+  requestAnimationFrame(tick);
+}
+
 export function startPvpMatchSession(room, mySlot) {
   setupPvpMatchEntities(room, mySlot);
   const mpDlg = document.getElementById("pvp-dialog");
@@ -730,8 +813,8 @@ export function startPvpMatchSession(room, mySlot) {
   if (pvpHooks.buildSpellButtons) pvpHooks.buildSpellButtons();
   if (pvpHooks.updateUI) pvpHooks.updateUI();
   runtime.uiDirty = true;
-  showFloorBanner(`PvP Round ${room.round || 1} — ${runtime.state.level.pvpMap.name}`);
-  addLog(`PvP Duel started on ${runtime.state.level.pvpMap.name}! Best of 3 rounds.`, "story");
+  showPvpVsLoadingScreen(room, mySlot, 3000);
+  addLog(`PvP Duel started on ${runtime.state.level.pvpMap.name}! Best of 3 rounds (5,000 HP).`, "story");
 }
 
 export function startPvpRound(room, mySlot) {

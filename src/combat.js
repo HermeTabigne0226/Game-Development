@@ -134,7 +134,7 @@ export function healPlayer(amount, sourceLabel = null) {
   if (!s) return 0;
   const p = s.player;
   const stats = getPlayerStats();
-  const finalHeal = Math.max(1, Math.round(amount));
+  const finalHeal = Math.max(1, Math.round(amount * (s.isPvp ? 10 : 1)));
   const before = p.hp;
   p.hp = Math.min(stats.maxHp, p.hp + finalHeal);
   const gained = Math.max(0, Math.round(p.hp - before));
@@ -199,7 +199,7 @@ export function damageEnemy(enemy, rawDmg, isCrit = false, sourceLabel = "strike
   }
 
   if (enemy.isPvpPlayer) {
-    const outDmg = Math.max(1, Math.round(modDmg));
+    const outDmg = Math.max(10, Math.round(modDmg * 10));
     enemy.hurtTimer = 0.16;
     s.shake = Math.max(s.shake, isCrit ? 5 : 2.5);
     addFloat(enemy.x, enemy.y, `${outDmg}${isCrit ? "!" : ""}`, isCrit ? "#fde047" : "#f87171");
@@ -445,7 +445,7 @@ export function handleBossDefeated(boss) {
 
 export function performMeleeAttack() {
   const s = runtime.state;
-  if (!s || s.runEnded || s.dyingTimer > 0) return;
+  if (!s || s.runEnded || s.dyingTimer > 0 || (s.pvpIntroTimer || 0) > 0) return;
   const p = s.player;
   if ((p.stunTimer || 0) > 0 || (p.frozenTimer || 0) > 0 || p.attackCd > 0) return;
 
@@ -601,7 +601,7 @@ export function performMeleeAttack() {
 
 export function performDash() {
   const s = runtime.state;
-  if (!s || s.runEnded || s.dyingTimer > 0) return;
+  if (!s || s.runEnded || s.dyingTimer > 0 || (s.pvpIntroTimer || 0) > 0) return;
   const p = s.player;
   if ((p.stunTimer || 0) > 0 || p.dashCd > 0 || p.dashTimer > 0) return;
   if (p.mp < 10) {
@@ -752,7 +752,7 @@ export function performDash() {
 
 export function castSpell(spellId) {
   const s = runtime.state;
-  if (!s || s.runEnded || s.dyingTimer > 0) return;
+  if (!s || s.runEnded || s.dyingTimer > 0 || (s.pvpIntroTimer || 0) > 0) return;
   const spell = SPELLS.find((x) => x.id === spellId);
   if (!spell) return;
   const p = s.player;

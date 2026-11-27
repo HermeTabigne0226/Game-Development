@@ -1,8 +1,17 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.3.10";
+export const GAME_VERSION = "v.1.3.11";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.3.11",
+    title: "PvP Auto-Start Countdown, VS Matchup Loading Screen & 5,000 HP",
+    notes: [
+      "PvP Auto-Start Timer: When both fighters press Ready Up, a live 3-second countdown automatically starts the duel (Hosts can also click Start Now anytime).",
+      "VS Matchup Loading Screen + Arena Countdown: Before fighting begins, an animated VS matchup screen showcases the Arena Map, Your Hero & 4 Skills (left) vs Opponent & 4 Skills (right), followed by a crisp 3-2-1 countdown.",
+      "Standard 5,000 HP PvP Balance: Both fighters start each duel at a balanced 5,000 HP with scaled PvP damage and healing.",
+    ],
+  },
   {
     version: "v.1.3.10",
     title: "Simplified 1-Click Online & Clean IP-Only LAN PvP",

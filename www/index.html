@@ -31,6 +31,42 @@
     </div>
   </div>
 
+  <!-- PvP Map Matchup VS Loading Screen -->
+  <div id="pvp-vs-screen" class="fullscreen-overlay pvp-vs-screen" hidden>
+    <div class="pvp-vs-backdrop">
+      <div class="pvp-vs-top-banner">
+        <span id="pvp-vs-round" class="eyebrow">ROUND 1 — 1V1 ARENA</span>
+        <h2 id="pvp-vs-map-name">Arena Map</h2>
+        <p id="pvp-vs-map-sub"></p>
+      </div>
+      <div class="pvp-vs-stage">
+        <div class="pvp-vs-fighter left">
+          <span class="pvp-vs-side-badge you">YOUR HERO</span>
+          <canvas id="pvp-vs-canvas-left" width="112" height="112" aria-hidden="true"></canvas>
+          <strong id="pvp-vs-left-name">Hero</strong>
+          <span id="pvp-vs-left-class" class="pvp-vs-class-pill">Archmage · 5,000 HP</span>
+          <div id="pvp-vs-left-skills" class="pvp-vs-skills-list"></div>
+        </div>
+        <div class="pvp-vs-center-emblem">
+          <div class="pvp-vs-badge">VS</div>
+        </div>
+        <div class="pvp-vs-fighter right">
+          <span class="pvp-vs-side-badge rival">CHALLENGER</span>
+          <canvas id="pvp-vs-canvas-right" width="112" height="112" aria-hidden="true"></canvas>
+          <strong id="pvp-vs-right-name">Rival</strong>
+          <span id="pvp-vs-right-class" class="pvp-vs-class-pill">Knight · 5,000 HP</span>
+          <div id="pvp-vs-right-skills" class="pvp-vs-skills-list"></div>
+        </div>
+      </div>
+      <div class="pvp-vs-loader">
+        <div class="loading-bar-track">
+          <div id="pvp-vs-bar-fill" class="loading-bar-fill" style="width:0%"></div>
+        </div>
+        <p id="pvp-vs-status" class="loading-status">Entering Arena...</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Game Intro & Main Menu -->
   <div id="main-menu" class="fullscreen-overlay" hidden>
     <div class="menu-card medieval-card">
@@ -848,6 +884,7 @@
         </div>
 
         <div id="pvp-vs-row" class="pvp-vs-row"></div>
+        <div id="pvp-lobby-countdown" class="pvp-lobby-countdown" hidden>All Fighters Ready!</div>
 
         <div class="pvp-room-config">
           <div id="pvp-host-map-bar" class="pvp-host-map-bar" hidden>
