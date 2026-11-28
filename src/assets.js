@@ -196,6 +196,8 @@ export async function loadAllAssets(onProgress = null) {
     vfx_air_burst: "assets/generated/vfx_skills/air_burst.png",
     vfx_wind_blade: "assets/generated/vfx_skills/wind_blade.png",
     vfx_bloom_heal: "assets/generated/vfx_skills/bloom_heal.png",
+    vfx_arrow_flight: "assets/generated/vfx_skills/arrow_flight.png",
+    vfx_arrow_impact: "assets/generated/vfx_skills/arrow_impact.png",
   };
 
   const list = Object.entries(manifest);

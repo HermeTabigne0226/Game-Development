@@ -1950,6 +1950,12 @@ export function updateSimulation(dt) {
       const fa = s.fallingArrows[i];
       fa.life -= dt;
       if (fa.life <= 0) {
+        const ang = Math.atan2(fa.targetY - fa.y, fa.targetX - fa.x);
+        spawnVfxAnim(fa.targetX / TILE_SIZE, fa.targetY / TILE_SIZE, "vfx_arrow_impact", 40, 0.34, {
+          angle: ang,
+          anchorX: 0.78,
+          anchorY: 0.53,
+        });
         s.particles.push({ x: fa.targetX, y: fa.targetY, vx: (Math.random() - 0.5) * 28, vy: (Math.random() - 0.5) * 28, color: "#fde047", size: 2.5, life: 0.18, maxLife: 0.18 });
         s.fallingArrows.splice(i, 1);
       }

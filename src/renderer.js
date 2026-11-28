@@ -67,6 +67,8 @@ const VFX_SHEET_META = {
   vfx_air_burst: { fw: 112, fh: 74, cols: 8, frames: 17 },
   vfx_wind_blade: { fw: 96, fh: 44, cols: 8, frames: 16 },
   vfx_bloom_heal: { fw: 56, fh: 64, cols: 8, frames: 22 },
+  vfx_arrow_flight: { fw: 51, fh: 15, cols: 8, frames: 8 },
+  vfx_arrow_impact: { fw: 64, fh: 32, cols: 8, frames: 17 },
 };
 
 const PROJ_SHEET_MAP = {
@@ -1202,7 +1204,15 @@ export function renderFrame(ts) {
       ctx.lineTo(cx, cy);
       ctx.stroke();
 
-      if (assets.arrow_proj) {
+      if (assets.vfx_arrow_flight) {
+        const meta = VFX_SHEET_META.vfx_arrow_flight;
+        const frameIdx = Math.floor((ts * 0.024 + fa.targetX) % meta.frames);
+        const dw = 38;
+        const dh = dw * (meta.fh / meta.fw);
+        ctx.translate(cx, cy);
+        ctx.rotate(ang);
+        drawGridVfxFrame(ctx, assets.vfx_arrow_flight, meta, frameIdx, -dw * 0.85, -dh * 0.5, dw, dh);
+      } else if (assets.arrow_proj) {
         ctx.imageSmoothingEnabled = false;
         const sz = fa.sizePx || 24;
         ctx.translate(cx, cy);
