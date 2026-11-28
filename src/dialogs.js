@@ -285,51 +285,98 @@ export function openItemActionDialog(index) {
 
     const cancelBtn = document.createElement("button");
     cancelBtn.type = "button";
-    cancelBtn.className = "btn btn-secondary";
+    cancelBtn.className = "btn btn-secondary btn-full";
     cancelBtn.textContent = "Cancel";
     cancelBtn.addEventListener("click", () => dlg.close());
     btnsEl.appendChild(cancelBtn);
   } else if (item.type === "consumable") {
+    const picker = document.createElement("div");
+    picker.className = "item-shortcut-picker";
+    picker.innerHTML = `<div class="item-shortcut-title">Quick Shortcut Slots (Tap to Assign)</div>`;
+    const grid = document.createElement("div");
+    grid.className = "item-shortcut-grid";
+
     for (let sl = 0; sl < 4; sl++) {
+      const assignedId = p.shortcuts?.[sl] || null;
+      const assignedTpl = assignedId ? ITEMS[assignedId] : null;
+      const assignedQty = assignedId ? (p.inventory.find((i) => i.id === assignedId)?.qty || 0) : 0;
+      const isSame = assignedId === item.id;
+
       const sBtn = document.createElement("button");
       sBtn.type = "button";
-      sBtn.className = "btn btn-secondary";
-      const isAssigned = s.player.shortcuts?.[sl] === item.id;
-      sBtn.textContent = isAssigned ? `Shortcut ${sl + 1} (Set)` : `Add to Shortcut ${sl + 1}`;
+      sBtn.className = `item-shortcut-slot${isSame ? " active" : ""}`;
+      sBtn.title = assignedTpl
+        ? `Slot ${sl + 1}: ${assignedTpl.name} (${assignedQty}) — Click to ${isSame ? "clear" : "replace"}`
+        : `Slot ${sl + 1}: Empty — Click to assign ${item.name}`;
+
+      if (assignedTpl) {
+        sBtn.innerHTML = `<span class="item-shortcut-num">${sl + 1}</span><img src="${assignedTpl.icon}" alt="${escapeHtml(assignedTpl.name)}" /><span class="item-shortcut-qty">${assignedQty}</span>`;
+      } else {
+        sBtn.innerHTML = `<span class="item-shortcut-empty">${sl + 1}</span>`;
+      }
+
       sBtn.addEventListener("click", () => {
-        if (!s.player.shortcuts) s.player.shortcuts = [null, null, null, null];
-        s.player.shortcuts[sl] = item.id;
+        if (!p.shortcuts) p.shortcuts = [null, null, null, null];
+        if (isSame) {
+          p.shortcuts[sl] = null;
+          addLog(`Cleared Shortcut ${sl + 1}.`, "info");
+        } else {
+          p.shortcuts[sl] = item.id;
+          addLog(`Assigned ${item.name} to Shortcut ${sl + 1}.`, "info");
+        }
         sfx.loot();
-        addLog(`Assigned ${item.name} to Shortcut ${sl + 1}.`, "info");
         runtime.uiDirty = true;
         saveRun();
         dlg.close();
       });
-      btnsEl.appendChild(sBtn);
+      grid.appendChild(sBtn);
     }
+    picker.appendChild(grid);
+    btnsEl.appendChild(picker);
 
     const qty = item.qty || 1;
     if (qty > 1) {
       const dropOneBtn = document.createElement("button");
       dropOneBtn.type = "button";
-      dropOneBtn.className = "btn btn-danger";
+      dropOneBtn.className = "btn btn-secondary";
       dropOneBtn.textContent = "Drop 1 to Ground";
       dropOneBtn.addEventListener("click", () => { dropInventoryItem(index, 1); sfx.step(); dlg.close(); });
       btnsEl.appendChild(dropOneBtn);
 
-      const dropAllBtn = document.createElement("button");
-      dropAllBtn.type = "button";
-      dropAllBtn.className = "btn btn-danger";
-      dropAllBtn.textContent = `Discard All (x${qty})`;
-      dropAllBtn.addEventListener("click", () => { dropInventoryItem(index, qty); sfx.step(); dlg.close(); });
-      btnsEl.appendChild(dropAllBtn);
+      const delAllBtn = document.createElement("button");
+      delAllBtn.type = "button";
+      delAllBtn.className = "btn btn-danger";
+      delAllBtn.textContent = `Delete All (x${qty})`;
+      delAllBtn.addEventListener("click", () => {
+        p.inventory.splice(index, 1);
+        sfx.step();
+        addLog(`Deleted ${item.name} (x${qty}).`, "info");
+        runtime.uiDirty = true;
+        saveRun();
+        dlg.close();
+      });
+      btnsEl.appendChild(delAllBtn);
     } else {
       const dropBtn = document.createElement("button");
       dropBtn.type = "button";
-      dropBtn.className = "btn btn-danger btn-full";
-      dropBtn.textContent = "Drop / Discard to Ground";
+      dropBtn.className = "btn btn-secondary";
+      dropBtn.textContent = "Drop to Ground";
       dropBtn.addEventListener("click", () => { dropInventoryItem(index, 1); sfx.step(); dlg.close(); });
       btnsEl.appendChild(dropBtn);
+
+      const delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "btn btn-danger";
+      delBtn.textContent = "Delete Item";
+      delBtn.addEventListener("click", () => {
+        p.inventory.splice(index, 1);
+        sfx.step();
+        addLog(`Deleted ${item.name}.`, "info");
+        runtime.uiDirty = true;
+        saveRun();
+        dlg.close();
+      });
+      btnsEl.appendChild(delBtn);
     }
   }
 
