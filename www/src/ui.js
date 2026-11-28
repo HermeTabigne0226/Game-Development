@@ -407,6 +407,15 @@ export function updateUI() {
   const paperdollEl = document.getElementById("bag-equip-paperdoll");
   if (paperdollEl) {
     paperdollEl.innerHTML = "";
+    const slotSilhouettes = {
+      helmet: "spritecook-inventory-icons/helmet.png",
+      armor: "spritecook-inventory-icons/armour.png",
+      weapon: "spritecook-inventory-icons/sword.png",
+      subweapon: "spritecook-inventory-icons/shield.png",
+      boots: "spritecook-inventory-icons/boot.png",
+      ring: "spritecook-inventory-icons/ring.png",
+    };
+    const earringSvg = `<svg viewBox="0 0 24 24" class="pd-silhouette pd-svg-silhouette" aria-hidden="true"><circle cx="8" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 9.5 L5.5 15 L8 19 L10.5 15 Z" fill="currentColor"/><circle cx="16" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 9.5 L13.5 15 L16 19 L18.5 15 Z" fill="currentColor"/></svg>`;
     const layout = [
       { slot: null },
       { slot: "helmet", label: "Head" },
@@ -438,7 +447,10 @@ export function updateUI() {
           if (uiHooks.openEquippedActionDialog) uiHooks.openEquippedActionDialog(cell.slot);
         });
       } else {
-        box.innerHTML = `<span class="pd-empty">${cell.label}</span>`;
+        const silHtml = slotSilhouettes[cell.slot]
+          ? `<img src="${slotSilhouettes[cell.slot]}" class="pixel-icon pd-silhouette" alt="" />`
+          : earringSvg;
+        box.innerHTML = `${silHtml}<span class="pd-empty">${cell.label}</span>`;
         box.title = `${cell.label} (Empty)`;
       }
       paperdollEl.appendChild(box);

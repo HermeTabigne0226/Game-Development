@@ -758,30 +758,42 @@ body[data-btn-size="big"] {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: clamp(4px, 0.8vh, 8px);
-    padding: clamp(6px, 1vh, 10px);
-    border-radius: 8px;
-    background: rgba(11, 15, 26, 0.92);
-    border: 1.5px solid #334155;
+    gap: clamp(6px, 1vh, 10px);
+    padding: clamp(8px, 1.3vh, 12px);
+    border-radius: 10px;
+    background:
+      radial-gradient(circle at 50% 54%, rgba(56, 189, 248, 0.12), rgba(15, 23, 42, 0.94) 68%),
+      repeating-linear-gradient(45deg, rgba(148, 163, 184, 0.03) 0 6px, transparent 6px 12px),
+      #0b101d;
+    border: 2px solid #3f4d6d;
+    box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.72), 0 4px 16px rgba(0, 0, 0, 0.45);
     min-height: 0;
     overflow: hidden;
   }
   #panel-bag.mobile-open .bag-paperdoll-section h3 {
     width: 100%;
-    font-size: clamp(0.64rem, 1.55vh, 0.78rem);
+    font-size: clamp(0.66rem, 1.6vh, 0.8rem);
     margin: 0;
+    padding-bottom: clamp(3px, 0.6vh, 5px);
+    border-bottom: 1px solid rgba(250, 204, 21, 0.22);
     text-align: center;
     color: #facc15;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
   }
   .bag-equip-paperdoll {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     grid-template-rows: repeat(3, minmax(0, 1fr));
-    gap: clamp(5px, 1vh, 9px);
-    width: min(100%, clamp(160px, 42vh, 240px));
+    gap: clamp(6px, 1.1vh, 10px);
+    width: min(100%, clamp(176px, 46vh, 256px));
     aspect-ratio: 1;
+    padding: clamp(7px, 1.2vh, 11px);
+    border-radius: 10px;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(250, 204, 21, 0.08) 0%, rgba(30, 41, 59, 0.55) 55%, rgba(8, 12, 22, 0.92) 100%);
+    border: 1.5px solid rgba(96, 125, 175, 0.42);
+    box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.75);
   }
   .paperdoll-spacer {
     pointer-events: none;
@@ -794,32 +806,44 @@ body[data-btn-size="big"] {
     justify-content: center;
     gap: 2px;
     padding: 3px;
-    border-radius: 6px;
+    border-radius: 7px;
     border: 2px solid #475569;
-    background: radial-gradient(circle at center, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
-    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.6);
+    background: radial-gradient(circle at center, rgba(30, 41, 59, 0.96), rgba(12, 18, 32, 0.98));
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.65);
     cursor: pointer;
     min-width: 0;
     min-height: 0;
   }
-  .paperdoll-slot img {
+  .paperdoll-slot img,
+  .paperdoll-slot .pd-svg-silhouette {
     width: clamp(22px, 5vh, 34px);
     height: clamp(22px, 5vh, 34px);
     image-rendering: pixelated;
     object-fit: contain;
   }
+  .paperdoll-slot .pd-silhouette {
+    filter: brightness(0) invert(0.62) sepia(0.28) hue-rotate(185deg) saturate(1.4);
+    opacity: 0.34;
+    pointer-events: none;
+  }
+  .paperdoll-slot .pd-svg-silhouette {
+    filter: none;
+    color: #7c93b8;
+    opacity: 0.36;
+  }
   .paperdoll-slot .pd-label {
-    font-size: clamp(0.5rem, 1.15vh, 0.62rem);
+    font-size: clamp(0.48rem, 1.1vh, 0.6rem);
     font-weight: 700;
     line-height: 1;
     text-transform: uppercase;
   }
   .paperdoll-slot .pd-empty {
-    font-size: clamp(0.54rem, 1.25vh, 0.66rem);
+    font-size: clamp(0.48rem, 1.1vh, 0.6rem);
     font-weight: 700;
     color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.03em;
+    line-height: 1;
   }
   #panel-bag.mobile-open .inventory-section {
     grid-column: 2;
