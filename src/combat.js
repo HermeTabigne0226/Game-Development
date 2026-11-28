@@ -1469,7 +1469,7 @@ export function castSpell(spellId) {
       if (d <= rad + 0.5) {
         const pullAng = Math.atan2(ty - e.y, tx - e.x);
         e.chilled = Math.max(e.chilled || 0, chillDur);
-        damageEnemy(e, dmg, false, spell.name, Math.cos(pullAng) * 2.2, Math.sin(pullAng) * 2.2, { isSkill: true, isAoe: true });
+        damageEnemy(e, dmg, false, spell.name, Math.cos(pullAng) * 2.2, Math.sin(pullAng) * 2.2, { isSkill: true, isAoe: true, freezeDur: chillDur * 0.5 });
       }
     }
     addFloat(tx, ty - 0.4, "VOID RIFT!", "#c084fc");
@@ -1511,7 +1511,7 @@ export function castSpell(spellId) {
       const d = Math.hypot(e.x - tx, e.y - ty);
       if (d <= rad + 0.65) {
         const pullAng = Math.atan2(ty - e.y, tx - e.x);
-        e.stunned = Math.max(e.stunned || 0, stunDur);
+        e.stunTimer = Math.max(e.stunTimer || 0, stunDur);
         damageEnemy(e, dmg, false, spell.name, Math.cos(pullAng) * 2.6, Math.sin(pullAng) * 2.6, { isSkill: true, isAoe: true, stunDur });
       }
     }
@@ -1560,7 +1560,7 @@ export function castSpell(spellId) {
     }
     for (const e of [...s.level.enemies]) {
       if (Math.hypot(e.x - tx, e.y - ty) <= rad + 0.35) {
-        e.stunned = Math.max(e.stunned || 0, stunDur);
+        e.stunTimer = Math.max(e.stunTimer || 0, stunDur);
         damageEnemy(e, dmg, false, spell.name, 0, 0, { isSkill: true, isAoe: true, stunDur });
       }
     }

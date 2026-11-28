@@ -1673,6 +1673,7 @@ export function updateSimulation(dt) {
             pierce: Boolean(pr.pierce),
             canInterrupt: Boolean(pr.isSkill),
             sunderDur: pr.sunderDur || 0,
+            freezeDur: pr.chill ? (typeof pr.chill === "number" ? pr.chill * 0.5 : 1.2) : 0,
           });
           if (pr.isSlashWave) spawnBurst(e.x, e.y, "#fb923c", 8, 1.0);
           if (pr.projKind === "fireball") {
