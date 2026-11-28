@@ -69,6 +69,8 @@ const VFX_SHEET_META = {
   vfx_bloom_heal: { fw: 56, fh: 64, cols: 8, frames: 22 },
   vfx_arrow_flight: { fw: 51, fh: 15, cols: 8, frames: 8 },
   vfx_arrow_impact: { fw: 64, fh: 32, cols: 8, frames: 17 },
+  vfx_divine_beam: { fw: 48, fh: 96, cols: 8, frames: 19 },
+  vfx_holy_nova: { fw: 128, fh: 108, cols: 8, frames: 25 },
 };
 
 const PROJ_SHEET_MAP = {

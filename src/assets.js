@@ -198,6 +198,8 @@ export async function loadAllAssets(onProgress = null) {
     vfx_bloom_heal: "assets/generated/vfx_skills/bloom_heal.png",
     vfx_arrow_flight: "assets/generated/vfx_skills/arrow_flight.png",
     vfx_arrow_impact: "assets/generated/vfx_skills/arrow_impact.png",
+    vfx_divine_beam: "assets/generated/vfx_skills/divine_beam.png",
+    vfx_holy_nova: "assets/generated/vfx_skills/holy_nova.png",
   };
 
   const list = Object.entries(manifest);

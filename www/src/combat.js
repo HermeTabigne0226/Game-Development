@@ -1090,7 +1090,8 @@ export function castSpell(spellId) {
 
     spawnBurst(targetX, targetY, spell.color, 18, 1.2);
     spawnRing(targetX, targetY, 38, spell.color, 0.35);
-    spawnVfxAnim(targetX, targetY, "vfx_holy_smite", 104, 0.62);
+    spawnVfxAnim(targetX, targetY, "vfx_divine_beam", 72, 0.58, { anchorX: 0.5, anchorY: 0.92 });
+    spawnVfxAnim(targetX, targetY, "vfx_holy_nova", 112, 0.55);
     spawnGroundDecal(targetX, targetY, "vfx_holy_ground_impact", 84, 0.65, { scaleStart: 0.72, scaleEnd: 1.08, spin: 0.5 });
     s.beams.push({ x: targetX * TILE_SIZE, y: targetY * TILE_SIZE, color: spell.color, life: 0.36, maxLife: 0.36 });
     if (s.isPvp) {

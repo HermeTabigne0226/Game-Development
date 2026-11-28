@@ -1292,7 +1292,8 @@ export function updateSimulation(dt) {
       spawnRing(p.x, p.y, radPx * 0.72, "#38bdf8", 0.44, { delay: 0.21, lineWidth: 2.4 });
       spawnRing(p.x, p.y, radPx * 1.24, "#fef08a", 0.56, { delay: 0.28, lineWidth: 2 });
       spawnVfxAnim(p.x, p.y, "vfx_holy_sword_fall", radPx * 2.2, 0.62);
-      spawnVfxAnim(p.x, p.y, "vfx_holy_smite", radPx * 1.85, 0.65);
+      spawnVfxAnim(p.x, p.y, "vfx_divine_beam", radPx * 1.15, 0.62, { anchorX: 0.5, anchorY: 0.92 });
+      spawnVfxAnim(p.x, p.y, "vfx_holy_nova", radPx * 2.1, 0.65);
       spawnVfxAnim(p.x, p.y, "vfx_shockwave_ring", radPx * 2.3, 0.52);
       spawnGroundDecal(p.x, p.y, "vfx_ground_slam_shockwave", radPx * 1.45, 0.24, { scaleStart: 0.1, scaleEnd: 2.0 });
       spawnGroundDecal(p.x, p.y, "vfx_skyfall_impact", radPx * 2.25, 0.8, { scaleStart: 0.72, scaleEnd: 1.12, spin: 0.35 });
