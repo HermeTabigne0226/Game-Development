@@ -1932,7 +1932,7 @@ export function updateSimulation(dt) {
         st.tickTimer = st.tickInterval;
         sfx.slash();
         s.shake = Math.max(s.shake, 2.5);
-        spawnRing(st.x, st.y, st.radius * TILE_SIZE, "rgba(250, 204, 21, 0.45)", 0.28);
+        spawnRing(st.x, st.y, st.radius * TILE_SIZE, "rgba(250, 204, 21, 0.28)", 0.28, { lineWidth: 1.5 });
         if (!st.isVisualOnly) {
           for (const e of [...s.level.enemies]) {
             if (Math.hypot(e.x - st.x, e.y - st.y) <= st.radius + 0.35) {

@@ -1141,24 +1141,38 @@ export function renderFrame(ts) {
       const sx = st.x * TILE_SIZE;
       const sy = st.y * TILE_SIZE;
       const radPx = st.radius * TILE_SIZE;
+      const fadeIn = Math.min(1, ((st.duration || 3) - st.timer) / 0.15);
+      const fadeOut = Math.min(1, Math.max(0, st.timer / 0.25));
+      const zoneAlpha = Math.min(fadeIn, fadeOut);
       ctx.save();
-      if (assets.vfx_arrow_storm_reticle) {
-        ctx.imageSmoothingEnabled = false;
-        ctx.globalAlpha = 0.58 + Math.sin(ts * 0.01) * 0.1;
-        ctx.translate(sx, sy);
-        ctx.rotate(ts * 0.0004);
-        const sz = radPx * 2.04;
-        ctx.drawImage(assets.vfx_arrow_storm_reticle, -sz / 2, -sz / 2, sz, sz);
-      } else {
-        ctx.strokeStyle = `rgba(250, 204, 21, ${0.45 + Math.sin(ts * 0.015) * 0.2})`;
-        ctx.fillStyle = "rgba(250, 204, 21, 0.08)";
-        ctx.lineWidth = 2;
-        ctx.setLineDash([6, 4]);
-        ctx.beginPath();
-        ctx.arc(sx, sy, radPx, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-      }
+      ctx.globalAlpha = zoneAlpha;
+
+      const grad = ctx.createRadialGradient(sx, sy, radPx * 0.1, sx, sy, radPx);
+      grad.addColorStop(0, "rgba(250, 204, 21, 0.14)");
+      grad.addColorStop(0.75, "rgba(250, 204, 21, 0.08)");
+      grad.addColorStop(1, "rgba(250, 204, 21, 0.02)");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(sx, sy, radPx, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.rotate(ts * 0.0005);
+      ctx.strokeStyle = `rgba(250, 204, 21, ${0.55 + Math.sin(ts * 0.01) * 0.15})`;
+      ctx.lineWidth = 1.6;
+      ctx.setLineDash([7, 5]);
+      ctx.beginPath();
+      ctx.arc(0, 0, radPx, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.strokeStyle = "rgba(253, 224, 71, 0.28)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(sx, sy, radPx * 0.55, 0, Math.PI * 2);
+      ctx.stroke();
+
       ctx.restore();
     }
   }
