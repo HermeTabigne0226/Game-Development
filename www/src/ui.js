@@ -200,8 +200,8 @@ export function updateCooldownUI() {
   const dashBtn = document.getElementById("btn-dash");
   if (dashBtn) {
     dashBtn.disabled = p.dashCd > 0 || dashOutOfMana;
-    dashBtn.classList.toggle("on-cooldown", p.dashCd > 0 || dashOutOfMana);
-    dashBtn.classList.toggle("no-mp", dashOutOfMana);
+    dashBtn.classList.toggle("on-cooldown", p.dashCd > 0);
+    dashBtn.classList.toggle("out-of-mana", dashOutOfMana);
     dashBtn.textContent = p.dashCd > 0
       ? `${dashBaseLabel} (${p.dashCd.toFixed(1)}s)`
       : dashOutOfMana
@@ -215,8 +215,8 @@ export function updateCooldownUI() {
   const tDashCd = document.getElementById("touch-dash-cd");
   if (tDash && tDashCd) {
     tDash.disabled = p.dashCd > 0 || dashOutOfMana;
-    tDash.classList.toggle("on-cooldown", p.dashCd > 0 || dashOutOfMana);
-    tDash.classList.toggle("no-mp", dashOutOfMana);
+    tDash.classList.toggle("on-cooldown", p.dashCd > 0);
+    tDash.classList.toggle("out-of-mana", dashOutOfMana);
     if (p.dashCd > 0) {
       tDashCd.hidden = false;
       tDashCd.classList.remove("oom");

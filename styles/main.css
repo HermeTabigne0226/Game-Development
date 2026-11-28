@@ -723,12 +723,15 @@ body[data-btn-size="big"] {
   .touch-skill-btn.on-cooldown img {
     filter: grayscale(1) brightness(0.42);
   }
+  .touch-action-btn.out-of-mana,
   .touch-skill-btn.out-of-mana {
     border-color: #38bdf8;
   }
+  .touch-action-btn.out-of-mana img,
   .touch-skill-btn.out-of-mana img {
     filter: sepia(1) hue-rotate(180deg) saturate(2.6) brightness(0.6);
   }
+  .touch-action-btn .ts-cd.oom,
   .touch-skill-btn .ts-cd.oom {
     background: rgba(12, 42, 82, 0.72);
     color: #bae6fd;
