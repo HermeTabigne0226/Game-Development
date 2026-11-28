@@ -150,6 +150,7 @@ export function createNewRun(heroName, difficultyId, loadout = DEFAULT_LOADOUT, 
       helmet: null,
       boots: null,
       ring: null,
+      earrings: null,
     },
     maxInventory: 15,
     inventory,
@@ -351,6 +352,7 @@ export function restoreRun(saved) {
       delete saved.player.equipment.shield;
     }
     if (saved.player.equipment.subweapon === undefined) saved.player.equipment.subweapon = null;
+    if (saved.player.equipment.earrings === undefined) saved.player.equipment.earrings = null;
     for (const k of Object.keys(saved.player.equipment)) {
       saved.player.equipment[k] = migrateEquipItem(saved.player.equipment[k]);
     }

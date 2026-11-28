@@ -382,7 +382,7 @@ export function updateUI() {
 
   const eqEl = document.getElementById("equipment-slots");
   eqEl.innerHTML = "";
-  const slotOrder = ["weapon", "subweapon", "armor", "helmet", "boots", "ring"];
+  const slotOrder = ["helmet", "earrings", "weapon", "armor", "subweapon", "ring", "boots"];
   for (const slot of slotOrder) {
     const item = p.equipment?.[slot] || null;
     const row = document.createElement("div");
@@ -402,6 +402,47 @@ export function updateUI() {
       row.innerHTML += `<span style="color:var(--muted)">Empty</span>`;
     }
     eqEl.appendChild(row);
+  }
+
+  const paperdollEl = document.getElementById("bag-equip-paperdoll");
+  if (paperdollEl) {
+    paperdollEl.innerHTML = "";
+    const layout = [
+      { slot: null },
+      { slot: "helmet", label: "Head" },
+      { slot: "earrings", label: "Earrings" },
+      { slot: "weapon", label: "Weapon" },
+      { slot: "armor", label: "Armor" },
+      { slot: "subweapon", label: "Sub" },
+      { slot: "ring", label: "Ring" },
+      { slot: "boots", label: "Boots" },
+      { slot: null },
+    ];
+    for (const cell of layout) {
+      if (!cell.slot) {
+        const spacer = document.createElement("div");
+        spacer.className = "paperdoll-spacer";
+        paperdollEl.appendChild(spacer);
+        continue;
+      }
+      const item = p.equipment?.[cell.slot] || null;
+      const box = document.createElement("button");
+      box.type = "button";
+      box.className = `paperdoll-slot slot-${cell.slot}`;
+      if (item) {
+        const rInfo = getRarityInfo(item);
+        box.style.borderColor = rInfo.color;
+        box.innerHTML = `<img src="${item.icon}" class="pixel-icon" alt="${item.name}" /><span class="pd-label" style="color:${rInfo.color}">${cell.label}</span>`;
+        box.title = `[${rInfo.label}] ${item.name} — ${item.desc}`;
+        box.addEventListener("click", () => {
+          if (uiHooks.openEquippedActionDialog) uiHooks.openEquippedActionDialog(cell.slot);
+        });
+      } else {
+        box.innerHTML = `<span class="pd-empty">${cell.label}</span>`;
+        box.title = `${cell.label} (Empty)`;
+      }
+      paperdollEl.appendChild(box);
+    }
   }
 
   const setData = getActiveSetBonuses(p);

@@ -371,11 +371,14 @@
                 <div class="mhud-bar-track"><div id="mhud-bar-xp" class="bar-fill xp" style="width:0%"></div><span id="mhud-xp">0/20</span></div>
               </div>
               <div class="mhud-inv-row">
-                <button type="button" id="btn-mobile-bag" class="mhud-inv-btn" title="Open Inventory & Chronicle">
+                <button type="button" id="btn-mobile-bag" class="mhud-inv-btn" title="Open Inventory &amp; Gear">
                   <img src="spritecook-game-asset-pack/chest_closed.png" alt="" />
                   <span>Bag</span>
                   <span id="mobile-bag-count" class="mhud-bag-count">0</span>
                   <span id="mobile-bag-upgrade" class="mhud-bag-upgrade" hidden>▲ Gear</span>
+                </button>
+                <button type="button" id="btn-mobile-logs" class="mhud-inv-btn mhud-logs-btn" title="Open Adventure Logs">
+                  <span>Logs</span>
                 </button>
               </div>
             </div>
@@ -441,15 +444,19 @@
         </div>
       </section>
 
-      <!-- Right Sidebar: Inventory & Chronicle Log -->
-      <aside id="panel-bag" class="panel sidebar-right" aria-label="Inventory and Chronicle">
+      <!-- Right Sidebar: Equipped Gear & Inventory -->
+      <aside id="panel-bag" class="panel sidebar-right" aria-label="Inventory and Gear">
         <div class="mobile-drawer-head">
-          <strong>Satchel &amp; Chronicle</strong>
+          <strong>Inventory &amp; Gear</strong>
           <button type="button" id="btn-close-bag" class="btn btn-secondary">Close</button>
         </div>
+        <section class="bag-paperdoll-section">
+          <h3>Equipped Gear</h3>
+          <div id="bag-equip-paperdoll" class="bag-equip-paperdoll"></div>
+        </section>
         <section class="inventory-section">
           <div class="section-head">
-            <h3>Satchel · <span id="inv-total">0</span> Items (<span id="inv-count">0</span>/<span id="inv-max">15</span>)</h3>
+            <h3>Inventory · <span id="inv-total">0</span> Items (<span id="inv-count">0</span>/<span id="inv-max">15</span>)</h3>
             <span id="inv-upgrade-pill" class="inv-upgrade-pill" hidden>▲ Better Gear</span>
           </div>
           <div id="inventory-grid" class="inventory-grid"></div>
@@ -458,9 +465,16 @@
             <div id="drawer-shortcuts" class="drawer-shortcuts"></div>
           </div>
         </section>
+      </aside>
 
+      <!-- Separate Adventure Logs Window -->
+      <aside id="panel-logs" class="panel sidebar-logs" aria-label="Adventure Logs">
+        <div class="mobile-drawer-head">
+          <strong>Adventure Logs</strong>
+          <button type="button" id="btn-close-logs" class="btn btn-secondary">Close</button>
+        </div>
         <section class="log-section">
-          <h3>Chronicle</h3>
+          <h3>Logs</h3>
           <div id="combat-log" class="combat-log" aria-live="polite"></div>
         </section>
       </aside>

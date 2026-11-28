@@ -109,16 +109,25 @@ function setupControls() {
 
   const panelStats = document.getElementById("panel-stats");
   const panelBag = document.getElementById("panel-bag");
+  const panelLogs = document.getElementById("panel-logs");
   document.getElementById("btn-mobile-stats").addEventListener("click", () => {
     panelBag.classList.remove("mobile-open");
+    panelLogs?.classList.remove("mobile-open");
     panelStats.classList.toggle("mobile-open");
   });
   document.getElementById("btn-mobile-bag").addEventListener("click", () => {
     panelStats.classList.remove("mobile-open");
+    panelLogs?.classList.remove("mobile-open");
     panelBag.classList.toggle("mobile-open");
+  });
+  document.getElementById("btn-mobile-logs")?.addEventListener("click", () => {
+    panelStats.classList.remove("mobile-open");
+    panelBag.classList.remove("mobile-open");
+    panelLogs?.classList.toggle("mobile-open");
   });
   document.getElementById("btn-close-stats").addEventListener("click", () => panelStats.classList.remove("mobile-open"));
   document.getElementById("btn-close-bag").addEventListener("click", () => panelBag.classList.remove("mobile-open"));
+  document.getElementById("btn-close-logs")?.addEventListener("click", () => panelLogs?.classList.remove("mobile-open"));
 
   // Mobile Touch Joystick
   const joyZone = document.getElementById("touch-joy-zone");

@@ -193,7 +193,9 @@ body[data-btn-size="big"] {
 
 .mobile-drawer-head,
 .mobile-hud,
-.touch-controls {
+.touch-controls,
+.bag-paperdoll-section,
+.sidebar-logs {
   display: none;
 }
 
@@ -606,7 +608,8 @@ body[data-btn-size="big"] {
 
   /* Hide sidebars unless opened as fullscreen drawer */
   #panel-stats,
-  #panel-bag {
+  #panel-bag,
+  #panel-logs {
     display: none;
     position: fixed;
     inset: 10px;
@@ -615,7 +618,8 @@ body[data-btn-size="big"] {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
   }
   #panel-stats.mobile-open,
-  #panel-bag.mobile-open {
+  #panel-bag.mobile-open,
+  #panel-logs.mobile-open {
     display: flex;
   }
   #panel-stats.mobile-open {
@@ -729,24 +733,96 @@ body[data-btn-size="big"] {
   }
   #panel-bag.mobile-open {
     display: grid;
-    grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+    grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
     grid-template-rows: auto minmax(0, 1fr);
     gap: clamp(6px, 1.1vh, 10px) clamp(8px, 1.4vw, 14px);
     padding: clamp(6px, 1.2vh, 12px) clamp(8px, 1.6vw, 14px);
     inset: clamp(4px, 1vh, 10px);
     overflow: hidden;
   }
-  #panel-bag.mobile-open .mobile-drawer-head {
+  #panel-bag.mobile-open .mobile-drawer-head,
+  #panel-logs.mobile-open .mobile-drawer-head {
     grid-column: 1 / -1;
     padding-bottom: clamp(4px, 0.8vh, 8px);
     font-size: clamp(0.8rem, 2vh, 0.96rem);
   }
-  #panel-bag.mobile-open .mobile-drawer-head .btn {
+  #panel-bag.mobile-open .mobile-drawer-head .btn,
+  #panel-logs.mobile-open .mobile-drawer-head .btn {
     padding: clamp(3px, 0.6vh, 6px) clamp(7px, 1.2vw, 11px);
     font-size: clamp(0.66rem, 1.6vh, 0.78rem);
   }
-  #panel-bag.mobile-open .inventory-section {
+  #panel-bag.mobile-open .bag-paperdoll-section {
     grid-column: 1;
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(4px, 0.8vh, 8px);
+    padding: clamp(6px, 1vh, 10px);
+    border-radius: 8px;
+    background: rgba(11, 15, 26, 0.92);
+    border: 1.5px solid #334155;
+    min-height: 0;
+    overflow: hidden;
+  }
+  #panel-bag.mobile-open .bag-paperdoll-section h3 {
+    width: 100%;
+    font-size: clamp(0.64rem, 1.55vh, 0.78rem);
+    margin: 0;
+    text-align: center;
+    color: #facc15;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .bag-equip-paperdoll {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    gap: clamp(5px, 1vh, 9px);
+    width: min(100%, clamp(160px, 42vh, 240px));
+    aspect-ratio: 1;
+  }
+  .paperdoll-spacer {
+    pointer-events: none;
+  }
+  .paperdoll-slot {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 6px;
+    border: 2px solid #475569;
+    background: radial-gradient(circle at center, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.6);
+    cursor: pointer;
+    min-width: 0;
+    min-height: 0;
+  }
+  .paperdoll-slot img {
+    width: clamp(22px, 5vh, 34px);
+    height: clamp(22px, 5vh, 34px);
+    image-rendering: pixelated;
+    object-fit: contain;
+  }
+  .paperdoll-slot .pd-label {
+    font-size: clamp(0.5rem, 1.15vh, 0.62rem);
+    font-weight: 700;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+  .paperdoll-slot .pd-empty {
+    font-size: clamp(0.54rem, 1.25vh, 0.66rem);
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  #panel-bag.mobile-open .inventory-section {
+    grid-column: 2;
     grid-row: 2;
     display: flex;
     flex-direction: column;
@@ -760,7 +836,7 @@ body[data-btn-size="big"] {
     overflow: hidden;
   }
   #panel-bag.mobile-open .section-head h3,
-  #panel-bag.mobile-open .log-section h3,
+  #panel-logs.mobile-open .log-section h3,
   #panel-bag.mobile-open .shortcut-section h4 {
     font-size: clamp(0.64rem, 1.55vh, 0.78rem);
     margin: 0 0 clamp(3px, 0.5vh, 5px);
@@ -786,9 +862,15 @@ body[data-btn-size="big"] {
   #panel-bag.mobile-open .drawer-shortcuts {
     gap: clamp(4px, 0.8vw, 8px);
   }
-  #panel-bag.mobile-open .log-section {
-    grid-column: 2;
-    grid-row: 2;
+  #panel-logs.mobile-open {
+    flex-direction: column;
+    gap: clamp(6px, 1vh, 10px);
+    padding: clamp(6px, 1.2vh, 12px) clamp(8px, 1.6vw, 14px);
+    inset: clamp(6px, 1.5vh, 14px);
+    overflow: hidden;
+  }
+  #panel-logs.mobile-open .log-section {
+    flex: 1;
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -798,12 +880,12 @@ body[data-btn-size="big"] {
     border: 1.5px solid #334155;
     overflow: hidden;
   }
-  #panel-bag.mobile-open .combat-log {
+  #panel-logs.mobile-open .combat-log {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    font-size: clamp(0.6rem, 1.45vh, 0.74rem);
-    line-height: 1.28;
+    font-size: clamp(0.64rem, 1.55vh, 0.78rem);
+    line-height: 1.32;
   }
   .mobile-drawer-head {
     display: flex;
