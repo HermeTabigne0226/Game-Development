@@ -72,6 +72,7 @@ const VFX_SHEET_META = {
   vfx_divine_beam: { fw: 48, fh: 96, cols: 8, frames: 19 },
   vfx_holy_nova: { fw: 128, fh: 108, cols: 8, frames: 25 },
   vfx_rapier_flurry: { fw: 64, fh: 48, cols: 8, frames: 16 },
+  vfx_regen_aura: { fw: 48, fh: 64, cols: 8, frames: 16 },
 };
 
 const PROJ_SHEET_MAP = {

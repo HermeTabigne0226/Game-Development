@@ -1166,13 +1166,12 @@ export function castSpell(spellId) {
     p.hasteTimer = spell.duration;
     p.stunTimer = 0;
     sfx.heal();
-    spawnVfxAnim(p.x, p.y, "vfx_holy_heal", 92, 0.75);
-    spawnBurst(p.x, p.y, "#34d399", 18, 1.2);
-    spawnRing(p.x, p.y, 38, "#34d399", 0.4);
-    spawnGroundDecal(p.x, p.y, "vfx_heal_haste_aura", 92, 0.48, { scaleStart: 0.65, scaleEnd: 1.25, spin: 1.2 });
+    spawnVfxAnim(p.x, p.y, "vfx_holy_heal", 68, 0.75, { anchorX: 0.5, anchorY: 0.78 });
+    spawnVfxAnim(p.x, p.y, "vfx_regen_aura", 58, 0.75, { anchorX: 0.5, anchorY: 0.82 });
+    spawnBurst(p.x, p.y, "#34d399", 14, 1.0);
     if (s.isPvp) {
-      broadcastPvpAction({ kind: "ring", x: p.x, y: p.y, radPx: 38, color: "#34d399", dur: 0.4 });
-      broadcastPvpAction({ kind: "decal", x: p.x, y: p.y, sheetKey: "vfx_heal_haste_aura", sizePx: 92, duration: 0.48, opts: { scaleStart: 0.65, scaleEnd: 1.25, spin: 1.2 } });
+      broadcastPvpAction({ kind: "vfx_anim", x: p.x, y: p.y, sheetKey: "vfx_holy_heal", sizePx: 68, duration: 0.75, opts: { anchorX: 0.5, anchorY: 0.78 } });
+      broadcastPvpAction({ kind: "vfx_anim", x: p.x, y: p.y, sheetKey: "vfx_regen_aura", sizePx: 58, duration: 0.75, opts: { anchorX: 0.5, anchorY: 0.82 } });
     }
     addFloat(p.x, p.y - 0.35, `+${gained} HP · HASTE`, "#34d399");
     addLog(`${spell.name}: Restored ${gained} HP and gained +15% Speed!`, "heal");

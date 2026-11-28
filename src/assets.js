@@ -201,6 +201,7 @@ export async function loadAllAssets(onProgress = null) {
     vfx_divine_beam: "assets/generated/vfx_skills/divine_beam.png",
     vfx_holy_nova: "assets/generated/vfx_skills/holy_nova.png",
     vfx_rapier_flurry: "assets/generated/vfx_skills/rapier_flurry.png",
+    vfx_regen_aura: "assets/generated/vfx_skills/regen_aura.png",
   };
 
   const list = Object.entries(manifest);
