@@ -618,6 +618,115 @@ body[data-btn-size="big"] {
   #panel-bag.mobile-open {
     display: flex;
   }
+  #panel-stats.mobile-open {
+    display: grid;
+    grid-template-columns: minmax(0, 1.06fr) minmax(0, 0.94fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+    align-content: start;
+    gap: clamp(4px, 1vh, 8px) clamp(8px, 1.4vw, 14px);
+    padding: clamp(6px, 1.2vh, 12px) clamp(8px, 1.6vw, 14px);
+    inset: clamp(4px, 1vh, 10px);
+  }
+  #panel-stats.mobile-open .mobile-drawer-head {
+    grid-column: 1 / -1;
+    padding-bottom: clamp(4px, 0.8vh, 8px);
+    font-size: clamp(0.8rem, 2vh, 0.96rem);
+  }
+  #panel-stats.mobile-open .mobile-drawer-head .btn {
+    padding: clamp(3px, 0.6vh, 6px) clamp(7px, 1.2vw, 11px);
+    font-size: clamp(0.66rem, 1.6vh, 0.78rem);
+  }
+  #panel-stats.mobile-open .hero-card {
+    grid-column: 1;
+    grid-row: 2 / 5;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(4px, 0.8vh, 7px);
+    min-height: 0;
+  }
+  #panel-stats.mobile-open .hero-header {
+    gap: clamp(6px, 1vw, 10px);
+  }
+  #panel-stats.mobile-open #hero-portrait {
+    width: clamp(34px, 6.2vh, 50px);
+    height: clamp(34px, 6.2vh, 50px);
+  }
+  #panel-stats.mobile-open #hero-name {
+    font-size: clamp(0.82rem, 2.1vh, 1.02rem);
+    margin: 0;
+  }
+  #panel-stats.mobile-open .hero-class {
+    font-size: clamp(0.64rem, 1.6vh, 0.78rem);
+    margin: 0;
+  }
+  #panel-stats.mobile-open .bars {
+    gap: clamp(3px, 0.55vh, 5px);
+  }
+  #panel-stats.mobile-open .bar-label {
+    font-size: clamp(0.62rem, 1.5vh, 0.74rem);
+  }
+  #panel-stats.mobile-open .bar-track {
+    height: clamp(5px, 0.9vh, 7px);
+  }
+  #panel-stats.mobile-open .stat-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(3px, 0.6vw, 6px);
+  }
+  #panel-stats.mobile-open .stat-pill {
+    padding: clamp(3px, 0.6vh, 5px) clamp(4px, 0.7vw, 7px);
+    font-size: clamp(0.62rem, 1.5vh, 0.76rem);
+  }
+  #panel-stats.mobile-open .hero-passive-card {
+    margin-top: 0;
+    padding: clamp(4px, 0.8vh, 7px) clamp(6px, 1vw, 9px);
+    gap: 2px;
+  }
+  #panel-stats.mobile-open .hero-passive-icon {
+    width: clamp(16px, 2.8vh, 22px);
+    height: clamp(16px, 2.8vh, 22px);
+  }
+  #panel-stats.mobile-open .hero-passive-title {
+    font-size: clamp(0.64rem, 1.6vh, 0.75rem);
+  }
+  #panel-stats.mobile-open .hero-passive-desc,
+  #panel-stats.mobile-open .hero-passive-growth {
+    font-size: clamp(0.58rem, 1.4vh, 0.7rem);
+    line-height: 1.22;
+  }
+  #panel-stats.mobile-open .equip-section {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  #panel-stats.mobile-open .shards-section {
+    grid-column: 2;
+    grid-row: 3;
+  }
+  #panel-stats.mobile-open .relics-section {
+    grid-column: 2;
+    grid-row: 4;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  #panel-stats.mobile-open section h3 {
+    font-size: clamp(0.64rem, 1.55vh, 0.76rem);
+    margin: 0 0 clamp(3px, 0.55vh, 5px);
+  }
+  #panel-stats.mobile-open .equip-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(3px, 0.6vh, 6px);
+  }
+  #panel-stats.mobile-open .equip-slot {
+    padding: clamp(3px, 0.6vh, 6px) clamp(5px, 0.8vw, 8px);
+    font-size: clamp(0.6rem, 1.45vh, 0.72rem);
+  }
+  #panel-stats.mobile-open .shard-slot {
+    padding: clamp(3px, 0.55vh, 5px) 0;
+    font-size: clamp(0.62rem, 1.5vh, 0.74rem);
+  }
+  #panel-stats.mobile-open .relics-list {
+    font-size: clamp(0.6rem, 1.45vh, 0.72rem);
+    gap: clamp(3px, 0.5vh, 5px);
+  }
   .mobile-drawer-head {
     display: flex;
     align-items: center;
