@@ -1663,36 +1663,39 @@ function drawEntityChargesAndAuras(ctx, assets, ts, entity) {
     const eased = 1 - Math.pow(1 - prog, 1.75);
     const curRadPx = Math.max(10, radPx * eased);
     ctx.save();
-    ctx.fillStyle = `rgba(249, 115, 22, ${0.08 + eased * 0.14})`;
+    const grad = ctx.createRadialGradient(lx, ly, 4, lx, ly, curRadPx);
+    grad.addColorStop(0, `rgba(254, 249, 195, ${0.18 + eased * 0.14})`);
+    grad.addColorStop(0.65, `rgba(250, 204, 21, ${0.08 + eased * 0.1})`);
+    grad.addColorStop(1, "rgba(249, 115, 22, 0.02)");
+    ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(lx, ly, curRadPx, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = "rgba(249, 115, 22, 0.55)";
-    ctx.lineWidth = 1.6;
-    ctx.setLineDash([6, 5]);
+    // Outer max-radius target ring
+    ctx.save();
+    ctx.translate(lx, ly);
+    ctx.rotate(ts * 0.0007);
+    ctx.strokeStyle = "rgba(250, 204, 21, 0.52)";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([7, 5]);
     ctx.beginPath();
-    ctx.arc(lx, ly, radPx, 0, Math.PI * 2);
+    ctx.arc(0, 0, radPx, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.restore();
 
-    const reticleImg = assets.vfx_skyfall_stage3 || assets.vfx_skyfall_reticle;
-    if (reticleImg) {
-      ctx.save();
-      ctx.imageSmoothingEnabled = false;
-      ctx.globalAlpha = 0.72 + eased * 0.28;
-      ctx.translate(lx, ly);
-      ctx.rotate(ts * 0.0014);
-      const sz = Math.max(24, radPx * 2.24 * (0.28 + 0.72 * eased));
-      ctx.drawImage(reticleImg, -sz / 2, -sz / 2, sz, sz);
-      ctx.restore();
-    }
-
-    ctx.setLineDash([]);
-    ctx.strokeStyle = "rgba(253, 224, 71, 0.9)";
-    ctx.lineWidth = 2.2;
+    // Expanding inner charge ring
+    ctx.strokeStyle = `rgba(254, 240, 138, ${0.65 + eased * 0.3})`;
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(lx, ly, curRadPx, 0, Math.PI * 2);
     ctx.stroke();
+
+    // Center focal point for the incoming beam
+    ctx.fillStyle = `rgba(255, 255, 255, ${0.45 + eased * 0.45})`;
+    ctx.beginPath();
+    ctx.arc(lx, ly, 3 + eased * 3.5, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
   }
 

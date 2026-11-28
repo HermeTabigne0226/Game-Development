@@ -1286,20 +1286,12 @@ export function updateSimulation(dt) {
       const radius = spell.radii[rankIdx];
       const dmg = Math.round(stats.atk * spell.mults[rankIdx]) + spell.flats[rankIdx];
       const radPx = radius * TILE_SIZE;
-      spawnRing(p.x, p.y, radPx * 0.88, "#ffffff", 0.36, { delay: 0, lineWidth: 3.5 });
-      spawnRing(p.x, p.y, radPx * 1.0, "#fde047", 0.44, { delay: 0.07, lineWidth: 3 });
-      spawnRing(p.x, p.y, radPx * 1.12, "#f97316", 0.52, { delay: 0.14, lineWidth: 2.8 });
-      spawnRing(p.x, p.y, radPx * 0.72, "#38bdf8", 0.44, { delay: 0.21, lineWidth: 2.4 });
-      spawnRing(p.x, p.y, radPx * 1.24, "#fef08a", 0.56, { delay: 0.28, lineWidth: 2 });
-      spawnVfxAnim(p.x, p.y, "vfx_holy_sword_fall", radPx * 2.2, 0.62);
-      spawnVfxAnim(p.x, p.y, "vfx_divine_beam", radPx * 1.15, 0.62, { anchorX: 0.5, anchorY: 0.92 });
-      spawnVfxAnim(p.x, p.y, "vfx_holy_nova", radPx * 2.1, 0.65);
-      spawnVfxAnim(p.x, p.y, "vfx_shockwave_ring", radPx * 2.3, 0.52);
-      spawnGroundDecal(p.x, p.y, "vfx_ground_slam_shockwave", radPx * 1.45, 0.24, { scaleStart: 0.1, scaleEnd: 2.0 });
-      spawnGroundDecal(p.x, p.y, "vfx_skyfall_impact", radPx * 2.25, 0.8, { scaleStart: 0.72, scaleEnd: 1.12, spin: 0.35 });
-      s.beams.push({ x: p.x * TILE_SIZE, y: p.y * TILE_SIZE, color: "#fde047", life: 0.44, maxLife: 0.44 });
-      spawnBurst(p.x, p.y, "#f97316", 32, 1.7);
-      spawnBurst(p.x, p.y, "#fde047", 20, 1.35);
+      spawnRing(p.x, p.y, radPx * 0.95, "#ffffff", 0.34, { delay: 0, lineWidth: 2.2 });
+      spawnRing(p.x, p.y, radPx * 1.12, "#fde047", 0.44, { delay: 0.08, lineWidth: 1.8 });
+      spawnVfxAnim(p.x, p.y, "vfx_divine_beam", radPx * 1.45, 0.72, { anchorX: 0.5, anchorY: 0.92 });
+      spawnVfxAnim(p.x, p.y, "vfx_holy_nova", radPx * 1.65, 0.62, { alpha: 0.85 });
+      spawnVfxAnim(p.x, p.y, "vfx_shockwave_ring", radPx * 2.0, 0.48, { alpha: 0.75 });
+      spawnBurst(p.x, p.y, "#fde047", 18, 1.35);
       if (s.isPvp) broadcastPvpAction({ kind: "leap_land", x: p.x, y: p.y, radius });
 
       for (const e of [...s.level.enemies]) {
