@@ -172,15 +172,6 @@ export function openItemActionDialog(index) {
       const slotLabel = item.slot === "subweapon" ? "Sub-Weapon" : item.slot;
 
       const nextEquipment = { ...p.equipment, [item.slot]: item };
-      let unpairedOther = null;
-      if (item.slot === "weapon" && nextEquipment.subweapon && !isWeaponSubPairValid(item, nextEquipment.subweapon)) {
-        unpairedOther = nextEquipment.subweapon;
-        nextEquipment.subweapon = null;
-      } else if (item.slot === "subweapon" && nextEquipment.weapon && !isWeaponSubPairValid(nextEquipment.weapon, item)) {
-        unpairedOther = nextEquipment.weapon;
-        nextEquipment.weapon = null;
-      }
-
       const curStats = getPlayerStats(p);
       const nextPlayer = { ...p, equipment: nextEquipment };
       const nextStats = getPlayerStats(nextPlayer);
@@ -236,7 +227,6 @@ export function openItemActionDialog(index) {
         </div>
         <div class="item-compare-rows">${rowsHtml || `<div class="hint-text">Same stat values as equipped item.</div>`}</div>
         ${setDeltaParts.length > 0 ? `<div class="cmp-set-note">Set Bonus Change: ${setDeltaParts.join(" · ")}</div>` : ""}
-        ${unpairedOther ? `<div class="cmp-pair-warn">Does not pair with <strong>${unpairedOther.name}</strong> — it will return to your satchel.</div>` : ""}
       `;
       compareEl.hidden = false;
     } else {
@@ -270,14 +260,28 @@ export function openItemActionDialog(index) {
   if (item.slot) {
     const dropBtn = document.createElement("button");
     dropBtn.type = "button";
-    dropBtn.className = "btn btn-danger";
-    dropBtn.textContent = "Discard to Ground";
+    dropBtn.className = "btn btn-secondary";
+    dropBtn.textContent = "Drop to Ground";
     dropBtn.addEventListener("click", () => {
       dropInventoryItem(index, 1);
       sfx.step();
       dlg.close();
     });
     btnsEl.appendChild(dropBtn);
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "btn btn-danger";
+    deleteBtn.textContent = "Delete Item";
+    deleteBtn.addEventListener("click", () => {
+      p.inventory.splice(index, 1);
+      sfx.step();
+      addLog(`Deleted ${item.name} from satchel.`, "info");
+      runtime.uiDirty = true;
+      saveRun();
+      dlg.close();
+    });
+    btnsEl.appendChild(deleteBtn);
 
     const cancelBtn = document.createElement("button");
     cancelBtn.type = "button";
