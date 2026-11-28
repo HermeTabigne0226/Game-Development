@@ -763,7 +763,7 @@ export const SPELLS = [
     range: 8.0,
     type: "arrow_volley",
     icon: "assets/generated/skill_arrow_volley.jpg",
-    desc: "[Ranger · Skill 1] Fire a 3-arrow spread dealing 85%–135% ATK per arrow with +20% CRIT & knockback (Lv 1, 3, 5, 7).",
+    desc: "[Ranger · Skill 1] Fire a 3-arrow spread dealing 85%–135% ATK per arrow that ricochets once & knocks foes back (Lv 1, 3, 5, 7).",
     color: "#38bdf8",
   },
   {

@@ -1325,11 +1325,9 @@ export function castSpell(spellId) {
     p.animTimer = 0.22;
     spawnVfxAnim(p.x + Math.cos(angle) * 0.45, p.y + Math.sin(angle) * 0.45, "vfx_air_burst", 76, 0.36, { angle });
     const speed = 13.0;
-    const baseDmg = Math.round(stats.atk * spell.mults[rIdx]);
+    const dmg = Math.round(stats.atk * spell.mults[rIdx]);
     for (const offset of [-0.22, 0, 0.22]) {
       const a = angle + offset;
-      const isCrit = Math.random() * 100 < Math.min(stats.crit + 20, 95);
-      const dmg = Math.round(baseDmg * (isCrit ? (s.isPvp ? 1.65 : 1.4) : 1));
       s.projectiles.push({
         x: p.x + Math.cos(a) * 0.4,
         y: p.y + Math.sin(a) * 0.4,
@@ -1338,7 +1336,7 @@ export function castSpell(spellId) {
         radius: 0.24,
         color: spell.color,
         dmg,
-        isCrit,
+        bouncesLeft: 1,
         kbMult: 0.48,
         isEnemy: false,
         isArrow: true,
