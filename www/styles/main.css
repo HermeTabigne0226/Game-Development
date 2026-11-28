@@ -883,6 +883,52 @@ body[data-btn-size="big"] {
     padding-top: clamp(4px, 0.7vh, 6px);
     border-top: 1px solid rgba(59, 70, 99, 0.55);
   }
+  .inv-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .inv-pager,
+  .inv-batch-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .inv-page-btn,
+  .inv-batch-btn {
+    padding: clamp(2px, 0.45vh, 4px) clamp(7px, 1vw, 10px);
+    font-size: clamp(0.6rem, 1.45vh, 0.74rem);
+    line-height: 1.1;
+  }
+  .inv-page-label {
+    font-size: clamp(0.6rem, 1.45vh, 0.74rem);
+    font-weight: 700;
+    color: #cbd5e1;
+    min-width: 34px;
+    text-align: center;
+  }
+  .inv-slot.batch-selected {
+    border: 2px solid #ef4444 !important;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.55);
+  }
+  .inv-batch-check {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #ef4444;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+  }
   #panel-bag.mobile-open .drawer-shortcuts {
     gap: clamp(4px, 0.8vw, 8px);
   }

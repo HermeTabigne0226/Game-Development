@@ -4,6 +4,7 @@ import { CLASS_DEFAULT_LOADOUTS, DEFAULT_LOADOUT, HERO_CLASSES, RELICS, SPELLS }
 import { pvpHooks } from "./pvp.js";
 import { renderHooks } from "./renderer.js";
 import {
+  addLog,
   getActiveSetBonuses,
   getActiveSpells,
   getDashMpCost,
@@ -14,6 +15,7 @@ import {
   isBetterEquipmentItem,
   loadSavedRun,
   runtime,
+  saveRun,
 } from "./state.js";
 import { worldHooks } from "./world.js";
 
@@ -22,6 +24,59 @@ export const uiHooks = {
   openItemActionDialog: null,
   openEquippedActionDialog: null,
 };
+
+let invPage = 0;
+let batchSelectMode = false;
+const batchSelected = new Set();
+let invToolbarWired = false;
+
+function ensureInvToolbarWired() {
+  if (invToolbarWired) return;
+  invToolbarWired = true;
+  document.getElementById("inv-prev-page")?.addEventListener("click", () => {
+    if (invPage > 0) {
+      invPage -= 1;
+      runtime.uiDirty = true;
+      updateUI();
+    }
+  });
+  document.getElementById("inv-next-page")?.addEventListener("click", () => {
+    const p = runtime.state?.player;
+    const totalPages = Math.max(1, Math.ceil(getMaxInventory(p) / 15));
+    if (invPage < totalPages - 1) {
+      invPage += 1;
+      runtime.uiDirty = true;
+      updateUI();
+    }
+  });
+  document.getElementById("inv-batch-toggle")?.addEventListener("click", () => {
+    batchSelectMode = true;
+    batchSelected.clear();
+    updateUI();
+  });
+  document.getElementById("inv-batch-cancel")?.addEventListener("click", () => {
+    batchSelectMode = false;
+    batchSelected.clear();
+    updateUI();
+  });
+  document.getElementById("inv-batch-delete")?.addEventListener("click", () => {
+    const s = runtime.state;
+    const p = s?.player;
+    if (!p || batchSelected.size === 0) return;
+    const indices = [...batchSelected].filter((idx) => idx >= 0 && idx < p.inventory.length).sort((a, b) => b - a);
+    if (!indices.length) return;
+    for (const idx of indices) {
+      p.inventory.splice(idx, 1);
+    }
+    sfx.hit();
+    addLog(`Discarded ${indices.length} item${indices.length > 1 ? "s" : ""} from inventory.`, "story");
+    batchSelected.clear();
+    batchSelectMode = false;
+    saveRun();
+    runtime.uiDirty = true;
+    updateUI();
+  });
+}
 
 export function buildSpellButtons() {
   const activeSpells = getActiveSpells(runtime.state?.player);
@@ -487,24 +542,63 @@ export function updateUI() {
   const mobBagCountEl = document.getElementById("mobile-bag-count");
   if (mobBagCountEl) mobBagCountEl.textContent = totalItems;
 
+  ensureInvToolbarWired();
   let upgradeCount = 0;
+  for (let i = 0; i < p.inventory.length; i++) {
+    if (p.inventory[i] && isBetterEquipmentItem(p.inventory[i], p)) upgradeCount += 1;
+  }
+
+  const pageSize = 15;
+  const totalPages = Math.max(1, Math.ceil(maxInv / pageSize));
+  if (invPage >= totalPages) invPage = totalPages - 1;
+  const startIdx = invPage * pageSize;
+  const endIdx = Math.min(maxInv, startIdx + pageSize);
+
+  const pagerEl = document.getElementById("inv-pager");
+  const prevBtn = document.getElementById("inv-prev-page");
+  const nextBtn = document.getElementById("inv-next-page");
+  const pageLabel = document.getElementById("inv-page-label");
+  if (pagerEl) pagerEl.hidden = totalPages <= 1;
+  if (prevBtn) prevBtn.disabled = invPage <= 0;
+  if (nextBtn) nextBtn.disabled = invPage >= totalPages - 1;
+  if (pageLabel) pageLabel.textContent = `${invPage + 1} / ${totalPages}`;
+
+  const toggleBtn = document.getElementById("inv-batch-toggle");
+  const delBtn = document.getElementById("inv-batch-delete");
+  const cancelBtn = document.getElementById("inv-batch-cancel");
+  if (toggleBtn) toggleBtn.hidden = batchSelectMode || p.inventory.length === 0;
+  if (delBtn) {
+    delBtn.hidden = !batchSelectMode;
+    delBtn.disabled = batchSelected.size === 0;
+    delBtn.textContent = `Delete (${batchSelected.size})`;
+  }
+  if (cancelBtn) cancelBtn.hidden = !batchSelectMode;
+
   const invGrid = document.getElementById("inventory-grid");
   invGrid.innerHTML = "";
-  for (let i = 0; i < maxInv; i++) {
+  for (let i = startIdx; i < endIdx; i++) {
     const item = p.inventory[i];
     const btn = document.createElement("button");
     btn.type = "button";
     const isUpgrade = item ? isBetterEquipmentItem(item, p) : false;
-    if (isUpgrade) upgradeCount += 1;
-    btn.className = `inv-slot ${item ? "" : "empty"}${isUpgrade ? " upgrade-ready" : ""}`;
+    const isSelected = batchSelectMode && batchSelected.has(i);
+    btn.className = `inv-slot ${item ? "" : "empty"}${isUpgrade ? " upgrade-ready" : ""}${isSelected ? " batch-selected" : ""}`;
     if (item) {
       const rInfo = getRarityInfo(item);
-      if (!isUpgrade) btn.style.borderColor = rInfo.color;
+      if (!isUpgrade && !isSelected) btn.style.borderColor = rInfo.color;
       btn.style.background = rInfo.bg;
-      btn.title = `[${rInfo.label}] ${item.name} — ${item.desc}${isUpgrade ? " [BETTER GEAR AVAILABLE!]" : ""}`;
-      btn.innerHTML = `<span class="inv-rarity-dot" style="background:${rInfo.color}"></span>${isUpgrade ? `<span class="inv-upgrade-badge" title="Better than equipped">▲</span>` : ""}<img src="${item.icon}" alt="${item.name}" />${item.qty > 1 ? `<span class="inv-qty">${item.qty}</span>` : ""}`;
+      btn.title = batchSelectMode
+        ? `Select ${item.name} for batch delete`
+        : `[${rInfo.label}] ${item.name} — ${item.desc}${isUpgrade ? " [BETTER GEAR AVAILABLE!]" : ""}`;
+      btn.innerHTML = `<span class="inv-rarity-dot" style="background:${rInfo.color}"></span>${isUpgrade ? `<span class="inv-upgrade-badge" title="Better than equipped">▲</span>` : ""}${isSelected ? `<span class="inv-batch-check">✓</span>` : ""}<img src="${item.icon}" alt="${item.name}" />${item.qty > 1 ? `<span class="inv-qty">${item.qty}</span>` : ""}`;
       btn.addEventListener("click", () => {
-        if (uiHooks.openItemActionDialog) uiHooks.openItemActionDialog(i);
+        if (batchSelectMode) {
+          if (batchSelected.has(i)) batchSelected.delete(i);
+          else batchSelected.add(i);
+          updateUI();
+        } else if (uiHooks.openItemActionDialog) {
+          uiHooks.openItemActionDialog(i);
+        }
       });
     } else {
       btn.disabled = true;
