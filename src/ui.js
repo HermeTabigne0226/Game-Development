@@ -42,7 +42,7 @@ function ensureInvToolbarWired() {
   });
   document.getElementById("inv-next-page")?.addEventListener("click", () => {
     const p = runtime.state?.player;
-    const totalPages = Math.max(1, Math.ceil(getMaxInventory(p) / 15));
+    const totalPages = Math.max(1, Math.ceil(getMaxInventory(p) / 25));
     if (invPage < totalPages - 1) {
       invPage += 1;
       runtime.uiDirty = true;
@@ -463,12 +463,12 @@ export function updateUI() {
   if (paperdollEl) {
     paperdollEl.innerHTML = "";
     const slotSilhouettes = {
-      helmet: "spritecook-inventory-icons/helmet.png",
-      armor: "spritecook-inventory-icons/armour.png",
-      weapon: "spritecook-inventory-icons/sword.png",
-      subweapon: "spritecook-inventory-icons/shield.png",
-      boots: "spritecook-inventory-icons/boot.png",
-      ring: "spritecook-inventory-icons/ring.png",
+      helmet: "assets/16x16 RPG Item Pack/Item__44.png",
+      armor: "assets/16x16 RPG Item Pack/Item__57.png",
+      weapon: "assets/16x16 RPG Item Pack/Item__00.png",
+      subweapon: "assets/16x16 RPG Item Pack/Item__25.png",
+      boots: "assets/16x16 RPG Item Pack/Item__49.png",
+      ring: "assets/16x16 RPG Item Pack/Item__41.png",
     };
     const earringSvg = `<svg viewBox="0 0 24 24" class="pd-silhouette pd-svg-silhouette" aria-hidden="true"><circle cx="8" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 9.5 L5.5 15 L8 19 L10.5 15 Z" fill="currentColor"/><circle cx="16" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 9.5 L13.5 15 L16 19 L18.5 15 Z" fill="currentColor"/></svg>`;
     const layout = [
@@ -548,7 +548,7 @@ export function updateUI() {
     if (p.inventory[i] && isBetterEquipmentItem(p.inventory[i], p)) upgradeCount += 1;
   }
 
-  const pageSize = 15;
+  const pageSize = 25;
   const totalPages = Math.max(1, Math.ceil(maxInv / pageSize));
   if (invPage >= totalPages) invPage = totalPages - 1;
   const startIdx = invPage * pageSize;

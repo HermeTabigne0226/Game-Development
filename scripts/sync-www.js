@@ -29,6 +29,7 @@ const ITEMS_TO_COPY = [
   "assets/generated/vfx_skills",
   "assets/generated/boss_act2",
   "assets/generated/hero_icons",
+  "assets/16x16 RPG Item Pack",
   "assets/generated/maps",
   "assets/generated/vfx_mage",
   "assets/generated/mage_hero",
