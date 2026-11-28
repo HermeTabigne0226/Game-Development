@@ -1257,6 +1257,7 @@ export function castSpell(spellId) {
   }
 
   if (spell.type === "rapid_slash") {
+    p.hasteTimer = Math.max(p.hasteTimer || 0, 1.8);
     p.rapidSlash = {
       remaining: spell.hits || 3,
       timer: 0,
@@ -1324,9 +1325,11 @@ export function castSpell(spellId) {
     p.animTimer = 0.22;
     spawnVfxAnim(p.x + Math.cos(angle) * 0.45, p.y + Math.sin(angle) * 0.45, "vfx_air_burst", 76, 0.36, { angle });
     const speed = 13.0;
-    const dmg = Math.round(stats.atk * spell.mults[rIdx]);
+    const baseDmg = Math.round(stats.atk * spell.mults[rIdx]);
     for (const offset of [-0.22, 0, 0.22]) {
       const a = angle + offset;
+      const isCrit = Math.random() * 100 < Math.min(stats.crit + 20, 95);
+      const dmg = Math.round(baseDmg * (isCrit ? (s.isPvp ? 1.65 : 1.4) : 1));
       s.projectiles.push({
         x: p.x + Math.cos(a) * 0.4,
         y: p.y + Math.sin(a) * 0.4,
@@ -1335,6 +1338,8 @@ export function castSpell(spellId) {
         radius: 0.24,
         color: spell.color,
         dmg,
+        isCrit,
+        kbMult: 0.48,
         isEnemy: false,
         isArrow: true,
         isSkill: true,
@@ -1364,6 +1369,8 @@ export function castSpell(spellId) {
     p.animTimer = 0.24;
     spawnVfxAnim(p.x + Math.cos(angle) * 0.55, p.y + Math.sin(angle) * 0.55, "vfx_wind_blade", 96, 0.38, { angle });
     const speed = 15.0;
+    const isCrit = Math.random() * 100 < Math.min(stats.crit + 25, 95);
+    const dmg = Math.round(stats.atk * spell.mults[rIdx] * (isCrit ? (s.isPvp ? 1.65 : 1.4) : 1));
     s.projectiles.push({
       x: p.x + Math.cos(angle) * 0.4,
       y: p.y + Math.sin(angle) * 0.4,
@@ -1371,7 +1378,9 @@ export function castSpell(spellId) {
       vy: Math.sin(angle) * speed,
       radius: 0.28,
       color: spell.color,
-      dmg: Math.round(stats.atk * spell.mults[rIdx]),
+      dmg,
+      isCrit,
+      sunderDur: 3.5,
       isEnemy: false,
       isArrow: true,
       isSkill: true,
@@ -1403,13 +1412,10 @@ export function castSpell(spellId) {
     p.tempAtk = atkBonus;
     p.tempAtkTimer = spell.duration;
     sfx.levelUp();
-    spawnVfxAnim(p.x, p.y, "vfx_bloom_heal", 88, 0.72);
-    spawnBurst(p.x, p.y, "#fb923c", 16, 1.2);
-    spawnRing(p.x, p.y, 38, "#facc15", 0.35);
-    spawnGroundDecal(p.x, p.y, "vfx_skyfall_reticle", 96, 0.45, { scaleStart: 0.5, scaleEnd: 1.15, spin: 1.1 });
+    spawnVfxAnim(p.x, p.y, "vfx_holy_heal", 68, 0.75, { anchorX: 0.5, anchorY: 0.78 });
+    spawnBurst(p.x, p.y, "#fb923c", 14, 1.1);
     if (s.isPvp) {
-      broadcastPvpAction({ kind: "ring", x: p.x, y: p.y, radPx: 38, color: "#facc15", dur: 0.35 });
-      broadcastPvpAction({ kind: "decal", x: p.x, y: p.y, sheetKey: "vfx_skyfall_reticle", sizePx: 96, duration: 0.45, opts: { scaleStart: 0.5, scaleEnd: 1.15, spin: 1.1 } });
+      broadcastPvpAction({ kind: "vfx_anim", x: p.x, y: p.y, sheetKey: "vfx_holy_heal", sizePx: 68, duration: 0.75, opts: { anchorX: 0.5, anchorY: 0.78 } });
     }
     addFloat(p.x, p.y - 0.35, `+${gained} HP · +${atkBonus} ATK`, "#fde047");
     addLog(`${spell.name}: +${gained} HP and +${atkBonus} ATK for ${spell.duration}s!`, "heal");

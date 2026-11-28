@@ -236,6 +236,17 @@ export function updateEnemiesAndBosses(dt) {
     e.frozenTimer = Math.max(0, (e.frozenTimer || 0) - dt);
     e.stunTimer = Math.max(0, (e.stunTimer || 0) - dt);
     e.sunderTimer = Math.max(0, (e.sunderTimer || 0) - dt);
+    if ((e.poisonTimer || 0) > 0) {
+      e.poisonTimer = Math.max(0, e.poisonTimer - dt);
+      e.poisonTick = (e.poisonTick || 0) - dt;
+      if (e.poisonTick <= 0 && e.hp > 0) {
+        e.poisonTick = 0.8;
+        const pDmg = Math.max(1, e.poisonDmg || 2);
+        e.hp -= pDmg;
+        addFloat(e.x, e.y - 0.3, `-${pDmg}`, "#4ade80");
+        spawnBurst(e.x, e.y, "#22c55e", 4, 0.6);
+      }
+    }
     e.dodgeCd = Math.max(0, (e.dodgeCd || 0) - dt);
     e.evadeTimer = Math.max(0, (e.evadeTimer || 0) - dt);
     e.bossStunImmuneTimer = Math.max(0, (e.bossStunImmuneTimer || 0) - dt);

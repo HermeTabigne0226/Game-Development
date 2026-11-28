@@ -73,6 +73,8 @@ const VFX_SHEET_META = {
   vfx_holy_nova: { fw: 128, fh: 108, cols: 8, frames: 25 },
   vfx_rapier_flurry: { fw: 64, fh: 48, cols: 8, frames: 16 },
   vfx_regen_aura: { fw: 48, fh: 64, cols: 8, frames: 16 },
+  vfx_power_up_aura: { fw: 56, fh: 56, cols: 8, frames: 14 },
+  vfx_poisoned_aura: { fw: 64, fh: 80, cols: 8, frames: 18 },
 };
 
 const PROJ_SHEET_MAP = {
@@ -778,6 +780,17 @@ export function renderFrame(ts) {
       ctx.restore();
     }
 
+    if (e.poisonTimer > 0 && assets.vfx_poisoned_aura) {
+      const pMeta = VFX_SHEET_META.vfx_poisoned_aura;
+      const pFrame = Math.floor((ts * 0.015) % pMeta.frames);
+      const pdw = size * 1.15;
+      const pdh = pdw * (pMeta.fh / pMeta.fw);
+      ctx.save();
+      ctx.globalAlpha = 0.82;
+      drawGridVfxFrame(ctx, assets.vfx_poisoned_aura, pMeta, pFrame, cx - pdw * 0.5, cy + 10 - ez - pdh * 0.88, pdw, pdh);
+      ctx.restore();
+    }
+
     if (e.windupTimer > 0) {
       ctx.strokeStyle = "#ef4444";
       ctx.lineWidth = 2;
@@ -860,6 +873,9 @@ export function renderFrame(ts) {
   ctx.fill();
   ctx.restore();
 
+  if ((p.tempAtkTimer || 0) > 0) {
+    drawPowerUpAura(ctx, assets, ts, p, pz);
+  }
   if ((p.hasteTimer || 0) > 0) {
     drawHasteRegenAura(ctx, assets, ts, p, pz);
   }
@@ -1446,6 +1462,34 @@ export function renderFrame(ts) {
 }
 
 /** Render active skill charges, telegraphs, and buffs for either the local hero or a PvP rival. */
+function drawPowerUpAura(ctx, assets, ts, entity, ez = 0) {
+  ctx.save();
+  if (assets.vfx_power_up_aura) {
+    const meta = VFX_SHEET_META.vfx_power_up_aura;
+    const frameIdx = Math.floor((ts * 0.016) % meta.frames);
+    const dw = 64;
+    const dh = dw * (meta.fh / meta.fw);
+    ctx.globalAlpha = 0.88;
+    drawGridVfxFrame(
+      ctx,
+      assets.vfx_power_up_aura,
+      meta,
+      frameIdx,
+      entity.x * TILE_SIZE - dw * 0.5,
+      entity.y * TILE_SIZE + 14 - ez * 0.5 - dh * 0.89,
+      dw,
+      dh
+    );
+  } else {
+    ctx.strokeStyle = `rgba(251, 146, 60, ${0.55 + Math.sin(ts * 0.014) * 0.25})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(entity.x * TILE_SIZE, entity.y * TILE_SIZE - ez * 0.5, 22, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 function drawHasteRegenAura(ctx, assets, ts, entity, ez = 0) {
   ctx.save();
   if (assets.vfx_regen_aura) {
@@ -1748,6 +1792,9 @@ function drawEntityChargesAndAuras(ctx, assets, ts, entity) {
     ctx.restore();
   }
 
+  if (entity.tempAtkTimer > 0 && entity !== runtime.state?.player) {
+    drawPowerUpAura(ctx, assets, ts, entity, ez);
+  }
   if (entity.hasteTimer > 0 && entity !== runtime.state?.player) {
     drawHasteRegenAura(ctx, assets, ts, entity, ez);
   }

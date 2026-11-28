@@ -705,7 +705,7 @@ export const SPELLS = [
     range: 2.25,
     type: "rapid_slash",
     icon: "assets/generated/skill_rapid_slash.jpg",
-    desc: "[Ranger · Skill 2] Unleash 3 rapid wind-blade slashes in front of you, slicing enemies in a forward arc (Lv 1, 3, 5, 7).",
+    desc: "[Ranger · Skill 2] Unleash 3 rapid wind-blade slashes in a forward arc, chilling foes & granting 1.8s Haste (Lv 1, 3, 5, 7).",
     color: "#7dd3fc",
   },
   {
@@ -763,7 +763,7 @@ export const SPELLS = [
     range: 8.0,
     type: "arrow_volley",
     icon: "assets/generated/skill_arrow_volley.jpg",
-    desc: "[Ranger · Skill 1] Fire a 3-arrow spread toward your aim dealing 85%–135% ATK per arrow (Lv 1, 3, 5, 7).",
+    desc: "[Ranger · Skill 1] Fire a 3-arrow spread dealing 85%–135% ATK per arrow with +20% CRIT & knockback (Lv 1, 3, 5, 7).",
     color: "#38bdf8",
   },
   {
@@ -781,7 +781,7 @@ export const SPELLS = [
     range: 7.8,
     type: "thorn_salvo",
     icon: "assets/generated/skill_thorn_salvo.png",
-    desc: "[Ranger · Skill 1] Fire 5 venomous emerald thorns in a tight fan dealing 55%–88% ATK each & slowing hit foes (Lv 1, 3, 5, 7).",
+    desc: "[Ranger · Skill 1] Fire 5 venomous emerald thorns dealing 55%–88% ATK each, slowing & poisoning hit foes (Lv 1, 3, 5, 7).",
     color: "#4ade80",
   },
   {
@@ -798,7 +798,7 @@ export const SPELLS = [
     range: 9.0,
     type: "piercing_shot",
     icon: "assets/generated/skill_piercing_shot.jpg",
-    desc: "[Ranger · Skill 2] Loose a high-velocity war-arrow that pierces all enemies in a line (Lv 1, 3, 5, 7).",
+    desc: "[Ranger · Skill 2] Loose a high-velocity war-arrow that pierces all enemies in a line, sundering DEF (-35%) with +25% CRIT (Lv 1, 3, 5, 7).",
     color: "#facc15",
   },
   {
@@ -821,7 +821,7 @@ export const SPELLS = [
   },
   {
     id: "vine_snare",
-    name: "Briar Snare",
+    name: "Verdant Snare",
     heroClass: "ranger",
     slot: 3,
     hotkey: "3",
@@ -835,7 +835,7 @@ export const SPELLS = [
     range: 4.5,
     type: "vine_snare",
     icon: "assets/generated/skill_briar_snare.png",
-    desc: "[Ranger · Skill 3] Unleash briar vines at your aim, damaging & rooting/stunning enemies for 1.4s–2.2s (Lv 1, 3, 5, 7).",
+    desc: "[Ranger · Skill 3] Unleash verdant vines at your aim, damaging & rooting/stunning enemies for 1.4s–2.2s (Lv 1, 3, 5, 7).",
     color: "#22c55e",
   },
   {

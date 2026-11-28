@@ -882,6 +882,7 @@ export function updateSimulation(dt) {
         if (dist <= sp.range) {
           const dot = dist < 0.01 ? 1 : (dx / dist) * dirX + (dy / dist) * dirY;
           if (dot >= 0.05 || dist < 0.85) {
+            e.chilled = Math.max(e.chilled || 0, 1.2);
             damageEnemy(e, dmg, false, sp.name, dirX * 1.4, dirY * 1.4, { isSkill: true });
           }
         }
@@ -1629,7 +1630,8 @@ export function updateSimulation(dt) {
             e.sunderTimer = Math.max(e.sunderTimer || 0, pr.sunderDur);
             addFloat(e.x, e.y - 0.4, "SUNDERED", "#fb923c");
           }
-          damageEnemy(e, pr.dmg, Boolean(pr.isCrit), pr.label || "Spell", pr.vx * 0.25, pr.vy * 0.25, {
+          const kb = pr.kbMult || 0.25;
+          damageEnemy(e, pr.dmg, Boolean(pr.isCrit), pr.label || "Spell", pr.vx * kb, pr.vy * kb, {
             isSkill: Boolean(pr.isSkill),
             pierce: Boolean(pr.pierce),
             canInterrupt: Boolean(pr.isSkill),
@@ -1654,7 +1656,12 @@ export function updateSimulation(dt) {
           } else if (pr.projKind === "water_bolt") {
             spawnVfxAnim(e.x, e.y, "vfx_water_impact", 64, 0.34);
           } else if (pr.projKind === "thorn_shot") {
-            spawnVfxAnim(e.x, e.y, "vfx_thorn_impact", 60, 0.32);
+            spawnVfxAnim(pr.x, pr.y, "vfx_thorn_impact", 60, 0.32);
+            e.poisonTimer = Math.max(e.poisonTimer || 0, 2.5);
+            e.poisonDmg = Math.max(e.poisonDmg || 0, Math.max(2, Math.round(pr.dmg * 0.28)));
+            e.poisonTick = e.poisonTick ?? 0.65;
+          } else if (pr.isArrow && pr.isSkill) {
+            spawnVfxAnim(e.x, e.y, "vfx_arrow_impact", 44, 0.32, { angle: Math.atan2(pr.vy, pr.vx), anchorX: 0.78, anchorY: 0.53 });
           }
           if (pr.isFrostLance) {
             spawnFrostZone(pr.x, pr.y);
