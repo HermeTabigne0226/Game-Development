@@ -151,7 +151,8 @@ export function useShortcut(slotIdx) {
 export function openItemActionDialog(index) {
   const s = runtime.state;
   if (!s || s.runEnded) return;
-  const item = s.player.inventory[index];
+  const p = s.player;
+  const item = p.inventory[index];
   if (!item) return;
 
   const dlg = document.getElementById("item-action-dialog");
@@ -284,7 +285,7 @@ export function openItemActionDialog(index) {
     cancelBtn.textContent = "Cancel";
     cancelBtn.addEventListener("click", () => dlg.close());
     btnsEl.appendChild(cancelBtn);
-  } else {
+  } else if (item.type === "consumable") {
     for (let sl = 0; sl < 4; sl++) {
       const sBtn = document.createElement("button");
       sBtn.type = "button";
@@ -327,6 +328,73 @@ export function openItemActionDialog(index) {
       btnsEl.appendChild(dropBtn);
     }
   }
+
+  dlg.showModal();
+}
+
+export function openEquippedActionDialog(slot) {
+  const s = runtime.state;
+  if (!s || s.runEnded) return;
+  const p = s.player;
+  const item = p.equipment?.[slot];
+  if (!item) return;
+
+  const dlg = document.getElementById("item-action-dialog");
+  const rInfo = getRarityInfo(item);
+  document.getElementById("item-action-icon").src = item.icon;
+  const titleEl = document.getElementById("item-action-title");
+  titleEl.textContent = item.name;
+  titleEl.style.color = rInfo.color;
+  document.getElementById("item-action-desc").innerHTML = `<span class="rarity-badge" style="color:${rInfo.color};border-color:${rInfo.color};background:${rInfo.bg}">${rInfo.label}</span> ${item.desc}`;
+
+  const compareEl = document.getElementById("item-action-compare");
+  if (compareEl) {
+    compareEl.hidden = true;
+    compareEl.innerHTML = "";
+  }
+
+  const btnsEl = document.getElementById("item-action-buttons");
+  btnsEl.innerHTML = "";
+
+  const unequipBtn = document.createElement("button");
+  unequipBtn.type = "button";
+  unequipBtn.className = "btn btn-primary";
+  unequipBtn.textContent = "Unequip to Bag";
+  unequipBtn.addEventListener("click", () => {
+    if (addItemToInventory(item)) {
+      p.equipment[slot] = null;
+      sfx.step();
+      addLog(`Unequipped ${item.name}.`, "info");
+      runtime.uiDirty = true;
+      saveRun();
+    } else {
+      addFloat(p.x, p.y - 0.35, "Bag is full!", "#f87171");
+      addLog("Cannot unequip: Satchel is full!", "info");
+    }
+    dlg.close();
+  });
+  btnsEl.appendChild(unequipBtn);
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.type = "button";
+  deleteBtn.className = "btn btn-danger";
+  deleteBtn.textContent = "Delete Item";
+  deleteBtn.addEventListener("click", () => {
+    p.equipment[slot] = null;
+    sfx.step();
+    addLog(`Deleted equipped ${item.name}.`, "info");
+    runtime.uiDirty = true;
+    saveRun();
+    dlg.close();
+  });
+  btnsEl.appendChild(deleteBtn);
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.type = "button";
+  cancelBtn.className = "btn btn-secondary";
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.addEventListener("click", () => dlg.close());
+  btnsEl.appendChild(cancelBtn);
 
   dlg.showModal();
 }
@@ -986,6 +1054,73 @@ export function openShrineDialog(prop) {
   dlg.showModal();
 }
 
+export function openEquippedActionDialog(slot) {
+  const s = runtime.state;
+  if (!s || s.runEnded) return;
+  const p = s.player;
+  const item = p.equipment?.[slot];
+  if (!item) return;
+
+  const dlg = document.getElementById("item-action-dialog");
+  const rInfo = getRarityInfo(item);
+  document.getElementById("item-action-icon").src = item.icon;
+  const titleEl = document.getElementById("item-action-title");
+  titleEl.textContent = item.name;
+  titleEl.style.color = rInfo.color;
+  document.getElementById("item-action-desc").innerHTML = `<span class="rarity-badge" style="color:${rInfo.color};border-color:${rInfo.color};background:${rInfo.bg}">${rInfo.label}</span> ${item.desc}`;
+
+  const compareEl = document.getElementById("item-action-compare");
+  if (compareEl) {
+    compareEl.hidden = true;
+    compareEl.innerHTML = "";
+  }
+
+  const btnsEl = document.getElementById("item-action-buttons");
+  btnsEl.innerHTML = "";
+
+  const unequipBtn = document.createElement("button");
+  unequipBtn.type = "button";
+  unequipBtn.className = "btn btn-primary";
+  unequipBtn.textContent = "Unequip to Bag";
+  unequipBtn.addEventListener("click", () => {
+    if (addItemToInventory(item)) {
+      p.equipment[slot] = null;
+      sfx.step();
+      addLog(`Unequipped ${item.name}.`, "info");
+      runtime.uiDirty = true;
+      saveRun();
+    } else {
+      addFloat(p.x, p.y - 0.35, "Bag is full!", "#f87171");
+      addLog("Cannot unequip: Satchel is full!", "info");
+    }
+    dlg.close();
+  });
+  btnsEl.appendChild(unequipBtn);
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.type = "button";
+  deleteBtn.className = "btn btn-danger";
+  deleteBtn.textContent = "Delete Item";
+  deleteBtn.addEventListener("click", () => {
+    p.equipment[slot] = null;
+    sfx.step();
+    addLog(`Deleted equipped ${item.name}.`, "info");
+    runtime.uiDirty = true;
+    saveRun();
+    dlg.close();
+  });
+  btnsEl.appendChild(deleteBtn);
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.type = "button";
+  cancelBtn.className = "btn btn-secondary";
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.addEventListener("click", () => dlg.close());
+  btnsEl.appendChild(cancelBtn);
+
+  dlg.showModal();
+}
+
 export function openStoryDialog(npc) {
   const tpl = NPC_ENCOUNTERS[npc.id];
   if (!tpl) return;
@@ -1060,6 +1195,73 @@ export function openStoryDialog(npc) {
     e.preventDefault();
     dismissNpc();
   }, { signal: storyDialogAbort.signal });
+
+  dlg.showModal();
+}
+
+export function openEquippedActionDialog(slot) {
+  const s = runtime.state;
+  if (!s || s.runEnded) return;
+  const p = s.player;
+  const item = p.equipment?.[slot];
+  if (!item) return;
+
+  const dlg = document.getElementById("item-action-dialog");
+  const rInfo = getRarityInfo(item);
+  document.getElementById("item-action-icon").src = item.icon;
+  const titleEl = document.getElementById("item-action-title");
+  titleEl.textContent = item.name;
+  titleEl.style.color = rInfo.color;
+  document.getElementById("item-action-desc").innerHTML = `<span class="rarity-badge" style="color:${rInfo.color};border-color:${rInfo.color};background:${rInfo.bg}">${rInfo.label}</span> ${item.desc}`;
+
+  const compareEl = document.getElementById("item-action-compare");
+  if (compareEl) {
+    compareEl.hidden = true;
+    compareEl.innerHTML = "";
+  }
+
+  const btnsEl = document.getElementById("item-action-buttons");
+  btnsEl.innerHTML = "";
+
+  const unequipBtn = document.createElement("button");
+  unequipBtn.type = "button";
+  unequipBtn.className = "btn btn-primary";
+  unequipBtn.textContent = "Unequip to Bag";
+  unequipBtn.addEventListener("click", () => {
+    if (addItemToInventory(item)) {
+      p.equipment[slot] = null;
+      sfx.step();
+      addLog(`Unequipped ${item.name}.`, "info");
+      runtime.uiDirty = true;
+      saveRun();
+    } else {
+      addFloat(p.x, p.y - 0.35, "Bag is full!", "#f87171");
+      addLog("Cannot unequip: Satchel is full!", "info");
+    }
+    dlg.close();
+  });
+  btnsEl.appendChild(unequipBtn);
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.type = "button";
+  deleteBtn.className = "btn btn-danger";
+  deleteBtn.textContent = "Delete Item";
+  deleteBtn.addEventListener("click", () => {
+    p.equipment[slot] = null;
+    sfx.step();
+    addLog(`Deleted equipped ${item.name}.`, "info");
+    runtime.uiDirty = true;
+    saveRun();
+    dlg.close();
+  });
+  btnsEl.appendChild(deleteBtn);
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.type = "button";
+  cancelBtn.className = "btn btn-secondary";
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.addEventListener("click", () => dlg.close());
+  btnsEl.appendChild(cancelBtn);
 
   dlg.showModal();
 }
@@ -1161,6 +1363,73 @@ export function openStairsDialog() {
   document.getElementById("stairs-dialog-title").textContent = `Descend to Floor ${nextFloor}?`;
   document.getElementById("stairs-dialog-text").textContent =
     `You found the stairs down to Floor ${nextFloor}. Do you want to proceed now or keep exploring Floor ${runtime.state.floor}?`;
+  dlg.showModal();
+}
+
+export function openEquippedActionDialog(slot) {
+  const s = runtime.state;
+  if (!s || s.runEnded) return;
+  const p = s.player;
+  const item = p.equipment?.[slot];
+  if (!item) return;
+
+  const dlg = document.getElementById("item-action-dialog");
+  const rInfo = getRarityInfo(item);
+  document.getElementById("item-action-icon").src = item.icon;
+  const titleEl = document.getElementById("item-action-title");
+  titleEl.textContent = item.name;
+  titleEl.style.color = rInfo.color;
+  document.getElementById("item-action-desc").innerHTML = `<span class="rarity-badge" style="color:${rInfo.color};border-color:${rInfo.color};background:${rInfo.bg}">${rInfo.label}</span> ${item.desc}`;
+
+  const compareEl = document.getElementById("item-action-compare");
+  if (compareEl) {
+    compareEl.hidden = true;
+    compareEl.innerHTML = "";
+  }
+
+  const btnsEl = document.getElementById("item-action-buttons");
+  btnsEl.innerHTML = "";
+
+  const unequipBtn = document.createElement("button");
+  unequipBtn.type = "button";
+  unequipBtn.className = "btn btn-primary";
+  unequipBtn.textContent = "Unequip to Bag";
+  unequipBtn.addEventListener("click", () => {
+    if (addItemToInventory(item)) {
+      p.equipment[slot] = null;
+      sfx.step();
+      addLog(`Unequipped ${item.name}.`, "info");
+      runtime.uiDirty = true;
+      saveRun();
+    } else {
+      addFloat(p.x, p.y - 0.35, "Bag is full!", "#f87171");
+      addLog("Cannot unequip: Satchel is full!", "info");
+    }
+    dlg.close();
+  });
+  btnsEl.appendChild(unequipBtn);
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.type = "button";
+  deleteBtn.className = "btn btn-danger";
+  deleteBtn.textContent = "Delete Item";
+  deleteBtn.addEventListener("click", () => {
+    p.equipment[slot] = null;
+    sfx.step();
+    addLog(`Deleted equipped ${item.name}.`, "info");
+    runtime.uiDirty = true;
+    saveRun();
+    dlg.close();
+  });
+  btnsEl.appendChild(deleteBtn);
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.type = "button";
+  cancelBtn.className = "btn btn-secondary";
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.addEventListener("click", () => dlg.close());
+  btnsEl.appendChild(cancelBtn);
+
   dlg.showModal();
 }
 
@@ -1552,12 +1821,80 @@ export function openLoadoutDialog(onConfirm, onBack, initialLoadout = null, hero
   dlg.showModal();
 }
 
+export function openEquippedActionDialog(slot) {
+  const s = runtime.state;
+  if (!s || s.runEnded) return;
+  const p = s.player;
+  const item = p.equipment?.[slot];
+  if (!item) return;
+
+  const dlg = document.getElementById("item-action-dialog");
+  const rInfo = getRarityInfo(item);
+  document.getElementById("item-action-icon").src = item.icon;
+  const titleEl = document.getElementById("item-action-title");
+  titleEl.textContent = item.name;
+  titleEl.style.color = rInfo.color;
+  document.getElementById("item-action-desc").innerHTML = `<span class="rarity-badge" style="color:${rInfo.color};border-color:${rInfo.color};background:${rInfo.bg}">${rInfo.label}</span> ${item.desc}`;
+
+  const compareEl = document.getElementById("item-action-compare");
+  if (compareEl) {
+    compareEl.hidden = true;
+    compareEl.innerHTML = "";
+  }
+
+  const btnsEl = document.getElementById("item-action-buttons");
+  btnsEl.innerHTML = "";
+
+  const unequipBtn = document.createElement("button");
+  unequipBtn.type = "button";
+  unequipBtn.className = "btn btn-primary";
+  unequipBtn.textContent = "Unequip to Bag";
+  unequipBtn.addEventListener("click", () => {
+    if (addItemToInventory(item)) {
+      p.equipment[slot] = null;
+      sfx.step();
+      addLog(`Unequipped ${item.name}.`, "info");
+      runtime.uiDirty = true;
+      saveRun();
+    } else {
+      addFloat(p.x, p.y - 0.35, "Bag is full!", "#f87171");
+      addLog("Cannot unequip: Satchel is full!", "info");
+    }
+    dlg.close();
+  });
+  btnsEl.appendChild(unequipBtn);
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.type = "button";
+  deleteBtn.className = "btn btn-danger";
+  deleteBtn.textContent = "Delete Item";
+  deleteBtn.addEventListener("click", () => {
+    p.equipment[slot] = null;
+    sfx.step();
+    addLog(`Deleted equipped ${item.name}.`, "info");
+    runtime.uiDirty = true;
+    saveRun();
+    dlg.close();
+  });
+  btnsEl.appendChild(deleteBtn);
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.type = "button";
+  cancelBtn.className = "btn btn-secondary";
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.addEventListener("click", () => dlg.close());
+  btnsEl.appendChild(cancelBtn);
+
+  dlg.showModal();
+}
+
 export { openPvpDialog } from "./pvpLobby.js";
 
 // Wire hooks
 combatHooks.openSkillDialog = openSkillDialog;
 uiHooks.useShortcut = useShortcut;
 uiHooks.openItemActionDialog = openItemActionDialog;
+uiHooks.openEquippedActionDialog = openEquippedActionDialog;
 worldHooks.openStairsDialog = openStairsDialog;
 worldHooks.openShopDialog = openShopDialog;
 worldHooks.openStoryDialog = openStoryDialog;

@@ -19,6 +19,7 @@ import { worldHooks } from "./world.js";
 export const uiHooks = {
   useShortcut: null,
   openItemActionDialog: null,
+  openEquippedActionDialog: null,
 };
 
 export function buildSpellButtons() {
@@ -376,8 +377,12 @@ export function updateUI() {
     if (item) {
       const rInfo = getRarityInfo(item);
       row.style.borderLeft = `3px solid ${rInfo.color}`;
+      row.style.cursor = "pointer";
       row.innerHTML += `<img src="${item.icon}" class="pixel-icon" alt="" /><span style="color:${rInfo.color}">${item.name}</span>`;
-      row.title = `[${rInfo.label}] ${item.desc}`;
+      row.title = `[${rInfo.label}] ${item.desc} — Click to Unequip or Delete`;
+      row.addEventListener("click", () => {
+        if (uiHooks.openEquippedActionDialog) uiHooks.openEquippedActionDialog(slot);
+      });
     } else {
       row.innerHTML += `<span style="color:var(--muted)">Empty</span>`;
     }
