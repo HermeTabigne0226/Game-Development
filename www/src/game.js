@@ -1,6 +1,6 @@
 import { loadAllAssets } from "./assets.js";
 import { bgm, sfx } from "./audio.js";
-import { castSpell, performDash, performMeleeAttack } from "./combat.js";
+import { castSpell, performDash, performMeleeAttack, upgradeSkillById } from "./combat.js";
 import { DEFAULT_LOADOUT, GAME_VERSION } from "./data.js";
 import {
   markPatchNotesSeen,
@@ -57,7 +57,12 @@ function setupControls() {
     else if (key === "f") triggerNearbyInteract();
     else if (key === "q") quickPotion("health_potion");
     else if (key === "e") quickPotion("mana_potion");
-    else if (["1", "2", "3", "4"].includes(key)) {
+    else if (e.altKey && (/^Digit[1-4]$/.test(e.code) || ["1", "2", "3", "4"].includes(key))) {
+      e.preventDefault();
+      const slotIdx = /^Digit[1-4]$/.test(e.code) ? Number(e.code.slice(5)) - 1 : Number(key) - 1;
+      const sp = getActiveSpells(runtime.state.player)[slotIdx];
+      if (sp) upgradeSkillById(sp.id);
+    } else if (["1", "2", "3", "4"].includes(key)) {
       const sp = getActiveSpells(runtime.state.player)[Number(key) - 1];
       if (sp) castSpell(sp.id);
     }
