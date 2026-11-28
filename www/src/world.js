@@ -939,13 +939,13 @@ export function updateSimulation(dt) {
       const radius = spell.radii[rankIdx];
       const dmg = Math.round(stats.atk * spell.mults[rankIdx]) + spell.flats[rankIdx];
       const stunDur = spell.stuns[rankIdx];
-      spawnBurst(p.x, p.y, "#fbbf24", 30, 1.55);
-      spawnBurst(p.x, p.y, "#ffffff", 16, 1.25);
-      spawnRing(p.x, p.y, radius * TILE_SIZE, "#fbbf24", 0.45);
-      spawnRing(p.x, p.y, radius * TILE_SIZE * 0.6, "#ffffff", 0.3);
-      spawnGroundDecal(p.x, p.y, "vfx_holy_ground_impact", radius * TILE_SIZE * 2.15, 0.9, { scaleStart: 0.72, scaleEnd: 1.08, spin: 0.35 });
-      spawnGroundDecal(p.x, p.y, "vfx_ground_slam_shockwave", radius * TILE_SIZE * 1.45, 0.24, { scaleStart: 0.15, scaleEnd: 1.85 });
-      s.beams.push({ x: p.x * TILE_SIZE, y: p.y * TILE_SIZE, color: "#fde047", life: 0.42, maxLife: 0.42 });
+      const radPx = radius * TILE_SIZE;
+      spawnRing(p.x, p.y, radPx * 0.95, "#ffffff", 0.34, { delay: 0, lineWidth: 2.2 });
+      spawnRing(p.x, p.y, radPx * 1.12, "#fde047", 0.44, { delay: 0.08, lineWidth: 1.8 });
+      spawnVfxAnim(p.x, p.y, "vfx_divine_beam", radPx * 1.45, 0.72, { anchorX: 0.5, anchorY: 0.92 });
+      spawnVfxAnim(p.x, p.y, "vfx_holy_nova", radPx * 1.75, 0.62, { alpha: 0.9 });
+      spawnVfxAnim(p.x, p.y, "vfx_shockwave_ring", radPx * 2.0, 0.48, { alpha: 0.75 });
+      spawnBurst(p.x, p.y, "#fde047", 18, 1.35);
       if (s.isPvp) broadcastPvpAction({ kind: "ult_slam", x: p.x, y: p.y, radius });
 
       for (const e of [...s.level.enemies]) {

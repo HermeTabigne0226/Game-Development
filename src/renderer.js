@@ -1485,26 +1485,28 @@ function drawEntityChargesAndAuras(ctx, assets, ts, entity) {
     const pxCenter = entity.x * TILE_SIZE;
     const pyCenter = entity.y * TILE_SIZE;
     ctx.save();
-    ctx.strokeStyle = `rgba(251, 191, 36, ${0.45 + Math.sin(ts * 0.015) * 0.25})`;
-    ctx.fillStyle = `rgba(251, 191, 36, ${0.08 + prog * 0.14})`;
-    ctx.lineWidth = 2.5;
+    const grad = ctx.createRadialGradient(pxCenter, pyCenter, 6, pxCenter, pyCenter, radPx);
+    grad.addColorStop(0, `rgba(254, 249, 195, ${0.18 + prog * 0.16})`);
+    grad.addColorStop(0.65, `rgba(251, 191, 36, ${0.08 + prog * 0.1})`);
+    grad.addColorStop(1, "rgba(251, 191, 36, 0.02)");
+    ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(pxCenter, pyCenter, radPx, 0, Math.PI * 2);
     ctx.fill();
+
+    ctx.save();
+    ctx.translate(pxCenter, pyCenter);
+    ctx.rotate(ts * 0.0006);
+    ctx.strokeStyle = `rgba(251, 191, 36, ${0.48 + Math.sin(ts * 0.015) * 0.18})`;
+    ctx.lineWidth = 1.6;
+    ctx.setLineDash([7, 5]);
+    ctx.beginPath();
+    ctx.arc(0, 0, radPx, 0, Math.PI * 2);
     ctx.stroke();
-    const gatherImg = assets.charging_ground_sigil || assets.vfx_holy_ground_impact;
-    if (gatherImg) {
-      ctx.save();
-      ctx.imageSmoothingEnabled = false;
-      ctx.globalAlpha = 0.6 + prog * 0.35;
-      ctx.translate(pxCenter, pyCenter);
-      ctx.rotate(ts * 0.0006);
-      const fullSz = radPx * 2.08;
-      ctx.drawImage(gatherImg, -fullSz / 2, -fullSz / 2, fullSz, fullSz);
-      ctx.restore();
-    }
-    ctx.strokeStyle = "#fef08a";
-    ctx.lineWidth = 2.2;
+    ctx.restore();
+
+    ctx.strokeStyle = `rgba(254, 240, 138, ${0.65 + prog * 0.3})`;
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(pxCenter, pyCenter, radPx * prog, 0, Math.PI * 2);
     ctx.stroke();
