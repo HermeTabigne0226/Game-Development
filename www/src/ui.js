@@ -437,7 +437,7 @@ export function updateUI() {
 
   const eqEl = document.getElementById("equipment-slots");
   eqEl.innerHTML = "";
-  const slotOrder = ["helmet", "earrings", "weapon", "armor", "subweapon", "ring", "boots"];
+  const slotOrder = ["helmet", "necklace", "weapon", "armor", "subweapon", "ring", "boots"];
   for (const slot of slotOrder) {
     const item = p.equipment?.[slot] || null;
     const row = document.createElement("div");
@@ -464,17 +464,17 @@ export function updateUI() {
     paperdollEl.innerHTML = "";
     const slotSilhouettes = {
       helmet: "assets/16x16 RPG Item Pack/Item__44.png",
+      necklace: "assets/16x16 RPG Item Pack/Item__32.png",
       armor: "assets/16x16 RPG Item Pack/Item__57.png",
       weapon: "assets/16x16 RPG Item Pack/Item__00.png",
       subweapon: "assets/16x16 RPG Item Pack/Item__25.png",
       boots: "assets/16x16 RPG Item Pack/Item__49.png",
       ring: "assets/16x16 RPG Item Pack/Item__41.png",
     };
-    const earringSvg = `<svg viewBox="0 0 24 24" class="pd-silhouette pd-svg-silhouette" aria-hidden="true"><circle cx="8" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 9.5 L5.5 15 L8 19 L10.5 15 Z" fill="currentColor"/><circle cx="16" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 9.5 L13.5 15 L16 19 L18.5 15 Z" fill="currentColor"/></svg>`;
     const layout = [
       { slot: null },
       { slot: "helmet", label: "Head" },
-      { slot: "earrings", label: "Earrings" },
+      { slot: "necklace", label: "Necklace" },
       { slot: "weapon", label: "Weapon" },
       { slot: "armor", label: "Armor" },
       { slot: "subweapon", label: "Sub" },
@@ -502,9 +502,7 @@ export function updateUI() {
           if (uiHooks.openEquippedActionDialog) uiHooks.openEquippedActionDialog(cell.slot);
         });
       } else {
-        const silHtml = slotSilhouettes[cell.slot]
-          ? `<img src="${slotSilhouettes[cell.slot]}" class="pixel-icon pd-silhouette" alt="" />`
-          : earringSvg;
+        const silHtml = `<img src="${slotSilhouettes[cell.slot]}" class="pixel-icon pd-silhouette" alt="" />`;
         box.innerHTML = `${silHtml}<span class="pd-empty">${cell.label}</span>`;
         box.title = `${cell.label} (Empty)`;
       }
