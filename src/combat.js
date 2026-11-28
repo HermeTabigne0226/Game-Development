@@ -1425,7 +1425,7 @@ export function castSpell(spellId) {
     p.animTimer = 0.35;
     const { tx, ty } = findVisibleTargetPos(p, angle, 7.5, 2.8);
     const radius = spell.radii[rIdx];
-    spawnVfxAnim(tx, ty, "vfx_air_burst", radius * TILE_SIZE * 1.9, 0.55);
+    spawnVfxAnim(tx, ty, "vfx_shockwave_ring", radius * TILE_SIZE * 1.35, 0.38, { alpha: 0.65 });
     const dmg = Math.round(stats.atk * spell.mults[rIdx]) + spell.flats[rIdx];
     const chillDur = spell.chills[rIdx];
     const dur = spell.duration || 3.0;

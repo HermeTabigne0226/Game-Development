@@ -1911,32 +1911,28 @@ export function updateSimulation(dt) {
       st.tickTimer -= dt;
       st.spawnTimer -= dt;
       if (st.spawnTimer <= 0) {
-        st.spawnTimer = 0.14;
-        if (s.fallingArrows.length < 10) {
-          const jx = (Math.random() - 0.5) * st.radius * TILE_SIZE * 0.35;
-          const jy = (Math.random() - 0.5) * st.radius * TILE_SIZE * 0.35;
-          const landX = st.x * TILE_SIZE + jx;
-          const landY = st.y * TILE_SIZE + jy;
+        st.spawnTimer = 0.055;
+        if (s.fallingArrows.length < 16) {
+          const r = Math.sqrt(Math.random()) * st.radius * TILE_SIZE * 0.85;
+          const theta = Math.random() * Math.PI * 2;
+          const landX = st.x * TILE_SIZE + Math.cos(theta) * r;
+          const landY = st.y * TILE_SIZE + Math.sin(theta) * r;
           s.fallingArrows.push({
-            x: landX - 28,
-            y: landY - 96,
+            x: landX - 34,
+            y: landY - 135,
             targetX: landX,
             targetY: landY,
-            sizePx: Math.max(72, st.radius * TILE_SIZE * 1.85),
-            life: 0.2,
-            maxLife: 0.2,
+            sizePx: 24,
+            life: 0.22,
+            maxLife: 0.22,
           });
         }
       }
       if (st.tickTimer <= 0) {
         st.tickTimer = st.tickInterval;
         sfx.slash();
-        s.shake = Math.max(s.shake, 3.2);
-        spawnRing(st.x, st.y, st.radius * TILE_SIZE, "rgba(250, 204, 21, 0.7)", 0.28);
-        spawnGroundDecal(st.x, st.y, "vfx_arrow_storm_impact", st.radius * TILE_SIZE * 2.05, 0.44, {
-          scaleStart: 0.85,
-          scaleEnd: 1.05,
-        });
+        s.shake = Math.max(s.shake, 2.5);
+        spawnRing(st.x, st.y, st.radius * TILE_SIZE, "rgba(250, 204, 21, 0.45)", 0.28);
         if (!st.isVisualOnly) {
           for (const e of [...s.level.enemies]) {
             if (Math.hypot(e.x - st.x, e.y - st.y) <= st.radius + 0.35) {

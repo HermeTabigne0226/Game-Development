@@ -1144,10 +1144,10 @@ export function renderFrame(ts) {
       ctx.save();
       if (assets.vfx_arrow_storm_reticle) {
         ctx.imageSmoothingEnabled = false;
-        ctx.globalAlpha = 0.85 + Math.sin(ts * 0.012) * 0.12;
+        ctx.globalAlpha = 0.58 + Math.sin(ts * 0.01) * 0.1;
         ctx.translate(sx, sy);
-        ctx.rotate(ts * 0.0008);
-        const sz = radPx * 2.08;
+        ctx.rotate(ts * 0.0004);
+        const sz = radPx * 2.04;
         ctx.drawImage(assets.vfx_arrow_storm_reticle, -sz / 2, -sz / 2, sz, sz);
       } else {
         ctx.strokeStyle = `rgba(250, 204, 21, ${0.45 + Math.sin(ts * 0.015) * 0.2})`;
@@ -1167,17 +1167,33 @@ export function renderFrame(ts) {
       const t = 1 - Math.max(0, fa.life / fa.maxLife);
       const cx = fa.x + (fa.targetX - fa.x) * t;
       const cy = fa.y + (fa.targetY - fa.y) * t;
+      const ang = Math.atan2(fa.targetY - fa.y, fa.targetX - fa.x);
+
+      // Ground target shadow growing as the arrow approaches
       ctx.save();
-      ctx.globalAlpha = Math.min(1, (1 - t * 0.25) * 0.95);
-      if (assets.vfx_arrow_storm_volley) {
+      ctx.globalAlpha = 0.15 + t * 0.3;
+      ctx.fillStyle = "#000000";
+      ctx.beginPath();
+      ctx.ellipse(fa.targetX, fa.targetY, 3 + t * 4, 1.8 + t * 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Clean falling arrow + subtle wind trail
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, 0.35 + t * 0.65);
+      ctx.strokeStyle = "rgba(253, 224, 71, 0.55)";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(cx - Math.cos(ang) * 20, cy - Math.sin(ang) * 20);
+      ctx.lineTo(cx, cy);
+      ctx.stroke();
+
+      if (assets.arrow_proj) {
         ctx.imageSmoothingEnabled = false;
-        const sz = fa.sizePx || 88;
-        ctx.drawImage(assets.vfx_arrow_storm_volley, cx - sz / 2, cy - sz / 2, sz, sz);
-      } else if (assets.arrow_proj) {
-        const ang = Math.atan2(fa.targetY - fa.y, fa.targetX - fa.x);
+        const sz = fa.sizePx || 24;
         ctx.translate(cx, cy);
         ctx.rotate(ang);
-        ctx.drawImage(assets.arrow_proj, -11, -11, 22, 22);
+        ctx.drawImage(assets.arrow_proj, -sz / 2, -sz / 2, sz, sz);
       }
       ctx.restore();
     }
