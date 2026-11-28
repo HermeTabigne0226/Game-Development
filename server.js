@@ -31,6 +31,7 @@ const BLOCKED_TOP_PATHS = new Set([
   "android",
   "scripts",
   "node_modules",
+  "agents.md",
 ]);
 
 const MIME_TYPES = {

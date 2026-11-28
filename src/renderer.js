@@ -177,6 +177,10 @@ export function renderFrame(ts) {
         const sx = (quad % 2) * 128;
         const sy = Math.floor(quad / 2) * 128;
         ctx.drawImage(tilesImg, sx, sy, 128, 128, dx, dy, TILE_SIZE, TILE_SIZE);
+        if (tile !== TILE.WALL) {
+          ctx.fillStyle = quad === 3 ? "rgba(8, 10, 18, 0.44)" : "rgba(8, 10, 18, 0.24)";
+          ctx.fillRect(dx, dy, TILE_SIZE, TILE_SIZE);
+        }
       } else {
         ctx.fillStyle = tile === TILE.WALL ? "#1e2436" : "#2e3548";
         ctx.fillRect(dx, dy, TILE_SIZE, TILE_SIZE);

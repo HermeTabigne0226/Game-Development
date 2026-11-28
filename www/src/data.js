@@ -1,8 +1,15 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.0.3.4 Beta";
+export const GAME_VERSION = "v.1.0.3.5 Beta";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.0.3.5 Beta",
+    title: "Dungeon Floor Contrast & Readability",
+    notes: [
+      "Floor Tile Contrast: Added a dark background-recession tint on dungeon floor tiles (especially the bright ornate 4th tile) so heroes, enemies, projectiles, and telegraphs stand out clearly without eye strain.",
+    ],
+  },
   {
     version: "v.1.0.3.4 Beta",
     title: "Restructured RPG Main Menu",

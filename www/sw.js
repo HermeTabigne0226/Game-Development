@@ -1,10 +1,11 @@
-const CACHE_NAME = "shattered-crown-v98";
+const CACHE_NAME = "shattered-crown-v100";
 
 const PRECACHE_URLS = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
   "./styles/main.css",
+  "./styles/pvp.css",
   "./src/game.js",
   "./src/data.js",
   "./src/dungeon.js",
@@ -13,6 +14,7 @@ const PRECACHE_URLS = [
   "./src/state.js",
   "./src/combat.js",
   "./src/pvp.js",
+  "./src/pvpLobby.js",
   "./src/enemyAI.js",
   "./src/world.js",
   "./src/renderer.js",
