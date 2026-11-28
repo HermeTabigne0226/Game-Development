@@ -1,6 +1,6 @@
 import { sfx } from "./audio.js";
-import { combatHooks, damageEnemy, hurtPlayer, performMeleeAttack, unlockCodex } from "./combat.js";
-import { DEFAULT_LOADOUT, ELITE_AFFIXES, HERO_CLASSES, ITEMS, NPC_ENCOUNTERS, RELICS, SHRINE_ENCOUNTERS, SPELLS } from "./data.js";
+import { combatHooks, damageEnemy, hurtPlayer, performMeleeAttack, stunPlayer, unlockCodex } from "./combat.js";
+import { DEFAULT_LOADOUT, ELITE_AFFIXES, HERO_CLASSES, ITEMS, NPC_ENCOUNTERS, RELICS, SHRINE_ENCOUNTERS, SPELLS, rollEquipmentByFloor } from "./data.js";
 import { MAP_H, MAP_W, TILE, computeFOV, createScaledEnemy, generateFloor } from "./dungeon.js";
 import { checkBossSpotted, revealBossRoom, startBossMatch, updateEnemiesAndBosses } from "./enemyAI.js";
 import { broadcastPvpAction, notifyLocalPvpTimeout, syncPvpIntroTimer, updatePvpFrame } from "./pvp.js";
@@ -531,21 +531,9 @@ export function interactProp(prop) {
     sfx.loot();
     const gold = 12 + s.floor * 5;
     p.gold += gold;
-    const gearPool = [
-      ITEMS.oak_shortbow, ITEMS.apprentice_staff, ITEMS.apprentice_wand, ITEMS.frost_wand, ITEMS.hunter_arrows, ITEMS.apprentice_tome,
-      ITEMS.vanguard_blade, ITEMS.oak_shield, ITEMS.plate_armor, ITEMS.steel_helm,
-      ITEMS.ranger_bow, ITEMS.ranger_quiver, ITEMS.ranger_tunic, ITEMS.scroll_smite, ITEMS.health_potion,
-    ];
-    if (s.floor >= 2) {
-      gearPool.push(ITEMS.ranger_hood, ITEMS.ranger_boots, ITEMS.emerald_recurve, ITEMS.frost_staff, ITEMS.frost_tome, ITEMS.pyro_tome, ITEMS.battle_axe, ITEMS.crimson_buckler, ITEMS.crimson_coat, ITEMS.swift_boots, ITEMS.ember_ring, ITEMS.astral_wand, ITEMS.astral_focus);
-    }
-    if (s.floor >= 4) {
-      gearPool.push(ITEMS.trident_staff, ITEMS.fire_staff, ITEMS.solar_tome, ITEMS.astral_robes, ITEMS.astral_circlet, ITEMS.astral_ring, ITEMS.sun_staff, ITEMS.aegis_shield, ITEMS.sunfire_vestments, ITEMS.sunfire_crown, ITEMS.sunfire_ring);
-    }
-    if (s.floor >= 6) {
-      gearPool.push(ITEMS.void_reaver, ITEMS.void_bulwark, ITEMS.void_plate, ITEMS.void_helm, ITEMS.void_greaves, ITEMS.void_ring, ITEMS.void_tome, ITEMS.sovereign_crossbow, ITEMS.sovereign_wand, ITEMS.sovereign_quiver, ITEMS.sovereign_plate, ITEMS.sovereign_crown, ITEMS.sovereign_greaves);
-    }
-    const drop = gearPool[Math.floor(Math.random() * gearPool.length)];
+    const drop = Math.random() < 0.14
+      ? (Math.random() < 0.45 ? ITEMS.scroll_smite : Math.random() < 0.5 ? ITEMS.health_potion : ITEMS.mana_potion)
+      : rollEquipmentByFloor(s.floor, "chest");
     const rInfo = getRarityInfo(drop);
     spawnBurst(prop.x + 0.5, prop.y + 0.5, rInfo.color, 14);
     if (giveOrDropItem(drop, prop.x + 0.5, prop.y + 0.5)) {
@@ -562,8 +550,8 @@ export function interactProp(prop) {
     sfx.ultSlam();
     s.shake = Math.max(s.shake, 7);
     spawnRing(prop.x + 0.5, prop.y + 0.5, 58, "#a855f7", 0.45);
-    addFloat(prop.x + 0.5, prop.y + 0.2, "AMBUSH TRIAL!", "#c084fc");
-    addLog("Trial Chest sprung an ambush! Defeat the guardians for your reward!", "story");
+    addFloat(prop.x + 0.5, prop.y + 0.2, "MIMIC AMBUSH!", "#c084fc");
+    addLog("It was a Mimic Chest! Defeat the ambush guardians for your reward!", "story");
 
     // Grant immediate Relic or Rare+ gear reward, and summon 2 guardians (1 Elite)
     const relic = grantRandomRelic(p);
@@ -1021,14 +1009,25 @@ export function updateSimulation(dt) {
     rc.timer -= dt;
     p.anim = "attack";
     p.animTimer = 0.18;
+    let liveAng = null;
     if (touchAim.active && (Math.abs(touchAim.x) > 0.1 || Math.abs(touchAim.y) > 0.1)) {
-      rc.angle = Math.atan2(touchAim.y, touchAim.x);
-      p.aimAngle = rc.angle;
-      p.facingLeft = Math.cos(rc.angle) < 0;
-    } else if (mouse.inside && mouse.x !== null) {
-      rc.angle = Math.atan2(mouse.y - p.y, mouse.x - p.x);
-      p.aimAngle = rc.angle;
-      p.facingLeft = Math.cos(rc.angle) < 0;
+      liveAng = Math.atan2(touchAim.y, touchAim.x);
+    } else if (touchMove.active && (Math.abs(touchMove.x) > 0.1 || Math.abs(touchMove.y) > 0.1)) {
+      liveAng = Math.atan2(touchMove.y, touchMove.x);
+    } else {
+      let kx = 0;
+      let ky = 0;
+      if (keys.has("w") || keys.has("arrowup")) ky -= 1;
+      if (keys.has("s") || keys.has("arrowdown")) ky += 1;
+      if (keys.has("a") || keys.has("arrowleft")) kx -= 1;
+      if (keys.has("d") || keys.has("arrowright")) kx += 1;
+      if (kx !== 0 || ky !== 0) liveAng = Math.atan2(ky, kx);
+      else if (mouse.inside && mouse.x !== null) liveAng = Math.atan2(mouse.y - p.y, mouse.x - p.x);
+    }
+    if (liveAng !== null) {
+      rc.angle = liveAng;
+      p.aimAngle = liveAng;
+      p.facingLeft = Math.cos(liveAng) < 0;
     }
     if (Math.random() < 0.7) {
       const ang = rc.angle + (Math.random() - 0.5) * 1.4;
@@ -1091,6 +1090,50 @@ export function updateSimulation(dt) {
     vc.timer -= dt;
     if (vc.phase === "windup") {
       p.anim = "attack";
+      let liveAng = null;
+      if (touchAim.active && (Math.abs(touchAim.x) > 0.1 || Math.abs(touchAim.y) > 0.1)) {
+        liveAng = Math.atan2(touchAim.y, touchAim.x);
+      } else if (touchMove.active && (Math.abs(touchMove.x) > 0.1 || Math.abs(touchMove.y) > 0.1)) {
+        liveAng = Math.atan2(touchMove.y, touchMove.x);
+      } else {
+        let kx = 0;
+        let ky = 0;
+        if (keys.has("w") || keys.has("arrowup")) ky -= 1;
+        if (keys.has("s") || keys.has("arrowdown")) ky += 1;
+        if (keys.has("a") || keys.has("arrowleft")) kx -= 1;
+        if (keys.has("d") || keys.has("arrowright")) kx += 1;
+        if (kx !== 0 || ky !== 0) liveAng = Math.atan2(ky, kx);
+        else if (mouse.inside && mouse.x !== null) liveAng = Math.atan2(mouse.y - p.y, mouse.x - p.x);
+      }
+      if (liveAng !== null) {
+        vc.dirX = Math.cos(liveAng);
+        vc.dirY = Math.sin(liveAng);
+        p.aimAngle = liveAng;
+        p.facingLeft = vc.dirX < 0;
+        let endX = vc.startX;
+        let endY = vc.startY;
+        const maxDist = vc.spell.dist || 5.5;
+        const step = 0.25;
+        for (let d = step; d <= maxDist; d += step) {
+          const nx = vc.startX + vc.dirX * d;
+          const ny = vc.startY + vc.dirY * d;
+          if (
+            Math.hypot(nx - vc.startX, ny - vc.startY) <= maxDist &&
+            !s.level.props.some((pr) => pr.solid && pr.x === Math.floor(nx) && pr.y === Math.floor(ny)) &&
+            s.level.grid[Math.floor(ny)]?.[Math.floor(nx)] !== TILE.WALL
+          ) {
+            endX = nx;
+            endY = ny;
+          } else {
+            break;
+          }
+        }
+        vc.targetX = endX;
+        vc.targetY = endY;
+        vc.travelDist = Math.hypot(endX - vc.startX, endY - vc.startY);
+        vc.spearDistMax = Math.max(1.65, vc.travelDist);
+        vc.speed = vc.travelDist > 0.05 ? vc.travelDist / vc.dashDur : 0;
+      }
       const prog = Math.min(1, 1 - vc.timer / vc.windupDur);
       const eased = 1 - Math.pow(1 - prog, 2.2);
       const spearDist = 0.55 + (vc.spearDistMax - 0.55) * eased;
@@ -1355,26 +1398,37 @@ export function updateSimulation(dt) {
 
   updateFOVIfNeeded(false);
 
-  // Floor Traps (4-state: Retracted -> Warning -> Extended -> Retracting)
+  // Floor Traps (hidden until stepped on; deals direct damage + 1.5s stun, then plays up/down spike animation)
   if (Array.isArray(s.level.traps)) {
     for (const tr of s.level.traps) {
-      tr.phase = (tr.phase + dt) % tr.period;
       tr.hitCd = Math.max(0, (tr.hitCd || 0) - dt);
-      const isExtended = tr.phase >= tr.period - 0.9 && tr.phase < tr.period - 0.22;
-      if (isExtended && tr.hitCd <= 0) {
+      tr.animTimer = Math.max(0, (tr.animTimer || 0) - dt);
+      if (tr.hitCd <= 0) {
         const tx = tr.x + 0.5;
         const ty = tr.y + 0.5;
+        const trapLabel = tr.kind === "void_vent" ? "Void Vent" : "Spike Trap";
+        const trapColor = tr.kind === "void_vent" ? "#c084fc" : "#ef4444";
+        let triggered = false;
         if (Math.hypot(p.x - tx, p.y - ty) <= 0.52 && (p.z || 0) <= 2) {
-          tr.hitCd = 0.85;
-          tr.bloodied = true;
-          hurtPlayer(4 + s.floor * 2, tr.kind === "void_vent" ? "Void Vent" : "Spike Trap", 0, 0);
-        }
-        for (const e of [...s.level.enemies]) {
-          if (!e.isBoss && Math.hypot(e.x - tx, e.y - ty) <= 0.55) {
-            tr.hitCd = 0.85;
-            tr.bloodied = true;
-            damageEnemy(e, 5 + s.floor * 2, false, "Floor Trap", 0, 0, { noOnHit: true, isAoe: true });
+          triggered = true;
+          const trapDmg = Math.round(5 + s.floor * 1.6);
+          hurtPlayer(trapDmg, trapLabel, 0, 0);
+          stunPlayer(1.5, trapLabel, trapColor);
+        } else {
+          for (const e of [...s.level.enemies]) {
+            if (!e.isBoss && Math.hypot(e.x - tx, e.y - ty) <= 0.55) {
+              triggered = true;
+              damageEnemy(e, Math.round(6 + s.floor * 1.8), false, trapLabel, 0, 0, { noOnHit: true, isAoe: true });
+              break;
+            }
           }
+        }
+        if (triggered) {
+          tr.hitCd = 2.6;
+          tr.animDur = 1.15;
+          tr.animTimer = 1.15;
+          tr.bloodied = true;
+          sfx.hit();
         }
       }
     }

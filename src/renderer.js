@@ -209,15 +209,18 @@ export function renderFrame(ts) {
     }
   }
 
-  // Floor Traps (4-state Spike Trap sprites + Void Vent)
+  // Floor Traps (hidden until stepped on; plays up-and-down animation when triggered)
   if (Array.isArray(lvl.traps)) {
     for (const tr of lvl.traps) {
       if (!lvl.explored[tr.y]?.[tr.x]) continue;
+      if ((tr.animTimer || 0) <= 0) continue;
       const tx = tr.x * TILE_SIZE;
       const ty = tr.y * TILE_SIZE;
-      const warning = tr.phase >= tr.period - 1.45 && tr.phase < tr.period - 0.9;
-      const extended = tr.phase >= tr.period - 0.9 && tr.phase < tr.period - 0.22;
-      const retracting = tr.phase >= tr.period - 0.22;
+      const dur = tr.animDur || 1.15;
+      const prog = Math.max(0, Math.min(1, 1 - tr.animTimer / dur));
+      const warning = prog < 0.14;
+      const extended = prog >= 0.14 && prog < 0.80;
+      const retracting = prog >= 0.80;
       ctx.save();
       if (tr.kind === "void_vent") {
         ctx.fillStyle = "#2e1065";
@@ -226,9 +229,9 @@ export function renderFrame(ts) {
           ctx.strokeStyle = "#c084fc";
           ctx.lineWidth = 1.5;
           ctx.strokeRect(tx + 4, ty + 4, TILE_SIZE - 8, TILE_SIZE - 8);
-        } else if (extended || retracting) {
-          ctx.fillStyle = extended ? "rgba(192, 132, 252, 0.85)" : "rgba(192, 132, 252, 0.45)";
-          const tipH = extended ? 4 : 2;
+        } else {
+          ctx.fillStyle = extended ? "rgba(192, 132, 252, 0.9)" : "rgba(192, 132, 252, 0.45)";
+          const tipH = extended ? 5 : 2;
           for (const [ox, oy] of [[9, 9], [20, 9], [9, 20], [20, 20]]) {
             ctx.beginPath();
             ctx.moveTo(tx + ox, ty + oy - tipH);
@@ -237,30 +240,18 @@ export function renderFrame(ts) {
             ctx.closePath();
             ctx.fill();
           }
-        } else {
-          ctx.fillStyle = "#0f172a";
-          for (const [ox, oy] of [[10, 10], [21, 10], [10, 21], [21, 21]]) {
-            ctx.fillRect(tx + ox - 1, ty + oy - 1, 2, 2);
-          }
         }
       } else {
         const spriteKey = extended
           ? "spike_trap_extended"
           : retracting
             ? "spike_trap_retracting"
-            : warning
-              ? "spike_trap_warning"
-              : "spike_trap_retracted";
+            : "spike_trap_warning";
         const trapImg = assets[spriteKey];
         if (trapImg) {
           ctx.imageSmoothingEnabled = false;
           ctx.drawImage(trapImg, tx, ty, TILE_SIZE, TILE_SIZE);
-          if (warning) {
-            ctx.globalAlpha = 0.28 + 0.18 * Math.sin(ts * 0.025);
-            ctx.strokeStyle = "#f59e0b";
-            ctx.lineWidth = 1.5;
-            ctx.strokeRect(tx + 1, ty + 1, TILE_SIZE - 2, TILE_SIZE - 2);
-          } else if (extended && tr.bloodied) {
+          if (extended && tr.bloodied) {
             ctx.globalAlpha = 0.85;
             ctx.fillStyle = "#dc2626";
             for (const [bx, by] of [[10, 4], [21, 4], [10, 15], [21, 15]]) {
@@ -351,19 +342,6 @@ export function renderFrame(ts) {
     else if (pr.kind === "well") img = assets.stone_well;
 
     if (img) {
-      if (pr.kind === "trial_chest" && !pr.opened) {
-        ctx.save();
-        ctx.strokeStyle = `rgba(168, 85, 247, ${0.65 + Math.sin(ts * 0.008) * 0.25})`;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(px + 16, py + 16, 15, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.font = "bold 8px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillStyle = "#d8b4fe";
-        ctx.fillText("TRIAL", px + 16, py - 2);
-        ctx.restore();
-      }
       if (pr.kind === "door") ctx.drawImage(img, px, py, TILE_SIZE, TILE_SIZE);
       else ctx.drawImage(img, px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
       if (pr.kind === "torch" && lvl.visible[pr.y][pr.x]) {

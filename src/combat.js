@@ -1,5 +1,5 @@
 import { sfx } from "./audio.js";
-import { DIFFICULTIES, HERO_CLASSES, ITEMS, LORE_CODEX, SPELLS } from "./data.js";
+import { DIFFICULTIES, HERO_CLASSES, ITEMS, LORE_CODEX, SPELLS, rollEquipmentByFloor } from "./data.js";
 import { broadcastPvpAction, notifyLocalPvpDefeat, sendPvpHit } from "./pvp.js";
 import { MAP_H, MAP_W, TILE } from "./dungeon.js";
 import {
@@ -61,6 +61,9 @@ export function getAimAngle() {
   const p = runtime.state.player;
   if (touchAim.active) {
     return touchAim.angle;
+  }
+  if (touchMove.active && (Math.abs(touchMove.x) > 0.1 || Math.abs(touchMove.y) > 0.1)) {
+    return Math.atan2(touchMove.y, touchMove.x);
   }
   if (mouse.inside && mouse.x !== null) {
     return Math.atan2(mouse.y - p.y, mouse.x - p.x);
@@ -335,19 +338,27 @@ export function damageEnemy(enemy, rawDmg, isCrit = false, sourceLabel = "strike
       handleBossDefeated(enemy);
     } else if (!enemy.isClone) {
       if (enemy.isElite) {
-        const elitePool = Object.values(ITEMS).filter((it) => it.slot && (s.floor >= 5 ? ["rare", "unique"].includes(it.rarity) : ["uncommon", "rare"].includes(it.rarity)));
-        const drop = elitePool.length > 0 && Math.random() < 0.72
-          ? elitePool[Math.floor(Math.random() * elitePool.length)]
-          : Math.random() < 0.5 ? ITEMS.health_potion : ITEMS.mana_potion;
+        const drop = Math.random() < 0.8
+          ? rollEquipmentByFloor(s.floor, "elite")
+          : Math.random() < 0.55 ? ITEMS.health_potion : ITEMS.mana_potion;
         const rInfo = getRarityInfo(drop);
         spawnGroundItem(drop, enemy.x, enemy.y);
         addFloat(enemy.x, enemy.y - 0.35, `Elite Drop: ${drop.name}!`, rInfo.color);
         addLog(`Elite ${enemy.name} dropped [${rInfo.label}] ${drop.name}!`, "loot");
-      } else if (Math.random() < 0.28) {
-        const drop = Math.random() < 0.6 ? ITEMS.health_potion : ITEMS.bread;
-        spawnGroundItem(drop, enemy.x, enemy.y);
-        addFloat(enemy.x, enemy.y - 0.35, `Dropped ${drop.name}`, "#fde047");
-        addLog(`${enemy.name} dropped ${drop.name} on the ground.`, "loot");
+      } else {
+        const mobRoll = Math.random();
+        if (mobRoll < 0.08) {
+          const drop = rollEquipmentByFloor(s.floor, "enemy");
+          const rInfo = getRarityInfo(drop);
+          spawnGroundItem(drop, enemy.x, enemy.y);
+          addFloat(enemy.x, enemy.y - 0.35, `Dropped ${drop.name}`, rInfo.color);
+          addLog(`${enemy.name} dropped [${rInfo.label}] ${drop.name}.`, "loot");
+        } else if (mobRoll < 0.30) {
+          const drop = Math.random() < 0.55 ? ITEMS.health_potion : Math.random() < 0.5 ? ITEMS.mana_potion : ITEMS.bread;
+          spawnGroundItem(drop, enemy.x, enemy.y);
+          addFloat(enemy.x, enemy.y - 0.35, `Dropped ${drop.name}`, "#fde047");
+          addLog(`${enemy.name} dropped ${drop.name} on the ground.`, "loot");
+        }
       }
     }
 
@@ -414,12 +425,8 @@ export function handleBossDefeated(boss) {
     addLog(`Vanquished ${boss.name} in Endless Abyss! (+${abyssShards} Soul Shards)`, "story");
   }
 
-  const bossLootPool =
-    s.floor >= 8
-      ? Object.values(ITEMS).filter((it) => it.rarity === "legendary")
-      : Object.values(ITEMS).filter((it) => it.rarity === "unique");
-  if (bossLootPool.length > 0) {
-    const bossDrop = bossLootPool[Math.floor(Math.random() * bossLootPool.length)];
+  const bossDrop = rollEquipmentByFloor(s.floor, "boss");
+  if (bossDrop) {
     const rInfo = getRarityInfo(bossDrop);
     spawnGroundItem(bossDrop, boss.x, boss.y);
     addFloat(boss.x, boss.y - 0.5, `${rInfo.label}: ${bossDrop.name}!`, rInfo.color);

@@ -305,10 +305,10 @@ function buildFloorCandidate(floor, difficultyId = "normal") {
     const equipList = Object.values(ITEMS).filter((it) => it.slot);
     const tiers =
       fl <= 4
-        ? ["uncommon", "rare", "unique"]
+        ? ["common", "uncommon", "rare"]
         : fl <= 8
-          ? ["rare", "unique", "legendary"]
-          : ["unique", "legendary", "legendary"];
+          ? ["uncommon", "rare", "unique"]
+          : ["rare", "unique", "legendary"];
     const chosenIds = new Set();
     for (const rKey of tiers) {
       const pool = equipList.filter((it) => it.rarity === rKey && !chosenIds.has(it.id));

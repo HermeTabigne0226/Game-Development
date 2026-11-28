@@ -1,8 +1,18 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.0.3.5 Beta";
+export const GAME_VERSION = "v.1.1.0.0 Beta";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.1.0.0 Beta",
+    title: "Directional Skill Charging, Itemization Rebalance & Hidden Traps",
+    notes: [
+      "Movement-Wheel Aiming & Live Charge Redirect: Skills now aim with the movement wheel when the aim stick isn't held, and charging skills (like Valiant Charge and Radiant Cleave) can be redirected live while charging.",
+      "Balanced Itemization & Floor-Scaled Drops: Rebalanced all equipment stats strictly by rarity (Common < Uncommon < Rare < Unique < Legendary) and added floor-scaled weighted drop rates for chests, enemies, elites, bosses, and shops.",
+      "Hidden Traps & Mimic Chests: Spike Traps & Void Vents are now hidden until stepped on—dealing direct balanced damage, stunning for 1.5s, and animating up/down. Trial Chests now disguise as normal Mimic Chests.",
+      "Tougher Balanced Elites: Increased Elite HP, ATK, and DEF scaling so elites feel like true mini-bosses without matching Act Boss tankiness.",
+    ],
+  },
   {
     version: "v.1.0.3.5 Beta",
     title: "Dungeon Floor Contrast & Readability",
@@ -794,40 +804,40 @@ export const ELITE_AFFIXES = {
     id: "blazing",
     label: "Blazing",
     color: "#f97316",
-    hpMult: 1.45,
-    atkMult: 1.2,
+    hpMult: 1.85,
+    atkMult: 1.3,
     speedMult: 1.05,
-    defBonus: 1,
+    defBonus: 2,
     desc: "Emits scorching fire pulses every 3s.",
   },
   swift: {
     id: "swift",
     label: "Swift",
     color: "#38bdf8",
-    hpMult: 1.3,
-    atkMult: 1.1,
+    hpMult: 1.65,
+    atkMult: 1.22,
     speedMult: 1.38,
-    defBonus: 0,
+    defBonus: 1,
     desc: "Moves and attacks significantly faster.",
   },
   armored: {
     id: "armored",
     label: "Armored",
     color: "#94a3b8",
-    hpMult: 1.55,
-    atkMult: 1.1,
+    hpMult: 2.05,
+    atkMult: 1.2,
     speedMult: 0.95,
-    defBonus: 5,
+    defBonus: 6,
     desc: "Reinforced plating grants high DEF.",
   },
   vampiric: {
     id: "vampiric",
     label: "Vampiric",
     color: "#ef4444",
-    hpMult: 1.4,
-    atkMult: 1.25,
+    hpMult: 1.8,
+    atkMult: 1.35,
     speedMult: 1.1,
-    defBonus: 1,
+    defBonus: 2,
     desc: "Leeches HP whenever it strikes you.",
   },
 };
@@ -841,11 +851,11 @@ export const RARITIES = {
 };
 
 export const RARITY_PRICES = {
-  common: 24,
+  common: 18,
   uncommon: 48,
-  rare: 90,
-  unique: 155,
-  legendary: 260,
+  rare: 95,
+  unique: 165,
+  legendary: 300,
 };
 
 export function getItemPrice(item) {
@@ -905,8 +915,8 @@ export const ITEMS = {
     rarity: "common",
     weaponType: "melee",
     icon: "spritecook-inventory-icons/sword.png",
-    atk: 4,
-    desc: "+4 ATK · Melee Slash",
+    atk: 3,
+    desc: "+3 ATK · Melee Slash",
   },
   oak_shortbow: {
     id: "oak_shortbow",
@@ -919,9 +929,9 @@ export const ITEMS = {
     projSpeed: 12.5,
     attackCd: 0.36,
     icon: "assets/bow_icon.svg",
-    atk: 5,
-    crit: 4,
-    desc: "+5 ATK, +4% CRIT · Ranged (Fires Arrows)",
+    atk: 3,
+    crit: 3,
+    desc: "+3 ATK, +3% CRIT · Ranged (Fires Arrows)",
   },
   emerald_recurve: {
     id: "emerald_recurve",
@@ -937,9 +947,9 @@ export const ITEMS = {
     setId: "ranger",
     tier: 2,
     icon: "assets/bow_icon.svg",
-    atk: 11,
-    crit: 10,
-    desc: "[Sylvan Ranger Set] +11 ATK, +10% CRIT · Rapid Emerald Arrows",
+    atk: 10,
+    crit: 9,
+    desc: "[Sylvan Ranger Set] +10 ATK, +9% CRIT · Rapid Emerald Arrows",
   },
   apprentice_staff: {
     id: "apprentice_staff",
@@ -953,9 +963,9 @@ export const ITEMS = {
     projSpeed: 12.0,
     attackCd: 0.36,
     icon: "assets/generated/magic staff pack/mage staff.png",
-    atk: 5,
-    maxMp: 8,
-    desc: "+5 ATK, +8 Max MP · Ranged (Fires Arcane Missiles)",
+    atk: 3,
+    maxMp: 5,
+    desc: "+3 ATK, +5 Max MP · Ranged (Fires Arcane Missiles)",
   },
   apprentice_wand: {
     id: "apprentice_wand",
@@ -969,9 +979,9 @@ export const ITEMS = {
     projSpeed: 11.0,
     attackCd: 0.38,
     icon: "assets/generated/magic staff pack/mage staff.png",
-    atk: 5,
-    maxMp: 6,
-    desc: "+5 ATK, +6 Max MP · Ranged (Fires Magic Missiles)",
+    atk: 3,
+    maxMp: 4,
+    desc: "+3 ATK, +4 Max MP · Ranged (Fires Magic Missiles)",
   },
   frost_wand: {
     id: "frost_wand",
@@ -986,9 +996,9 @@ export const ITEMS = {
     chill: 1.5,
     attackCd: 0.36,
     icon: "assets/generated/magic staff pack/ice staff.png",
-    atk: 8,
-    maxMp: 10,
-    desc: "+8 ATK, +10 Max MP · Ranged (Chilling Ice Shards)",
+    atk: 6,
+    maxMp: 8,
+    desc: "+6 ATK, +8 Max MP · Ranged (Chilling Ice Shards)",
   },
   frost_staff: {
     id: "frost_staff",
@@ -1006,8 +1016,8 @@ export const ITEMS = {
     tier: 2,
     icon: "assets/generated/magic staff pack/ice staff.png",
     atk: 10,
-    maxMp: 14,
-    desc: "[Astral Weaver Set] +10 ATK, +14 Max MP · Fires Chilling Ice Shards",
+    maxMp: 12,
+    desc: "[Astral Weaver Set] +10 ATK, +12 Max MP · Fires Chilling Ice Shards",
   },
   trident_staff: {
     id: "trident_staff",
@@ -1055,9 +1065,9 @@ export const ITEMS = {
     subType: "arrows",
     rarity: "common",
     icon: "spritecook-inventory-icons/arrows.png",
-    atk: 2,
-    crit: 4,
-    desc: "[Sub-Weapon: Bow] +2 ATK, +4% CRIT",
+    atk: 1,
+    crit: 3,
+    desc: "[Sub-Weapon: Bow] +1 ATK, +3% CRIT",
   },
   apprentice_tome: {
     id: "apprentice_tome",
@@ -1067,9 +1077,9 @@ export const ITEMS = {
     subType: "book",
     rarity: "common",
     icon: "assets/generated/magic books/magic book _1.png",
-    atk: 2,
-    maxMp: 8,
-    desc: "[Sub-Weapon: Wand/Staff] +2 ATK, +8 Max MP",
+    atk: 1,
+    maxMp: 5,
+    desc: "[Sub-Weapon: Wand/Staff] +1 ATK, +5 Max MP",
   },
   frost_tome: {
     id: "frost_tome",
@@ -1079,10 +1089,10 @@ export const ITEMS = {
     subType: "book",
     rarity: "uncommon",
     icon: "assets/generated/magic books/magic book _12.png",
-    atk: 3,
-    def: 2,
-    maxMp: 12,
-    desc: "[Sub-Weapon: Wand/Staff] +3 ATK, +2 DEF, +12 Max MP",
+    atk: 2,
+    def: 1,
+    maxMp: 9,
+    desc: "[Sub-Weapon: Wand/Staff] +2 ATK, +1 DEF, +9 Max MP",
   },
   pyro_tome: {
     id: "pyro_tome",
@@ -1092,10 +1102,10 @@ export const ITEMS = {
     subType: "book",
     rarity: "rare",
     icon: "assets/generated/magic books/magic book _5.png",
-    atk: 5,
+    atk: 4,
     crit: 5,
     maxMp: 12,
-    desc: "[Sub-Weapon: Wand/Staff] +5 ATK, +5% CRIT, +12 Max MP",
+    desc: "[Sub-Weapon: Wand/Staff] +4 ATK, +5% CRIT, +12 Max MP",
   },
   // --- Vanguard Set (Tank / Knight) ---
   vanguard_blade: {
@@ -1122,9 +1132,9 @@ export const ITEMS = {
     setId: "vanguard",
     tier: 1,
     icon: "spritecook-inventory-icons/shield.png",
-    def: 4,
+    def: 3,
     maxHp: 6,
-    desc: "[Vanguard Set · Shield] +4 DEF, +6 Max HP",
+    desc: "[Vanguard Set · Shield] +3 DEF, +6 Max HP",
   },
   plate_armor: {
     id: "plate_armor",
@@ -1135,9 +1145,9 @@ export const ITEMS = {
     setId: "vanguard",
     tier: 1,
     icon: "spritecook-inventory-icons/armour.png",
-    def: 6,
-    maxHp: 12,
-    desc: "[Vanguard Set] +6 DEF, +12 Max HP",
+    def: 4,
+    maxHp: 10,
+    desc: "[Vanguard Set] +4 DEF, +10 Max HP",
   },
   steel_helm: {
     id: "steel_helm",
@@ -1148,9 +1158,9 @@ export const ITEMS = {
     setId: "vanguard",
     tier: 1,
     icon: "spritecook-inventory-icons/helmet.png",
-    def: 4,
+    def: 3,
     maxHp: 6,
-    desc: "[Vanguard Set] +4 DEF, +6 Max HP",
+    desc: "[Vanguard Set] +3 DEF, +6 Max HP",
   },
   // --- Sylvan Ranger Set (Bow & Crit Armory) ---
   ranger_bow: {
@@ -1166,9 +1176,9 @@ export const ITEMS = {
     setId: "ranger",
     tier: 1,
     icon: "assets/bow_icon.svg",
-    atk: 7,
-    crit: 8,
-    desc: "[Sylvan Ranger Set] +7 ATK, +8% CRIT · Fires Arrows",
+    atk: 6,
+    crit: 6,
+    desc: "[Sylvan Ranger Set] +6 ATK, +6% CRIT · Fires Arrows",
   },
   ranger_quiver: {
     id: "ranger_quiver",
@@ -1180,10 +1190,10 @@ export const ITEMS = {
     setId: "ranger",
     tier: 1,
     icon: "spritecook-inventory-icons/arrows.png",
-    atk: 3,
-    def: 2,
-    crit: 6,
-    desc: "[Sylvan Ranger Set · Arrows] +3 ATK, +2 DEF, +6% CRIT",
+    atk: 2,
+    def: 1,
+    crit: 5,
+    desc: "[Sylvan Ranger Set · Arrows] +2 ATK, +1 DEF, +5% CRIT",
   },
   ranger_tunic: {
     id: "ranger_tunic",
@@ -1194,10 +1204,10 @@ export const ITEMS = {
     setId: "ranger",
     tier: 1,
     icon: "spritecook-inventory-icons/armour.png",
-    def: 4,
-    crit: 6,
-    maxHp: 10,
-    desc: "[Sylvan Ranger Set] +4 DEF, +6% CRIT, +10 Max HP",
+    def: 3,
+    crit: 5,
+    maxHp: 8,
+    desc: "[Sylvan Ranger Set] +3 DEF, +5% CRIT, +8 Max HP",
   },
   ranger_hood: {
     id: "ranger_hood",
@@ -1208,10 +1218,10 @@ export const ITEMS = {
     setId: "ranger",
     tier: 1,
     icon: "spritecook-inventory-icons/helmet.png",
-    def: 3,
+    def: 4,
     atk: 2,
     crit: 8,
-    desc: "[Sylvan Ranger Set] +3 DEF, +2 ATK, +8% CRIT",
+    desc: "[Sylvan Ranger Set] +4 DEF, +2 ATK, +8% CRIT",
   },
   ranger_boots: {
     id: "ranger_boots",
@@ -1222,9 +1232,9 @@ export const ITEMS = {
     setId: "ranger",
     tier: 1,
     icon: "spritecook-inventory-icons/boot.png",
-    def: 3,
+    def: 4,
     crit: 8,
-    desc: "[Sylvan Ranger Set] +3 DEF, +8% CRIT, +Speed",
+    desc: "[Sylvan Ranger Set] +4 DEF, +8% CRIT, +Speed",
   },
   // --- Crimson Shadow Set (Crit / Speed) ---
   battle_axe: {
@@ -1237,9 +1247,9 @@ export const ITEMS = {
     setId: "crimson",
     tier: 1,
     icon: "spritecook-inventory-icons/axe.png",
-    atk: 8,
+    atk: 9,
     crit: 6,
-    desc: "[Crimson Set] +8 ATK, +6% CRIT",
+    desc: "[Crimson Set] +9 ATK, +6% CRIT",
   },
   crimson_buckler: {
     id: "crimson_buckler",
@@ -1251,9 +1261,9 @@ export const ITEMS = {
     setId: "crimson",
     tier: 1,
     icon: "spritecook-inventory-icons/shield.png",
-    def: 4,
+    def: 5,
     crit: 6,
-    desc: "[Crimson Set · Shield] +4 DEF, +6% CRIT",
+    desc: "[Crimson Set · Shield] +5 DEF, +6% CRIT",
   },
   crimson_coat: {
     id: "crimson_coat",
@@ -1264,9 +1274,10 @@ export const ITEMS = {
     setId: "crimson",
     tier: 1,
     icon: "spritecook-inventory-icons/armour.png",
-    def: 5,
+    def: 6,
     crit: 8,
-    desc: "[Crimson Set] +5 DEF, +8% CRIT",
+    maxHp: 10,
+    desc: "[Crimson Set] +6 DEF, +8% CRIT, +10 Max HP",
   },
   swift_boots: {
     id: "swift_boots",
@@ -1277,9 +1288,9 @@ export const ITEMS = {
     setId: "crimson",
     tier: 1,
     icon: "spritecook-inventory-icons/boot.png",
-    def: 3,
+    def: 4,
     crit: 10,
-    desc: "[Crimson Set] +3 DEF, +10% CRIT",
+    desc: "[Crimson Set] +4 DEF, +10% CRIT",
   },
   ember_ring: {
     id: "ember_ring",
@@ -1309,9 +1320,9 @@ export const ITEMS = {
     setId: "astral",
     tier: 2,
     icon: "assets/generated/magic staff pack/mage staff.png",
-    atk: 10,
-    maxMp: 14,
-    desc: "[Astral Weaver Set] +10 ATK, +14 Max MP · Fires Arcane Orbs",
+    atk: 9,
+    maxMp: 12,
+    desc: "[Astral Weaver Set] +9 ATK, +12 Max MP · Fires Arcane Orbs",
   },
   astral_focus: {
     id: "astral_focus",
@@ -1324,9 +1335,9 @@ export const ITEMS = {
     tier: 2,
     icon: "assets/generated/magic books/magic book _15.png",
     def: 4,
-    atk: 3,
-    maxMp: 16,
-    desc: "[Astral Weaver Set · Book] +4 DEF, +3 ATK, +16 Max MP",
+    atk: 4,
+    maxMp: 14,
+    desc: "[Astral Weaver Set · Book] +4 DEF, +4 ATK, +14 Max MP",
   },
   astral_robes: {
     id: "astral_robes",
@@ -1337,10 +1348,10 @@ export const ITEMS = {
     setId: "astral",
     tier: 2,
     icon: "spritecook-inventory-icons/armour.png",
-    def: 6,
+    def: 7,
     maxMp: 20,
-    maxHp: 10,
-    desc: "[Astral Weaver Set] +6 DEF, +20 Max MP, +10 Max HP",
+    maxHp: 14,
+    desc: "[Astral Weaver Set] +7 DEF, +20 Max MP, +14 Max HP",
   },
   astral_circlet: {
     id: "astral_circlet",
@@ -1351,10 +1362,10 @@ export const ITEMS = {
     setId: "astral",
     tier: 2,
     icon: "spritecook-inventory-icons/helmet.png",
-    def: 4,
+    def: 5,
     atk: 5,
     maxMp: 14,
-    desc: "[Astral Weaver Set] +4 DEF, +5 ATK, +14 Max MP",
+    desc: "[Astral Weaver Set] +5 DEF, +5 ATK, +14 Max MP",
   },
   astral_ring: {
     id: "astral_ring",
@@ -1365,10 +1376,10 @@ export const ITEMS = {
     setId: "astral",
     tier: 2,
     icon: "spritecook-inventory-icons/ring.png",
-    atk: 5,
+    atk: 6,
     maxMp: 16,
-    crit: 8,
-    desc: "[Astral Weaver Set] +5 ATK, +16 Max MP, +8% CRIT",
+    crit: 9,
+    desc: "[Astral Weaver Set] +6 ATK, +16 Max MP, +9% CRIT",
   },
   // --- Sunfire Sanctum Set (Archon / Caster) ---
   sun_staff: {
@@ -1385,10 +1396,10 @@ export const ITEMS = {
     setId: "sunfire",
     tier: 3,
     icon: "assets/generated/magic staff pack/holy staff.png",
-    atk: 15,
-    crit: 8,
-    maxMp: 18,
-    desc: "[Sunfire Set] +15 ATK, +8% CRIT, +18 Max MP · Fires Holy Lances",
+    atk: 18,
+    crit: 10,
+    maxMp: 20,
+    desc: "[Sunfire Set] +18 ATK, +10% CRIT, +20 Max MP · Fires Holy Lances",
   },
   solar_tome: {
     id: "solar_tome",
@@ -1416,8 +1427,8 @@ export const ITEMS = {
     tier: 2,
     icon: "spritecook-inventory-icons/shield.png",
     def: 7,
-    maxHp: 12,
-    desc: "[Sunfire Set · Shield] +7 DEF, +12 Max HP",
+    maxHp: 14,
+    desc: "[Sunfire Set · Shield] +7 DEF, +14 Max HP",
   },
   sunfire_vestments: {
     id: "sunfire_vestments",
@@ -1428,9 +1439,10 @@ export const ITEMS = {
     setId: "sunfire",
     tier: 2,
     icon: "spritecook-inventory-icons/armour.png",
-    def: 6,
-    maxMp: 14,
-    desc: "[Sunfire Set] +6 DEF, +14 Max MP",
+    def: 7,
+    maxHp: 12,
+    maxMp: 16,
+    desc: "[Sunfire Set] +7 DEF, +12 Max HP, +16 Max MP",
   },
   sunfire_crown: {
     id: "sunfire_crown",
@@ -1441,10 +1453,10 @@ export const ITEMS = {
     setId: "sunfire",
     tier: 2,
     icon: "spritecook-inventory-icons/helmet.png",
-    def: 4,
-    atk: 3,
-    maxMp: 10,
-    desc: "[Sunfire Set] +4 DEF, +3 ATK, +10 Max MP",
+    def: 5,
+    atk: 4,
+    maxMp: 12,
+    desc: "[Sunfire Set] +5 DEF, +4 ATK, +12 Max MP",
   },
   sunfire_ring: {
     id: "sunfire_ring",
@@ -1455,9 +1467,10 @@ export const ITEMS = {
     setId: "sunfire",
     tier: 2,
     icon: "spritecook-inventory-icons/ring.png",
-    atk: 4,
-    maxMp: 12,
-    desc: "[Sunfire Set] +4 ATK, +12 Max MP",
+    atk: 5,
+    maxMp: 14,
+    crit: 6,
+    desc: "[Sunfire Set] +5 ATK, +14 Max MP, +6% CRIT",
   },
   // --- Voidbreaker Set (Endgame / Deep Floors) ---
   void_reaver: {
@@ -1470,9 +1483,9 @@ export const ITEMS = {
     setId: "voidbreaker",
     tier: 3,
     icon: "spritecook-inventory-icons/sword.png",
-    atk: 14,
-    crit: 8,
-    desc: "[Voidbreaker Set] +14 ATK, +8% CRIT",
+    atk: 18,
+    crit: 10,
+    desc: "[Voidbreaker Set] +18 ATK, +10% CRIT",
   },
   void_bulwark: {
     id: "void_bulwark",
@@ -1484,9 +1497,9 @@ export const ITEMS = {
     setId: "voidbreaker",
     tier: 3,
     icon: "spritecook-inventory-icons/shield.png",
-    def: 9,
-    maxHp: 16,
-    desc: "[Voidbreaker Set · Shield] +9 DEF, +16 Max HP",
+    def: 10,
+    maxHp: 22,
+    desc: "[Voidbreaker Set · Shield] +10 DEF, +22 Max HP",
   },
   void_plate: {
     id: "void_plate",
@@ -1497,9 +1510,9 @@ export const ITEMS = {
     setId: "voidbreaker",
     tier: 3,
     icon: "spritecook-inventory-icons/armour.png",
-    def: 9,
-    maxHp: 20,
-    desc: "[Voidbreaker Set] +9 DEF, +20 Max HP",
+    def: 11,
+    maxHp: 24,
+    desc: "[Voidbreaker Set] +11 DEF, +24 Max HP",
   },
   void_helm: {
     id: "void_helm",
@@ -1510,10 +1523,10 @@ export const ITEMS = {
     setId: "voidbreaker",
     tier: 3,
     icon: "spritecook-inventory-icons/helmet.png",
-    def: 6,
-    maxHp: 10,
-    crit: 4,
-    desc: "[Voidbreaker Set] +6 DEF, +10 Max HP, +4% CRIT",
+    def: 7,
+    maxHp: 14,
+    crit: 6,
+    desc: "[Voidbreaker Set] +7 DEF, +14 Max HP, +6% CRIT",
   },
   void_greaves: {
     id: "void_greaves",
@@ -1524,9 +1537,9 @@ export const ITEMS = {
     setId: "voidbreaker",
     tier: 3,
     icon: "spritecook-inventory-icons/boot.png",
-    def: 5,
-    crit: 8,
-    desc: "[Voidbreaker Set] +5 DEF, +8% CRIT",
+    def: 7,
+    crit: 10,
+    desc: "[Voidbreaker Set] +7 DEF, +10% CRIT",
   },
   void_ring: {
     id: "void_ring",
@@ -1537,10 +1550,10 @@ export const ITEMS = {
     setId: "voidbreaker",
     tier: 3,
     icon: "spritecook-inventory-icons/ring.png",
-    atk: 6,
-    crit: 10,
-    maxMp: 10,
-    desc: "[Voidbreaker Set] +6 ATK, +10% CRIT, +10 Max MP",
+    atk: 8,
+    crit: 12,
+    maxMp: 14,
+    desc: "[Voidbreaker Set] +8 ATK, +12% CRIT, +14 Max MP",
   },
   // --- Draconic Sovereign Set (Legendary Endgame Armory & Ranged) ---
   sovereign_crossbow: {
@@ -1557,9 +1570,9 @@ export const ITEMS = {
     setId: "sovereign",
     tier: 3,
     icon: "assets/crossbow_icon.svg",
-    atk: 16,
+    atk: 19,
     crit: 14,
-    desc: "[Sovereign Set] +16 ATK, +14% CRIT · Fires Blazing Bolts",
+    desc: "[Sovereign Set] +19 ATK, +14% CRIT · Fires Blazing Bolts",
   },
   sovereign_wand: {
     id: "sovereign_wand",
@@ -1575,10 +1588,10 @@ export const ITEMS = {
     setId: "sovereign",
     tier: 3,
     icon: "assets/wand_icon.svg",
-    atk: 17,
-    maxMp: 22,
-    crit: 10,
-    desc: "[Sovereign Set] +17 ATK, +22 Max MP, +10% CRIT · Fires Void Orbs",
+    atk: 19,
+    maxMp: 24,
+    crit: 12,
+    desc: "[Sovereign Set] +19 ATK, +24 Max MP, +12% CRIT · Fires Void Orbs",
   },
   sovereign_plate: {
     id: "sovereign_plate",
@@ -1589,10 +1602,10 @@ export const ITEMS = {
     setId: "sovereign",
     tier: 3,
     icon: "spritecook-inventory-icons/armour.png",
-    def: 12,
-    maxHp: 28,
-    atk: 4,
-    desc: "[Sovereign Set] +12 DEF, +28 Max HP, +4 ATK",
+    def: 13,
+    maxHp: 30,
+    atk: 5,
+    desc: "[Sovereign Set] +13 DEF, +30 Max HP, +5 ATK",
   },
   sovereign_crown: {
     id: "sovereign_crown",
@@ -1603,10 +1616,10 @@ export const ITEMS = {
     setId: "sovereign",
     tier: 3,
     icon: "spritecook-inventory-icons/helmet.png",
-    def: 8,
-    maxHp: 16,
-    crit: 6,
-    desc: "[Sovereign Set] +8 DEF, +16 Max HP, +6% CRIT",
+    def: 9,
+    maxHp: 18,
+    crit: 8,
+    desc: "[Sovereign Set] +9 DEF, +18 Max HP, +8% CRIT",
   },
   sovereign_greaves: {
     id: "sovereign_greaves",
@@ -1617,10 +1630,10 @@ export const ITEMS = {
     setId: "sovereign",
     tier: 3,
     icon: "spritecook-inventory-icons/boot.png",
-    def: 7,
-    crit: 10,
-    maxHp: 12,
-    desc: "[Sovereign Set] +7 DEF, +10% CRIT, +12 Max HP",
+    def: 8,
+    crit: 12,
+    maxHp: 14,
+    desc: "[Sovereign Set] +8 DEF, +12% CRIT, +14 Max HP",
   },
   sovereign_quiver: {
     id: "sovereign_quiver",
@@ -1632,10 +1645,10 @@ export const ITEMS = {
     setId: "sovereign",
     tier: 3,
     icon: "spritecook-inventory-icons/arrows.png",
-    atk: 8,
-    def: 4,
+    atk: 9,
+    def: 5,
     crit: 12,
-    desc: "[Sovereign Set · Arrows] +8 ATK, +4 DEF, +12% CRIT",
+    desc: "[Sovereign Set · Arrows] +9 ATK, +5 DEF, +12% CRIT",
   },
   void_tome: {
     id: "void_tome",
@@ -1647,13 +1660,57 @@ export const ITEMS = {
     setId: "voidbreaker",
     tier: 3,
     icon: "assets/generated/magic books/magic book _28.png",
-    atk: 9,
-    def: 4,
-    crit: 6,
-    maxMp: 20,
-    desc: "[Voidbreaker Set · Book] +9 ATK, +4 DEF, +6% CRIT, +20 Max MP",
+    atk: 10,
+    def: 5,
+    crit: 8,
+    maxMp: 22,
+    desc: "[Voidbreaker Set · Book] +10 ATK, +5 DEF, +8% CRIT, +22 Max MP",
   },
 };
+
+const DROP_TABLES = {
+  chest: [
+    { maxFloor: 3, weights: { common: 50, uncommon: 34, rare: 13, unique: 3, legendary: 0 } },
+    { maxFloor: 6, weights: { common: 22, uncommon: 36, rare: 28, unique: 11, legendary: 3 } },
+    { maxFloor: 9, weights: { common: 8, uncommon: 22, rare: 34, unique: 25, legendary: 11 } },
+    { maxFloor: 999, weights: { common: 0, uncommon: 12, rare: 30, unique: 34, legendary: 24 } },
+  ],
+  elite: [
+    { maxFloor: 3, weights: { common: 0, uncommon: 55, rare: 35, unique: 10, legendary: 0 } },
+    { maxFloor: 7, weights: { common: 0, uncommon: 25, rare: 45, unique: 25, legendary: 5 } },
+    { maxFloor: 999, weights: { common: 0, uncommon: 10, rare: 30, unique: 40, legendary: 20 } },
+  ],
+  enemy: [
+    { maxFloor: 4, weights: { common: 70, uncommon: 25, rare: 5, unique: 0, legendary: 0 } },
+    { maxFloor: 8, weights: { common: 35, uncommon: 45, rare: 18, unique: 2, legendary: 0 } },
+    { maxFloor: 999, weights: { common: 10, uncommon: 40, rare: 35, unique: 12, legendary: 3 } },
+  ],
+  boss: [
+    { maxFloor: 7, weights: { common: 0, uncommon: 0, rare: 0, unique: 85, legendary: 15 } },
+    { maxFloor: 999, weights: { common: 0, uncommon: 0, rare: 0, unique: 0, legendary: 100 } },
+  ],
+};
+
+/** Roll a weighted equipment item scaled to the current dungeon floor and loot source. */
+export function rollEquipmentByFloor(floor = 1, source = "chest") {
+  const bands = DROP_TABLES[source] || DROP_TABLES.chest;
+  const weights = (bands.find((b) => floor <= b.maxFloor) || bands[bands.length - 1]).weights;
+  const entries = Object.entries(weights).filter(([, w]) => w > 0);
+  const total = entries.reduce((acc, [, w]) => acc + w, 0);
+  let roll = Math.random() * total;
+  let chosenRarity = entries[0]?.[0] || "common";
+  for (const [r, w] of entries) {
+    roll -= w;
+    if (roll <= 0) {
+      chosenRarity = r;
+      break;
+    }
+  }
+  const pool = Object.values(ITEMS).filter((it) => it.slot && it.rarity === chosenRarity);
+  if (pool.length > 0) return pool[Math.floor(Math.random() * pool.length)];
+  const anyEquip = Object.values(ITEMS).filter((it) => it.slot);
+  return anyEquip[Math.floor(Math.random() * anyEquip.length)];
+}
 
 export const EQUIPMENT_SETS = {
   vanguard: {
