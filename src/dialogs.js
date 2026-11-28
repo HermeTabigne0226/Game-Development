@@ -29,8 +29,10 @@ import {
   getMaxInventory,
   getPlayerStats,
   getRarityInfo,
+  getRequiredClassForItem,
   giveOrDropItem,
   grantRandomRelic,
+  isItemAllowedForClass,
   isWeaponSubPairValid,
   keys,
   runtime,
@@ -90,6 +92,13 @@ export function useInventoryItem(index) {
     if (item.qty <= 0) inv.splice(index, 1);
     runtime.uiDirty = true;
   } else if (item.slot) {
+    if (!isItemAllowedForClass(item, p.heroClass)) {
+      const reqCls = HERO_CLASSES[getRequiredClassForItem(item)]?.name || "another class";
+      sfx.hit();
+      addFloat(p.x, p.y - 0.35, "Class Not Match!", "#f87171");
+      addLog(`Cannot equip ${item.name}: Class Not Match (Requires ${reqCls}).`, "info");
+      return;
+    }
     const prev = p.equipment[item.slot];
     p.equipment[item.slot] = item;
     inv.splice(index, 1);
@@ -235,13 +244,22 @@ export function openItemActionDialog(index) {
     }
   }
 
+  const classAllowed = !item.slot || isItemAllowedForClass(item, p.heroClass);
+  const reqClassName = !classAllowed ? (HERO_CLASSES[getRequiredClassForItem(item)]?.name || "Other Class") : null;
+
   const btnsEl = document.getElementById("item-action-buttons");
   btnsEl.innerHTML = "";
+
+  if (!classAllowed && compareEl) {
+    compareEl.hidden = false;
+    compareEl.innerHTML += `<div class="cmp-pair-warn">Class Not Match — Requires <strong>${escapeHtml(reqClassName)}</strong></div>`;
+  }
 
   const primaryBtn = document.createElement("button");
   primaryBtn.type = "button";
   primaryBtn.className = "btn btn-primary";
-  primaryBtn.textContent = item.type === "consumable" ? "Consume / Use" : "Equip";
+  primaryBtn.textContent = item.type === "consumable" ? "Consume / Use" : classAllowed ? "Equip" : "Class Not Match";
+  primaryBtn.disabled = !classAllowed;
   primaryBtn.addEventListener("click", () => {
     useInventoryItem(index);
     dlg.close();

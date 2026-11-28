@@ -89,9 +89,6 @@ export function createNewRun(heroName, difficultyId, loadout = DEFAULT_LOADOUT, 
     { ...ITEMS.health_potion, qty: 1 + prov },
     { ...ITEMS.mana_potion, qty: 1 },
   ];
-  if (cls.id === "ranger") {
-    inventory.push({ ...ITEMS.iron_sword, qty: 1 });
-  }
 
   const startWeapon = ITEMS[cls.startWeapon] ? { ...ITEMS[cls.startWeapon] } : { ...ITEMS.iron_sword };
   const startSubweapon = cls.startSubweapon && ITEMS[cls.startSubweapon] ? { ...ITEMS[cls.startSubweapon] } : null;

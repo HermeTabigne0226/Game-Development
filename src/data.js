@@ -1,8 +1,17 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.2.0.2 Beta";
+export const GAME_VERSION = "v.1.2.0.3 Beta";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.2.0.3 Beta",
+    title: "Class Equipment Restrictions, Starting Gear & Dash OOM Indicator",
+    notes: [
+      "Class-Restricted Equipment: Weapons, sub-weapons, and class sets can now only be equipped by their matching Hero Class, with a 'Class Not Match' warning in the item modal.",
+      "Class Starting Weapon & Sub-Weapon: Added Oakhaven Buckler for Gilded Knight and fixed Sylvan Ranger's Iron-Tipped Arrows so every class starts with both weapon & sub-weapon equipped.",
+      "Dash Out-of-Mana Indicator: Added clear 'OUT OF MANA' / 'Out of Mana (10 MP)' indicators on both mobile touch and desktop Dash buttons.",
+    ],
+  },
   {
     version: "v.1.2.0.2 Beta",
     title: "Upgraded Pixel-Art Skill Icons",
@@ -404,7 +413,7 @@ export const HERO_CLASSES = {
     bonusCrit: 2,
     bonusSpeed: 0.45,
     startWeapon: "oak_shortbow",
-    startSubweapon: "hunter_quiver",
+    startSubweapon: "hunter_arrows",
   },
 };
 
@@ -1269,6 +1278,18 @@ export const ITEMS = {
     atk: 1,
     crit: 3,
     desc: "[Sub-Weapon: Bow] +1 ATK, +3% CRIT",
+  },
+  wooden_buckler: {
+    id: "wooden_buckler",
+    name: "Oakhaven Buckler",
+    type: "armor",
+    slot: "subweapon",
+    subType: "shield",
+    rarity: "common",
+    icon: "spritecook-inventory-icons/shield.png",
+    def: 1,
+    maxHp: 3,
+    desc: "[Sub-Weapon: Shield] +1 DEF, +3 Max HP",
   },
   apprentice_tome: {
     id: "apprentice_tome",

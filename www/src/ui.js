@@ -201,11 +201,14 @@ export function updateCooldownUI() {
   if (dashBtn) {
     dashBtn.disabled = p.dashCd > 0 || dashOutOfMana;
     dashBtn.classList.toggle("on-cooldown", p.dashCd > 0 || dashOutOfMana);
+    dashBtn.classList.toggle("no-mp", dashOutOfMana);
     dashBtn.textContent = p.dashCd > 0
       ? `${dashBaseLabel} (${p.dashCd.toFixed(1)}s)`
-      : isPvp
-        ? `${dashBaseLabel} (6s CD)`
-        : `${dashBaseLabel} (10 MP)`;
+      : dashOutOfMana
+        ? `Out of Mana (10 MP)`
+        : isPvp
+          ? `${dashBaseLabel} (6s CD)`
+          : `${dashBaseLabel} (10 MP)`;
     dashBtn.title = "Dash skill adapts to Sub-Weapon: Shield = Shield Bash · Arrows = 3 Ricochet Arrows · Tome/Book = Blink Teleport";
   }
   const tDash = document.getElementById("touch-btn-dash");
@@ -213,11 +216,18 @@ export function updateCooldownUI() {
   if (tDash && tDashCd) {
     tDash.disabled = p.dashCd > 0 || dashOutOfMana;
     tDash.classList.toggle("on-cooldown", p.dashCd > 0 || dashOutOfMana);
+    tDash.classList.toggle("no-mp", dashOutOfMana);
     if (p.dashCd > 0) {
       tDashCd.hidden = false;
+      tDashCd.classList.remove("oom");
       tDashCd.textContent = String(Math.ceil(p.dashCd));
+    } else if (dashOutOfMana) {
+      tDashCd.hidden = false;
+      tDashCd.classList.add("oom");
+      tDashCd.textContent = "OUT OF MANA";
     } else {
       tDashCd.hidden = true;
+      tDashCd.classList.remove("oom");
     }
   }
   const skillBtn = document.getElementById("btn-skills");

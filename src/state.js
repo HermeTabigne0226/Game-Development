@@ -405,8 +405,28 @@ export function isWeaponSubPairValid(weapon, sub) {
   return getWeaponCategory(weapon) === getSubWeaponCategory(sub);
 }
 
+export function getRequiredClassForItem(item) {
+  if (!item || !item.slot) return null;
+  if (item.heroClass) return item.heroClass;
+  if (item.weaponType === "wand" || item.weaponType === "staff" || item.subType === "book") return "mage";
+  if (item.weaponType === "melee" || item.subType === "shield") return "gilded";
+  if (item.weaponType === "bow" || item.subType === "arrows") return "ranger";
+  if (item.setId === "astral" || item.setId === "sunfire") return "mage";
+  if (item.setId === "vanguard" || item.setId === "voidbreaker") return "gilded";
+  if (item.setId === "ranger") return "ranger";
+  return null;
+}
+
+export function isItemAllowedForClass(item, heroClass = runtime.state?.player?.heroClass) {
+  const req = getRequiredClassForItem(item);
+  if (!req) return true;
+  const resolved = heroClass === "paladin" ? "gilded" : (heroClass || "gilded");
+  return req === resolved;
+}
+
 export function isBetterEquipmentItem(item, p = runtime.state?.player) {
   if (!item || !item.slot || !p) return false;
+  if (!isItemAllowedForClass(item, p.heroClass)) return false;
   if (item.slot === "subweapon" && p.equipment?.weapon && !isWeaponSubPairValid(p.equipment.weapon, item)) {
     return false;
   }
