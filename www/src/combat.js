@@ -1167,11 +1167,9 @@ export function castSpell(spellId) {
     p.stunTimer = 0;
     sfx.heal();
     spawnVfxAnim(p.x, p.y, "vfx_holy_heal", 68, 0.75, { anchorX: 0.5, anchorY: 0.78 });
-    spawnVfxAnim(p.x, p.y, "vfx_regen_aura", 58, 0.75, { anchorX: 0.5, anchorY: 0.82 });
     spawnBurst(p.x, p.y, "#34d399", 14, 1.0);
     if (s.isPvp) {
       broadcastPvpAction({ kind: "vfx_anim", x: p.x, y: p.y, sheetKey: "vfx_holy_heal", sizePx: 68, duration: 0.75, opts: { anchorX: 0.5, anchorY: 0.78 } });
-      broadcastPvpAction({ kind: "vfx_anim", x: p.x, y: p.y, sheetKey: "vfx_regen_aura", sizePx: 58, duration: 0.75, opts: { anchorX: 0.5, anchorY: 0.82 } });
     }
     addFloat(p.x, p.y - 0.35, `+${gained} HP · HASTE`, "#34d399");
     addLog(`${spell.name}: Restored ${gained} HP and gained +15% Speed!`, "heal");

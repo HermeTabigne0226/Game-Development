@@ -860,6 +860,10 @@ export function renderFrame(ts) {
   ctx.fill();
   ctx.restore();
 
+  if ((p.hasteTimer || 0) > 0) {
+    drawHasteRegenAura(ctx, assets, ts, p, pz);
+  }
+
   const pSheet = assets[`${heroPrefix}_${p.anim}`] || assets[`${heroPrefix}_idle`] || assets.gilded_idle;
   ctx.save();
   if (p.iFrames > 0 && !p.leap && Math.floor(ts / 60) % 2 === 0) ctx.globalAlpha = 0.55;
@@ -1442,6 +1446,34 @@ export function renderFrame(ts) {
 }
 
 /** Render active skill charges, telegraphs, and buffs for either the local hero or a PvP rival. */
+function drawHasteRegenAura(ctx, assets, ts, entity, ez = 0) {
+  ctx.save();
+  if (assets.vfx_regen_aura) {
+    const meta = VFX_SHEET_META.vfx_regen_aura;
+    const frameIdx = Math.floor((ts * 0.016) % meta.frames);
+    const dw = 64;
+    const dh = dw * (meta.fh / meta.fw);
+    ctx.globalAlpha = 0.88;
+    drawGridVfxFrame(
+      ctx,
+      assets.vfx_regen_aura,
+      meta,
+      frameIdx,
+      entity.x * TILE_SIZE - dw * 0.5,
+      entity.y * TILE_SIZE + 14 - ez * 0.5 - dh * 0.89,
+      dw,
+      dh
+    );
+  } else {
+    ctx.strokeStyle = `rgba(52, 211, 153, ${0.55 + Math.sin(ts * 0.014) * 0.25})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(entity.x * TILE_SIZE, entity.y * TILE_SIZE - ez * 0.5, 22, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 function drawEntityChargesAndAuras(ctx, assets, ts, entity) {
   const ez = entity.z || 0;
   if (entity.radiantCharge) {
@@ -1724,32 +1756,8 @@ function drawEntityChargesAndAuras(ctx, assets, ts, entity) {
     ctx.restore();
   }
 
-  if (entity.hasteTimer > 0) {
-    ctx.save();
-    if (assets.vfx_regen_aura) {
-      const meta = VFX_SHEET_META.vfx_regen_aura;
-      const frameIdx = Math.floor((ts * 0.016) % meta.frames);
-      const dw = 44;
-      const dh = dw * (meta.fh / meta.fw);
-      ctx.globalAlpha = 0.85;
-      drawGridVfxFrame(
-        ctx,
-        assets.vfx_regen_aura,
-        meta,
-        frameIdx,
-        entity.x * TILE_SIZE - dw * 0.5,
-        entity.y * TILE_SIZE - ez * 0.5 - dh * 0.78,
-        dw,
-        dh
-      );
-    } else {
-      ctx.strokeStyle = `rgba(52, 211, 153, ${0.55 + Math.sin(ts * 0.014) * 0.25})`;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(entity.x * TILE_SIZE, entity.y * TILE_SIZE - ez * 0.5, 22, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    ctx.restore();
+  if (entity.hasteTimer > 0 && entity !== runtime.state?.player) {
+    drawHasteRegenAura(ctx, assets, ts, entity, ez);
   }
 
   if (entity.tempDefTimer > 0) {
