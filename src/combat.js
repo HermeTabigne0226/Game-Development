@@ -9,6 +9,8 @@ import {
   clearSavedRun,
   distPointToSegment,
   getActiveSpells,
+  getDashCooldown,
+  getDashMpCost,
   getPlayerStats,
   getRarityInfo,
   getWeaponCategory,
@@ -653,11 +655,12 @@ export function performDash() {
   const p = s.player;
   if ((p.stunTimer || 0) > 0 || p.dashCd > 0 || p.dashTimer > 0) return;
   if (!s.isPvp) {
-    if (p.mp < 10) {
-      addLog("Not enough MP to Dash! (10 MP required)", "info");
+    const dashCost = getDashMpCost(p);
+    if (p.mp < dashCost) {
+      addLog(`Not enough MP to Dash! (${dashCost} MP required)`, "info");
       return;
     }
-    p.mp -= 10;
+    p.mp -= dashCost;
   }
   runtime.uiDirty = true;
 
@@ -685,7 +688,7 @@ export function performDash() {
   p.dashDirX = dx;
   p.dashDirY = dy;
   p.dashTimer = 0.16;
-  p.dashCd = s.isPvp ? 6.0 : 1.05;
+  p.dashCd = s.isPvp ? 6.0 : getDashCooldown(p);
   p.iFrames = Math.max(p.iFrames, 0.24);
   p.facingLeft = dx < 0;
   sfx.dash();

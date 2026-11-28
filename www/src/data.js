@@ -1,8 +1,17 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.2.0.4 Beta";
+export const GAME_VERSION = "v.1.2.1.0 Beta";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.2.1.0 Beta",
+    title: "Visual Shortcut Picker, Graphic NPC/Shrine Cards & Dash Upgrades",
+    notes: [
+      "Visual Quick-Shortcut Picker: Consumable modals now display the 4 actual shortcut slots with assigned item icons and counts, plus clean Drop & Delete actions.",
+      "Graphic NPC & Shrine Cards: All NPC and Shrine choices now render with icons and clear effect descriptions.",
+      "Dash MP & Cooldown Upgrades: Replaced floor-reveal options with Dash MP Cost (-1 MP, min 7 MP) and Dash Cooldown (-0.15s) blessings at Lyra, Unit-09, and Shrine of Magic.",
+    ],
+  },
   {
     version: "v.1.2.0.4 Beta",
     title: "Smart Ground Skill Targeting & Inventory Item Fixes",
@@ -2271,9 +2280,9 @@ export const NPC_ENCOUNTERS = {
       "Peace be with you, traveler. The catacombs grow colder with each floor, yet the Sanctum's flame still answers a hero's oath.",
     ],
     choices: [
-      { label: "Receive Blessing (Full HP & MP Restore)", effect: "full_heal" },
-      { label: "Ask for Provisions (+1 Crimson Vial, +1 Azure Vial)", effect: "gift_potions" },
-      { label: "Expand Satchel (+1 Max Inventory Slot)", effect: "upgrade_inventory" },
+      { label: "Receive Blessing", desc: "Full HP & MP Restore", icon: "assets/generated/skill_sovereign_grace.jpg", effect: "full_heal" },
+      { label: "Ask for Provisions", desc: "+1 Crimson Vial & +1 Azure Vial", icon: "spritecook-inventory-icons/health_potion.png", effect: "gift_potions" },
+      { label: "Expand Satchel", desc: "+1 Max Inventory Slot", icon: "spritecook-inventory-icons/armour.png", effect: "upgrade_inventory" },
     ],
   },
   rogue: {
@@ -2285,9 +2294,9 @@ export const NPC_ENCOUNTERS = {
       "Keep your wits sharp. King Grak hoards the First Shard down below—and Goblin Slingers guard every junction. Need supplies?",
     ],
     choices: [
-      { label: "Trade 25 Gold for Scroll of Valor (+2 ATK)", effect: "buy_scroll", cost: 25 },
-      { label: "Take Scout's Intel (+15 XP & reveal floor)", effect: "reveal_floor" },
-      { label: "Expand Satchel (+1 Max Inventory Slot)", effect: "upgrade_inventory" },
+      { label: "Scroll of Valor", desc: "+2 Permanent ATK (25 Gold)", icon: "spritecook-inventory-icons/scroll.png", effect: "buy_scroll", cost: 25 },
+      { label: "Shadow Step Training", desc: "-1 Dash MP Cost (min 7 MP) & +15 XP", icon: "assets/generated/skill_void_rift.png", effect: "dash_mp_discount" },
+      { label: "Expand Satchel", desc: "+1 Max Inventory Slot", icon: "spritecook-inventory-icons/armour.png", effect: "upgrade_inventory" },
     ],
   },
   robot: {
@@ -2299,9 +2308,9 @@ export const NPC_ENCOUNTERS = {
       "CALIBRATING... Sir Aurelius ordered this foundry sealed 3,650 days ago. Clockwork Sentinels still patrol these halls, bound by the Second Shard.",
     ],
     choices: [
-      { label: "Overclock Weapon (+3 ATK for this run, costs 20 Gold)", effect: "buy_atk", cost: 20 },
-      { label: "Download Tactical Map (Reveal entire floor + 1 Azure Vial)", effect: "reveal_and_mp" },
-      { label: "Expand Satchel (+1 Max Inventory Slot)", effect: "upgrade_inventory" },
+      { label: "Overclock Weapon", desc: "+3 Permanent ATK for this run (20 Gold)", icon: "spritecook-inventory-icons/sword.png", effect: "buy_atk", cost: 20 },
+      { label: "Thruster Calibration", desc: "-0.15s Dash Cooldown & +1 Azure Vial", icon: "assets/generated/skill_tempest_field.png", effect: "dash_cd_discount" },
+      { label: "Expand Satchel", desc: "+1 Max Inventory Slot", icon: "spritecook-inventory-icons/armour.png", effect: "upgrade_inventory" },
     ],
   },
   pirate: {
@@ -2313,9 +2322,9 @@ export const NPC_ENCOUNTERS = {
       "Even smuggler tunnels end at Malakor's door. If you're marching into the Abyssal Sanctum, take what steel you can carry.",
     ],
     choices: [
-      { label: "Buy Gilded Aegis (+7 DEF, +12 Max HP) — 40 Gold", effect: "buy_aegis", cost: 40 },
-      { label: "Share a Toast (+18 HP, +10 MP)", effect: "small_heal" },
-      { label: "Expand Satchel (+1 Max Inventory Slot)", effect: "upgrade_inventory" },
+      { label: "Buy Gilded Aegis", desc: "+7 DEF, +12 Max HP Shield (40 Gold)", icon: "spritecook-inventory-icons/shield.png", effect: "buy_aegis", cost: 40 },
+      { label: "Share a Toast", desc: "Restore +18 HP & +10 MP", icon: "spritecook-inventory-icons/bread.png", effect: "small_heal" },
+      { label: "Expand Satchel", desc: "+1 Max Inventory Slot", icon: "spritecook-inventory-icons/armour.png", effect: "upgrade_inventory" },
     ],
   },
 };
@@ -2327,9 +2336,9 @@ export const SHRINE_ENCOUNTERS = {
     role: "Ancient Shrine",
     desc: "A crimson orb burns atop the altar. Sacrifice vitality for brutal combat power?",
     choices: [
-      { label: "Offer 25% Current HP -> Gain +3 ATK & +4% CRIT", effect: "shrine_blood_atk" },
-      { label: "Offer 35 Gold -> Gain +1 Random Relic", effect: "shrine_relic", cost: 35 },
-      { label: "Leave Untouched", effect: "none" },
+      { label: "Blood Offering", desc: "Offer 25% Current HP -> +3 ATK & +4% CRIT", icon: "assets/generated/skill_tempest_cleave.jpg", effect: "shrine_blood_atk" },
+      { label: "Claim Relic", desc: "Offer 35 Gold -> +1 Random Relic", icon: "spritecook-inventory-icons/ring.png", effect: "shrine_relic", cost: 35 },
+      { label: "Leave Untouched", desc: "Exit without altering the altar", icon: "assets/generated/vfx/shrine_depleted.png", effect: "none" },
     ],
   },
   sanctum: {
@@ -2338,9 +2347,10 @@ export const SHRINE_ENCOUNTERS = {
     role: "Ancient Shrine",
     desc: "A radiant cyan orb hums with arcane resonance above this forgotten stone altar.",
     choices: [
-      { label: "Pray for Wisdom -> +1 Skill Point (or +25 XP if Lv 1)", effect: "shrine_skill_pt" },
-      { label: "Drink Arcane Light -> Full HP/MP & +8 Max MP", effect: "shrine_mp" },
-      { label: "Claim Relic Blessing -> +1 Random Relic (costs 30 Gold)", effect: "shrine_relic", cost: 30 },
+      { label: "Pray for Wisdom", desc: "+1 Skill Point & +15 XP", icon: "assets/generated/skill_mana_shield.png", effect: "shrine_skill_pt" },
+      { label: "Drink Arcane Light", desc: "Full HP/MP & +8 Max MP", icon: "spritecook-inventory-icons/mana_potion.png", effect: "shrine_mp" },
+      { label: "Swiftness Blessing", desc: "-1 Dash MP Cost (min 7 MP) & -0.15s Dash CD", icon: "assets/generated/skill_void_rift.png", effect: "shrine_dash_mp" },
+      { label: "Claim Relic Blessing", desc: "+1 Random Relic (30 Gold)", icon: "spritecook-inventory-icons/ring.png", effect: "shrine_relic", cost: 30 },
     ],
   },
   aegis: {
@@ -2349,9 +2359,9 @@ export const SHRINE_ENCOUNTERS = {
     role: "Ancient Shrine",
     desc: "A consecrated golden orb shields the sanctum, radiating bastion fortitude.",
     choices: [
-      { label: "Claim Ward Blessing -> +3 DEF & +12 Max HP", effect: "shrine_aegis_def" },
-      { label: "Sacred Protection -> +1 Random Relic (costs 30 Gold)", effect: "shrine_relic", cost: 30 },
-      { label: "Leave Untouched", effect: "none" },
+      { label: "Claim Ward Blessing", desc: "+3 DEF & +12 Max HP", icon: "assets/generated/skill_aegis_bulwark.jpg", effect: "shrine_aegis_def" },
+      { label: "Sacred Protection", desc: "+1 Random Relic (30 Gold)", icon: "spritecook-inventory-icons/ring.png", effect: "shrine_relic", cost: 30 },
+      { label: "Leave Untouched", desc: "Exit without altering the altar", icon: "assets/generated/vfx/shrine_depleted.png", effect: "none" },
     ],
   },
 };

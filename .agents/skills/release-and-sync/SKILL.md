@@ -19,6 +19,7 @@ Whenever a new image/SVG/audio file is referenced by the game:
 4. Run `npm run sync` to copy root files into `www/`.
 
 ## 2. Version Bump & Patch Notes (All 5 Touchpoints)
+Always update `PATCH_NOTES` and bump the version whenever completing a gameplay/UI update, and suggest the next version (`X.Y.Z.W-beta`) to the user for confirmation before pushing live.
 Keep semver/display versions synchronized across all 5 files (mismatch breaks PvP `hasVersionMismatch` checks and APK self-update):
 1. **`package.json` (L3)**: `"version": "X.Y.Z.W-beta"` (used by `.github/workflows/build-apk.yml`).
 2. **`android/app/build.gradle` (L10–11)**: Increment integer `versionCode` (+1) and update `versionName "X.Y.Z.W-beta"`.

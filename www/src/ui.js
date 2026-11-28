@@ -6,6 +6,7 @@ import { renderHooks } from "./renderer.js";
 import {
   getActiveSetBonuses,
   getActiveSpells,
+  getDashMpCost,
   getMaxInventory,
   getPlayerStats,
   getRarityInfo,
@@ -197,7 +198,8 @@ export function updateCooldownUI() {
         : subType === "book"
           ? "Blink Dash"
           : "Dash";
-  const dashOutOfMana = !isPvp && p.mp < 10;
+  const dashCost = getDashMpCost(p);
+  const dashOutOfMana = !isPvp && p.mp < dashCost;
   const dashBtn = document.getElementById("btn-dash");
   if (dashBtn) {
     dashBtn.disabled = p.dashCd > 0 || dashOutOfMana;
@@ -206,10 +208,10 @@ export function updateCooldownUI() {
     dashBtn.textContent = p.dashCd > 0
       ? `${dashBaseLabel} (${p.dashCd.toFixed(1)}s)`
       : dashOutOfMana
-        ? `Out of Mana (10 MP)`
+        ? `Out of Mana (${dashCost} MP)`
         : isPvp
           ? `${dashBaseLabel} (6s CD)`
-          : `${dashBaseLabel} (10 MP)`;
+          : `${dashBaseLabel} (${dashCost} MP)`;
     dashBtn.title = "Dash skill adapts to Sub-Weapon: Shield = Shield Bash · Arrows = 3 Ricochet Arrows · Tome/Book = Blink Teleport";
   }
   const tDash = document.getElementById("touch-btn-dash");

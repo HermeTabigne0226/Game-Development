@@ -1019,12 +1019,11 @@ export function openShrineDialog(prop) {
   tpl.choices.forEach((choice) => {
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "btn btn-secondary";
-    btn.textContent = choice.label;
-    if (choice.cost && s.player.gold < choice.cost) {
-      btn.disabled = true;
-      btn.textContent += " (Not enough Gold)";
-    }
+    btn.className = "story-choice-card";
+    const cantAfford = Boolean(choice.cost && s.player.gold < choice.cost);
+    btn.disabled = cantAfford;
+    const subTxt = cantAfford ? `${choice.desc || ""} (Not enough Gold)` : (choice.desc || "");
+    btn.innerHTML = `${choice.icon ? `<img src="${choice.icon}" alt="" />` : ""}<div class="story-choice-meta"><strong>${escapeHtml(choice.label)}</strong>${subTxt ? `<span>${escapeHtml(subTxt)}</span>` : ""}</div>`;
     btn.addEventListener("click", () => {
       storyDialogAbort?.abort();
       dlg.close("chosen");
@@ -1063,6 +1062,13 @@ export function openShrineDialog(prop) {
         sfx.heal();
         addFloat(p.x, p.y - 0.4, "+3 DEF · +12 MAX HP!", "#facc15");
         addLog("Shrine of Aegis blessed your armor (+3 DEF, +12 Max HP)!", "loot");
+        prop.used = true;
+      } else if (choice.effect === "shrine_dash_mp") {
+        p.dashMpDiscount = Math.min(3, (p.dashMpDiscount || 0) + 1);
+        p.dashCdDiscount = Math.min(0.45, (p.dashCdDiscount || 0) + 0.15);
+        sfx.levelUp();
+        addFloat(p.x, p.y - 0.4, "-1 DASH MP · -0.15s CD!", "#38bdf8");
+        addLog(`Swiftness Blessing: Dash now costs ${Math.max(7, 10 - p.dashMpDiscount)} MP and -${p.dashCdDiscount.toFixed(2)}s cooldown!`, "loot");
         prop.used = true;
       } else if (choice.effect === "shrine_relic") {
         const rel = grantRandomRelic(p);
@@ -1153,13 +1159,12 @@ export function openStoryDialog(npc) {
   tpl.choices.forEach((choice, i) => {
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "btn btn-secondary";
+    btn.className = "story-choice-card";
     if (i === 0) btn.autofocus = true;
-    btn.textContent = choice.label;
-    if (choice.cost && runtime.state.player.gold < choice.cost) {
-      btn.disabled = true;
-      btn.textContent += " (Not enough Gold)";
-    }
+    const cantAfford = Boolean(choice.cost && runtime.state.player.gold < choice.cost);
+    btn.disabled = cantAfford;
+    const subTxt = cantAfford ? `${choice.desc || ""} (Not enough Gold)` : (choice.desc || "");
+    btn.innerHTML = `${choice.icon ? `<img src="${choice.icon}" alt="" />` : ""}<div class="story-choice-meta"><strong>${escapeHtml(choice.label)}</strong>${subTxt ? `<span>${escapeHtml(subTxt)}</span>` : ""}</div>`;
     btn.addEventListener("click", () => {
       storyDialogAbort?.abort();
       dlg.close("chosen");
@@ -1185,28 +1190,6 @@ export function openStoryDialog(npc) {
 }
 
 
-function revealEntireFloor(lvl) {
-  if (!lvl?.explored || !lvl?.grid) return;
-  const h = lvl.explored.length;
-  for (let y = 0; y < h; y++) {
-    const row = lvl.explored[y];
-    if (!row) continue;
-    for (let x = 0; x < row.length; x++) {
-      if (lvl.grid[y]?.[x] !== TILE.WALL) { row[x] = true; continue; }
-      let touchesFloor = false;
-      for (let dy = -1; dy <= 1 && !touchesFloor; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-          if (lvl.grid[y + dy]?.[x + dx] !== undefined && lvl.grid[y + dy]?.[x + dx] !== TILE.WALL) {
-            touchesFloor = true;
-            break;
-          }
-        }
-      }
-      if (touchesFloor) row[x] = true;
-    }
-  }
-}
-
 function applyStoryChoice(choice, npc) {
   const s = runtime.state;
   const p = s.player;
@@ -1231,21 +1214,24 @@ function applyStoryChoice(choice, npc) {
       sfx.levelUp();
       addLog("Lyra hands you a Scroll of Valor (+2 ATK).", "loot");
       break;
-    case "reveal_floor":
-      revealEntireFloor(s.level);
+    case "dash_mp_discount":
+      p.dashMpDiscount = Math.min(3, (p.dashMpDiscount || 0) + 1);
       grantXP(15);
-      addLog("Lyra shares her map of the floor (+15 XP).", "story");
+      sfx.levelUp();
+      addFloat(p.x, p.y - 0.3, "-1 DASH MP!", "#38bdf8");
+      addLog(`Lyra's Shadow Step training reduced Dash MP cost to ${Math.max(7, 10 - p.dashMpDiscount)} MP (+15 XP).`, "story");
       break;
     case "buy_atk":
       p.baseAtk += 3;
       sfx.levelUp();
       addLog("Unit-09 sharpens your blade with foundry plasma (+3 ATK).", "loot");
       break;
-    case "reveal_and_mp":
-      revealEntireFloor(s.level);
+    case "dash_cd_discount":
+      p.dashCdDiscount = Math.min(0.45, (p.dashCdDiscount || 0) + 0.15);
       sfx.loot();
       giveOrDropItem(ITEMS.mana_potion, p.x, p.y, { requireLeave: true });
-      addLog("Downloaded floor schematic and received an Azure Vial.", "loot");
+      addFloat(p.x, p.y - 0.3, "-0.15s DASH CD!", "#38bdf8");
+      addLog(`Unit-09 calibrated thrusters (-0.15s Dash Cooldown) and gave you an Azure Vial.`, "loot");
       break;
     case "buy_aegis":
       sfx.loot();

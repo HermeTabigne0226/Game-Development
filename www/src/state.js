@@ -454,6 +454,16 @@ export function getMaxInventory(p = runtime.state?.player) {
   return p?.maxInventory || DEFAULT_MAX_INVENTORY;
 }
 
+export function getDashMpCost(p = runtime.state?.player) {
+  const discount = Math.min(3, Math.max(0, p?.dashMpDiscount || 0));
+  return Math.max(7, 10 - discount);
+}
+
+export function getDashCooldown(p = runtime.state?.player) {
+  const discount = Math.min(0.45, Math.max(0, p?.dashCdDiscount || 0));
+  return Math.max(0.6, 1.05 - discount);
+}
+
 export function isBlockedAt(tx, ty) {
   const s = runtime.state;
   if (!s?.level) return true;
