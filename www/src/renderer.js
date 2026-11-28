@@ -75,6 +75,8 @@ const VFX_SHEET_META = {
   vfx_regen_aura: { fw: 48, fh: 64, cols: 8, frames: 16 },
   vfx_power_up_aura: { fw: 56, fh: 56, cols: 8, frames: 14 },
   vfx_poisoned_aura: { fw: 64, fh: 80, cols: 8, frames: 18 },
+  vfx_piercing_lance: { fw: 72, fh: 28, cols: 8, frames: 8 },
+  vfx_poison_dart: { fw: 96, fh: 40, cols: 8, frames: 18 },
 };
 
 const PROJ_SHEET_MAP = {
@@ -88,7 +90,9 @@ const PROJ_SHEET_MAP = {
   water_bolt: { key: "vfx_water_bolt", dw: 38, dh: 18 },
   arcane_orb: { key: "vfx_arcane_orb", dw: 48, dh: 22 },
   void_orb: { key: "vfx_arcane_orb", dw: 48, dh: 22 },
-  thorn_shot: { key: "vfx_thorn_shot", dw: 40, dh: 18 },
+  thorn_shot: { key: "vfx_poison_dart", dw: 46, dh: 19 },
+  arrow_volley: { key: "vfx_arrow_flight", dw: 36, dh: 12 },
+  piercing_shot: { key: "vfx_piercing_lance", dw: 54, dh: 21 },
 };
 
 function drawGridVfxFrame(targetCtx, sheet, meta, frameIdx, dx, dy, dw, dh) {

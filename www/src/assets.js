@@ -204,6 +204,8 @@ export async function loadAllAssets(onProgress = null) {
     vfx_regen_aura: "assets/generated/vfx_skills/regen_aura.png",
     vfx_power_up_aura: "assets/generated/vfx_skills/power_up_aura.png",
     vfx_poisoned_aura: "assets/generated/vfx_skills/poisoned_aura.png",
+    vfx_piercing_lance: "assets/generated/vfx_skills/piercing_lance.png",
+    vfx_poison_dart: "assets/generated/vfx_skills/poison_dart.png",
   };
 
   const list = Object.entries(manifest);

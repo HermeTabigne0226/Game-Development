@@ -1342,6 +1342,7 @@ export function castSpell(spellId) {
         kbMult: 0.48,
         isEnemy: false,
         isArrow: true,
+        projKind: "arrow_volley",
         isSkill: true,
         life: 0.72,
         label: spell.name,
@@ -1356,6 +1357,7 @@ export function castSpell(spellId) {
           radius: 0.24,
           color: spell.color,
           isArrow: true,
+          projKind: "arrow_volley",
           life: 0.72,
         });
       }
@@ -1367,7 +1369,7 @@ export function castSpell(spellId) {
     sfx.pierceShot();
     p.anim = p.heroClass === "ranger" ? "bow" : "attack";
     p.animTimer = 0.24;
-    spawnVfxAnim(p.x + Math.cos(angle) * 0.55, p.y + Math.sin(angle) * 0.55, "vfx_wind_blade", 96, 0.38, { angle });
+    spawnVfxAnim(p.x + Math.cos(angle) * 0.55, p.y + Math.sin(angle) * 0.55, "vfx_sonic_boom", 88, 0.34, { angle });
     const speed = 15.0;
     const isCrit = Math.random() * 100 < Math.min(stats.crit + 25, 95);
     const dmg = Math.round(stats.atk * spell.mults[rIdx] * (isCrit ? (s.isPvp ? 1.65 : 1.4) : 1));
@@ -1383,6 +1385,7 @@ export function castSpell(spellId) {
       sunderDur: 3.5,
       isEnemy: false,
       isArrow: true,
+      projKind: "piercing_shot",
       isSkill: true,
       pierce: true,
       hitIds: new Set(),
@@ -1399,6 +1402,7 @@ export function castSpell(spellId) {
         radius: 0.28,
         color: spell.color,
         isArrow: true,
+        projKind: "piercing_shot",
         pierce: true,
         life: 0.8,
       });

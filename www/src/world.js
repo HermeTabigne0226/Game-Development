@@ -1660,6 +1660,8 @@ export function updateSimulation(dt) {
             e.poisonTimer = Math.max(e.poisonTimer || 0, 2.5);
             e.poisonDmg = Math.max(e.poisonDmg || 0, Math.max(2, Math.round(pr.dmg * 0.28)));
             e.poisonTick = e.poisonTick ?? 0.65;
+          } else if (pr.projKind === "piercing_shot") {
+            spawnVfxAnim(e.x, e.y, "vfx_holy_impact", 62, 0.34);
           } else if (pr.isArrow && pr.isSkill) {
             spawnVfxAnim(e.x, e.y, "vfx_arrow_impact", 44, 0.32, { angle: Math.atan2(pr.vy, pr.vx), anchorX: 0.78, anchorY: 0.53 });
           }
