@@ -1,8 +1,23 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.2.1.0 Beta";
+export const GAME_VERSION = "v.1.2.1.1 Beta";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.2.1.1 Beta",
+    title: "Frost Orb Rework, Updated Mage Icons & Crisp Choice Icons",
+    icons: [
+      { src: "assets/generated/skill_void_rift.png", label: "Void Rift" },
+      { src: "assets/generated/skill_tempest_field.png", label: "Tempest Field" },
+      { src: "assets/generated/skill_gravity_singularity.png", label: "Gravity Singularity" },
+      { src: "assets/generated/skill_frost_lance.jpg", label: "Frost Orb" },
+    ],
+    notes: [
+      "Updated Mage Row-1 Icons: Refreshed Void Rift, Tempest Field, Gravity Singularity, and Frost Orb icons.",
+      "Frost Orb Rework: Renamed Frost Lance to Frost Orb with animated icy projectile flight and Frost Explosion impact VFX.",
+      "Crisp NPC/Shrine Icons: Added pixelated rendering to NPC and Shrine choice icons so pixel-art sprites stay sharp.",
+    ],
+  },
   {
     version: "v.1.2.1.0 Beta",
     title: "Visual Shortcut Picker, Graphic NPC/Shrine Cards & Dash Upgrades",
@@ -489,7 +504,7 @@ export const SPELLS = [
   },
   {
     id: "arcane_bolt",
-    name: "Frost Lance",
+    name: "Frost Orb",
     heroClass: "mage",
     slot: 1,
     hotkey: "1",
@@ -503,7 +518,7 @@ export const SPELLS = [
     range: 7.5,
     type: "projectile",
     icon: "assets/generated/skill_frost_lance.jpg",
-    desc: "[Mage · Skill 1] Hurl an ice lance leaving a Frost AOE that slows & freezes enemies (Lv 1, 3, 5, 7).",
+    desc: "[Mage · Skill 1] Hurl a Frost Orb leaving a Frost AOE that slows & freezes enemies (Lv 1, 3, 5, 7).",
     color: "#38bdf8",
   },
   {

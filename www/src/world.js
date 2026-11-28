@@ -1626,7 +1626,12 @@ export function updateSimulation(dt) {
     }
 
     if (pr.life <= 0 || blocked) {
-      if (pr.isFrostLance) spawnFrostZone(blocked ? pr.x - pr.vx * dt * 0.6 : pr.x, blocked ? pr.y - pr.vy * dt * 0.6 : pr.y);
+      if (pr.isFrostLance) {
+        const fx = blocked ? pr.x - pr.vx * dt * 0.6 : pr.x;
+        const fy = blocked ? pr.y - pr.vy * dt * 0.6 : pr.y;
+        spawnFrostZone(fx, fy);
+        spawnVfxAnim(fx, fy, "vfx_frost_explosion", 84, 0.42);
+      }
       else if (pr.projKind === "fireball") spawnVfxAnim(pr.x, pr.y, "vfx_fireball_impact", 72, 0.36);
       else if (pr.projKind === "arcane_orb" || pr.projKind === "void_orb") spawnVfxAnim(pr.x, pr.y, "vfx_arcane_burst", 68, 0.32);
       else if (pr.projKind === "lightning_bolt") spawnVfxAnim(pr.x, pr.y, "vfx_lightning_impact", 64, 0.34);
@@ -1692,7 +1697,10 @@ export function updateSimulation(dt) {
           } else if (pr.projKind === "thorn_shot") {
             spawnVfxAnim(e.x, e.y, "vfx_thorn_impact", 60, 0.32);
           }
-          if (pr.isFrostLance) spawnFrostZone(pr.x, pr.y);
+          if (pr.isFrostLance) {
+            spawnFrostZone(pr.x, pr.y);
+            spawnVfxAnim(pr.x, pr.y, "vfx_frost_explosion", 84, 0.42);
+          }
           if ((pr.bouncesLeft || 0) > 0) {
             pr.bouncesLeft -= 1;
             pr.lastHitUid = e.uid;

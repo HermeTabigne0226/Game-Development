@@ -1032,6 +1032,7 @@ export function castSpell(spellId) {
       color: spell.color,
       dmg: Math.round(stats.atk * spell.mults[rIdx]) + spell.flats[rIdx],
       isEnemy: false,
+      projKind: "frost_orb",
       isFrostLance: true,
       isSkill: true,
       chill: spell.chills[rIdx],
@@ -1051,6 +1052,7 @@ export function castSpell(spellId) {
         vy: Math.sin(angle) * speed,
         radius: 0.25,
         color: spell.color,
+        projKind: "frost_orb",
         isFrostLance: true,
         life: range / speed,
       });

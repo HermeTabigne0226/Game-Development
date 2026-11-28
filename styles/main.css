@@ -3570,6 +3570,7 @@ dialog.pixel-dialog {
   height: 34px;
   border-radius: 7px;
   object-fit: cover;
+  image-rendering: pixelated;
   flex-shrink: 0;
   border: 1px solid rgba(148, 163, 184, 0.3);
 }

@@ -50,6 +50,7 @@ const VFX_SHEET_META = {
   vfx_holy_impact: { fw: 72, fh: 72, cols: 8, frames: 17 },
   vfx_water_impact: { fw: 72, fh: 52, cols: 8, frames: 18 },
   vfx_thorn_impact: { fw: 64, fh: 40, cols: 8, frames: 17 },
+  vfx_frost_explosion: { fw: 136, fh: 104, cols: 8, frames: 25 },
 };
 
 const PROJ_SHEET_MAP = {

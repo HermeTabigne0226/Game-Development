@@ -174,6 +174,7 @@ export async function loadAllAssets(onProgress = null) {
     vfx_holy_impact: "assets/generated/vfx_skills/vfx_holy_impact.png",
     vfx_water_impact: "assets/generated/vfx_skills/vfx_water_impact.png",
     vfx_thorn_impact: "assets/generated/vfx_skills/vfx_thorn_impact.png",
+    vfx_frost_explosion: "assets/generated/vfx_skills/vfx_frost_explosion.png",
   };
 
   const list = Object.entries(manifest);
