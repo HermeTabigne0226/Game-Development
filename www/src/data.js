@@ -705,7 +705,7 @@ export const SPELLS = [
     range: 2.25,
     type: "rapid_slash",
     icon: "assets/generated/skill_rapid_slash.jpg",
-    desc: "[Ranger · Skill 2] Unleash 3 rapid strikes matching your weapon toward your aim (Lv 1, 3, 5, 7).",
+    desc: "[Ranger · Skill 2] Unleash 3 rapid wind-blade slashes in front of you, slicing enemies in a forward arc (Lv 1, 3, 5, 7).",
     color: "#7dd3fc",
   },
   {

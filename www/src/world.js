@@ -852,80 +852,37 @@ export function updateSimulation(dt) {
       const sp = rs.spell;
       const rIdx = rs.rankIdx;
       const dmg = Math.round(stats.atk * sp.mults[rIdx]) + sp.flats[rIdx];
-      const weapon = p.equipment?.weapon;
-      const wCat = getWeaponCategory(weapon);
-
-      if (wCat === "bow" || wCat === "wand") {
-        const isBow = wCat === "bow";
-        const spreadOff = rs.remaining === 3 ? -0.09 : rs.remaining === 2 ? 0 : 0.09;
-        const shotAng = rs.angle + spreadOff;
-        const speed = weapon?.projSpeed || (isBow ? 13.5 : 11.8);
-        const color = weapon?.projColor || (isBow ? "#fde047" : sp.color);
-        if (isBow) sfx.arrow();
-        else sfx.magicOrb();
-        p.anim = isBow && p.heroClass === "ranger" ? "bow" : "attack";
-        p.animTimer = 0.14;
-        s.projectiles.push({
-          x: p.x + Math.cos(shotAng) * 0.42,
-          y: p.y + Math.sin(shotAng) * 0.42,
-          vx: Math.cos(shotAng) * speed,
-          vy: Math.sin(shotAng) * speed,
-          radius: isBow ? 0.22 : 0.25,
-          color,
-          dmg,
-          isEnemy: false,
-          isArrow: isBow,
-          isMagicOrb: !isBow,
-          isSkill: true,
-          fireTrail: weapon?.projectileKind === "fire_arrow",
-          chill: weapon?.chill || 0,
-          life: 0.9,
-          label: sp.name,
+      const flipY = rs.remaining % 2 === 0;
+      const ang = rs.angle + (flipY ? -0.18 : 0.18);
+      sfx.slash();
+      p.anim = "attack";
+      p.animTimer = 0.14;
+      spawnVfxAnim(p.x, p.y, "vfx_rapier_flurry", 88, 0.28, {
+        angle: ang,
+        anchorX: 0.12,
+        anchorY: 0.5,
+      });
+      if (s.isPvp) {
+        broadcastPvpAction({
+          kind: "vfx_anim",
+          x: p.x,
+          y: p.y,
+          sheetKey: "vfx_rapier_flurry",
+          sizePx: 88,
+          duration: 0.28,
+          opts: { angle: ang, anchorX: 0.12, anchorY: 0.5 },
         });
-        spawnBurst(p.x + Math.cos(shotAng) * 0.4, p.y + Math.sin(shotAng) * 0.4, color, 4, 0.55);
-        if (s.isPvp) {
-          broadcastPvpAction({
-            kind: "projectile",
-            x: p.x + Math.cos(shotAng) * 0.42,
-            y: p.y + Math.sin(shotAng) * 0.42,
-            vx: Math.cos(shotAng) * speed,
-            vy: Math.sin(shotAng) * speed,
-            radius: isBow ? 0.22 : 0.25,
-            color,
-            isArrow: isBow,
-            isMagicOrb: !isBow,
-            life: 0.9,
-          });
-        }
-      } else {
-        const flipY = rs.remaining % 2 === 0;
-        const ang = rs.angle + (flipY ? -0.22 : 0.22);
-        sfx.slash();
-        p.anim = "attack";
-        p.animTimer = 0.14;
-        s.slashes.push({
-          x: p.x * TILE_SIZE,
-          y: p.y * TILE_SIZE,
-          angle: ang,
-          radius: 38,
-          variant: "gold",
-          flipY,
-          color: sp.color,
-          life: 0.19,
-          maxLife: 0.19,
-        });
-        if (s.isPvp) broadcastPvpAction({ kind: "slash", x: p.x, y: p.y, angle: ang, radius: 38, variant: "gold", flipY, color: sp.color, life: 0.19 });
-        const dirX = Math.cos(rs.angle);
-        const dirY = Math.sin(rs.angle);
-        for (const e of [...s.level.enemies]) {
-          const dx = e.x - p.x;
-          const dy = e.y - p.y;
-          const dist = Math.hypot(dx, dy);
-          if (dist <= sp.range) {
-            const dot = dist < 0.01 ? 1 : (dx / dist) * dirX + (dy / dist) * dirY;
-            if (dot >= 0.1 || dist < 0.85) {
-              damageEnemy(e, dmg, false, sp.name, dirX * 1.4, dirY * 1.4, { isSkill: true });
-            }
+      }
+      const dirX = Math.cos(rs.angle);
+      const dirY = Math.sin(rs.angle);
+      for (const e of [...s.level.enemies]) {
+        const dx = e.x - p.x;
+        const dy = e.y - p.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist <= sp.range) {
+          const dot = dist < 0.01 ? 1 : (dx / dist) * dirX + (dy / dist) * dirY;
+          if (dot >= 0.05 || dist < 0.85) {
+            damageEnemy(e, dmg, false, sp.name, dirX * 1.4, dirY * 1.4, { isSkill: true });
           }
         }
       }
