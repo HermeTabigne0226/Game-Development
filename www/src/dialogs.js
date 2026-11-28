@@ -1357,18 +1357,18 @@ export function renderPatchNotes() {
     const betaReleases = PATCH_NOTES.filter((r) => !/alpha/i.test(r.version));
     const alphaReleases = PATCH_NOTES.filter((r) => /alpha/i.test(r.version));
 
-    betaReleases.forEach((release, idx) => {
-      const det = document.createElement("details");
-      det.className = "patch-accordion";
-      if (idx === 0) det.open = true;
-      det.innerHTML = `<summary>${release.version} — ${release.title}</summary><div class="patch-accordion-body">${renderReleaseCard(release)}</div>`;
-      listEl.appendChild(det);
-    });
+    if (betaReleases.length > 0) {
+      const betaDet = document.createElement("details");
+      betaDet.className = "patch-accordion";
+      betaDet.open = true;
+      betaDet.innerHTML = `<summary>BETA (${betaReleases.length} updates)</summary><div class="patch-accordion-body">${betaReleases.map(renderReleaseCard).join("")}</div>`;
+      listEl.appendChild(betaDet);
+    }
 
     if (alphaReleases.length > 0) {
       const alphaDet = document.createElement("details");
       alphaDet.className = "patch-accordion patch-accordion-alpha";
-      alphaDet.innerHTML = `<summary>Alpha Test Archive (${alphaReleases.length} builds)</summary><div class="patch-accordion-body">${alphaReleases.map(renderReleaseCard).join("")}</div>`;
+      alphaDet.innerHTML = `<summary>ALPHA (${alphaReleases.length} builds)</summary><div class="patch-accordion-body">${alphaReleases.map(renderReleaseCard).join("")}</div>`;
       listEl.appendChild(alphaDet);
     }
   }
