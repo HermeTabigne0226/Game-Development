@@ -436,7 +436,9 @@ export function openShopDialog(shop) {
     const isUlt = Boolean(oldSpell.isUltimate);
     const cost = isUlt ? ULT_SKILL_SWAP_COST : BASIC_SKILL_SWAP_COST;
     const oldRank = p.skillRanks[oldSpell.id] || 0;
-    const candidates = SPELLS.filter((sp) => Boolean(sp.isUltimate) === isUlt && !p.loadout.includes(sp.id));
+    const targetSlot = swapState.slotIdx + 1;
+    const heroCls = p.heroClass === "paladin" ? "gilded" : (p.heroClass || "gilded");
+    const candidates = SPELLS.filter((sp) => !sp.legacy && sp.heroClass === heroCls && sp.slot === targetSlot && !p.loadout.includes(sp.id));
 
     const head = document.createElement("div");
     head.className = "skill-swap-step-head";
@@ -1342,12 +1344,32 @@ export function renderPatchNotes() {
   const listEl = document.getElementById("patch-notes-list");
   if (listEl) {
     listEl.innerHTML = "";
-    for (const release of PATCH_NOTES) {
-      const card = document.createElement("div");
-      card.className = "codex-item";
+    const renderReleaseCard = (release) => {
+      const iconsHtml = Array.isArray(release.icons) && release.icons.length
+        ? `<div class="patch-icon-strip">${release.icons
+            .map((ic) => `<div class="patch-icon-chip"><img src="${ic.src}" alt="${escapeHtml(ic.label)}" /><span>${escapeHtml(ic.label)}</span></div>`)
+            .join("")}</div>`
+        : "";
       const itemsHtml = release.notes.map((n) => `<li>${n}</li>`).join("");
-      card.innerHTML = `<h4>${release.version} — ${release.title}</h4><ul class="menu-patch-list">${itemsHtml}</ul>`;
-      listEl.appendChild(card);
+      return `<div class="codex-item"><h4>${release.version} — ${release.title}</h4>${iconsHtml}<ul class="menu-patch-list">${itemsHtml}</ul></div>`;
+    };
+
+    const betaReleases = PATCH_NOTES.filter((r) => !/alpha/i.test(r.version));
+    const alphaReleases = PATCH_NOTES.filter((r) => /alpha/i.test(r.version));
+
+    betaReleases.forEach((release, idx) => {
+      const det = document.createElement("details");
+      det.className = "patch-accordion";
+      if (idx === 0) det.open = true;
+      det.innerHTML = `<summary>${release.version} — ${release.title}</summary><div class="patch-accordion-body">${renderReleaseCard(release)}</div>`;
+      listEl.appendChild(det);
+    });
+
+    if (alphaReleases.length > 0) {
+      const alphaDet = document.createElement("details");
+      alphaDet.className = "patch-accordion patch-accordion-alpha";
+      alphaDet.innerHTML = `<summary>Alpha Test Archive (${alphaReleases.length} builds)</summary><div class="patch-accordion-body">${alphaReleases.map(renderReleaseCard).join("")}</div>`;
+      listEl.appendChild(alphaDet);
     }
   }
 }
@@ -1445,59 +1467,62 @@ export function openHeroDialog(onSelectHero, onBack = null) {
   rafId = requestAnimationFrame(tickPreview);
 }
 
-export function openLoadoutDialog(onConfirm, onBack, initialLoadout = null) {
+export function openLoadoutDialog(onConfirm, onBack, initialLoadout = null, heroClass = "gilded") {
   const dlg = document.getElementById("loadout-dialog");
-  const basicList = document.getElementById("loadout-basic-list");
-  const ultList = document.getElementById("loadout-ult-list");
+  if (!dlg) return;
+  const slotLists = [
+    document.getElementById("loadout-slot1-list"),
+    document.getElementById("loadout-slot2-list"),
+    document.getElementById("loadout-slot3-list"),
+    document.getElementById("loadout-ult-list"),
+  ];
   const badge = document.getElementById("loadout-count-badge");
   const confirmBtn = document.getElementById("btn-loadout-confirm");
   const cancelBtn = document.getElementById("btn-loadout-cancel");
 
-  const basicSpells = SPELLS.filter((s) => !s.isUltimate);
-  const ultSpells = SPELLS.filter((s) => s.isUltimate);
-  let selectedBasic = Array.isArray(initialLoadout)
-    ? initialLoadout.filter((id) => basicSpells.some((sp) => sp.id === id)).slice(0, 3)
-    : [];
-  let selectedUlt = Array.isArray(initialLoadout)
-    ? initialLoadout.find((id) => ultSpells.some((sp) => sp.id === id)) || null
-    : null;
+  const resolvedClass = heroClass === "paladin" ? "gilded" : (heroClass || "gilded");
+  const classSpells = SPELLS.filter((s) => !s.legacy && s.heroClass === resolvedClass);
+  const slotPools = [1, 2, 3, 4].map((slotNum) => classSpells.filter((s) => s.slot === slotNum));
+  const defaults = CLASS_DEFAULT_LOADOUTS[resolvedClass] || DEFAULT_LOADOUT;
+
+  const selectedSlots = slotPools.map((pool, idx) => {
+    const fromInit = Array.isArray(initialLoadout)
+      ? pool.find((sp) => sp.id === initialLoadout[idx] || initialLoadout.includes(sp.id))
+      : null;
+    if (fromInit) return fromInit.id;
+    const fromDef = pool.find((sp) => sp.id === defaults[idx]);
+    return (fromDef || pool[0])?.id || null;
+  });
 
   function renderLoadout() {
-    badge.textContent = `${selectedBasic.length}/3 Basic · ${selectedUlt ? 1 : 0}/1 Ult`;
-    confirmBtn.disabled = selectedBasic.length !== 3 || !selectedUlt;
+    const readyCount = selectedSlots.filter(Boolean).length;
+    badge.textContent = `${readyCount}/4 Slots Ready`;
+    confirmBtn.disabled = readyCount !== 4;
 
-    basicList.innerHTML = "";
-    for (const sp of basicSpells) {
-      const isSel = selectedBasic.includes(sp.id);
-      const card = document.createElement("button");
-      card.type = "button";
-      card.className = `loadout-card ${isSel ? "selected" : ""}`;
-      card.innerHTML = `<img src="${sp.icon}" alt="" /><div class="loadout-card-body"><strong>${sp.name} · ${sp.mpCost} MP</strong><span>${sp.desc}</span></div>`;
-      card.addEventListener("click", () => {
-        if (isSel) selectedBasic = selectedBasic.filter((id) => id !== sp.id);
-        else if (selectedBasic.length < 3) selectedBasic.push(sp.id);
-        else selectedBasic = [...selectedBasic.slice(1), sp.id];
-        renderLoadout();
-      });
-      basicList.appendChild(card);
-    }
-
-    ultList.innerHTML = "";
-    for (const sp of ultSpells) {
-      const isSel = selectedUlt === sp.id;
-      const card = document.createElement("button");
-      card.type = "button";
-      card.className = `loadout-card ult ${isSel ? "selected" : ""}`;
-      card.innerHTML = `<img src="${sp.icon}" alt="" /><div class="loadout-card-body"><strong>${sp.name} (ULT) · ${sp.mpCost} MP</strong><span>${sp.desc}</span></div>`;
-      card.addEventListener("click", () => { selectedUlt = sp.id; renderLoadout(); });
-      ultList.appendChild(card);
-    }
+    slotPools.forEach((pool, idx) => {
+      const container = slotLists[idx];
+      if (!container) return;
+      container.innerHTML = "";
+      const isUltSlot = idx === 3;
+      for (const sp of pool) {
+        const isSel = selectedSlots[idx] === sp.id;
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = `loadout-card ${isUltSlot ? "ult " : ""}${isSel ? "selected" : ""}`;
+        card.innerHTML = `<img src="${sp.icon}" alt="" /><div class="loadout-card-body"><strong>${sp.name}${isUltSlot ? " (ULT)" : ""} · ${sp.mpCost} MP</strong><span>${sp.desc}</span></div>`;
+        card.addEventListener("click", () => {
+          selectedSlots[idx] = sp.id;
+          renderLoadout();
+        });
+        container.appendChild(card);
+      }
+    });
   }
 
   confirmBtn.onclick = () => {
-    if (selectedBasic.length !== 3 || !selectedUlt) return;
+    if (selectedSlots.some((id) => !id)) return;
     dlg.close("confirm");
-    onConfirm([...selectedBasic, selectedUlt]);
+    onConfirm([...selectedSlots]);
   };
   cancelBtn.onclick = () => {
     dlg.close("cancel");

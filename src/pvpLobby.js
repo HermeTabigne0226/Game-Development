@@ -801,7 +801,8 @@ export function openPvpDialog() {
         reopen();
       },
       reopen,
-      pvpLoadout
+      pvpLoadout,
+      pvpHeroClass
     );
   };
 

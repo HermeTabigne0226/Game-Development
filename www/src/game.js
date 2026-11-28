@@ -712,7 +712,9 @@ function setupControls() {
           (chosenLoadout) => {
             createNewRun(getEnteredHeroName(), getSelectedDifficulty(), chosenLoadout, chosenHero);
           },
-          startHeroAndSkills
+          startHeroAndSkills,
+          null,
+          chosenHero
         );
       });
     };

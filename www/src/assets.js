@@ -163,6 +163,17 @@ export async function loadAllAssets(onProgress = null) {
     vfx_magic_missile: "assets/generated/vfx_mage/vfx_magic_missile.png",
     vfx_arcane_burst: "assets/generated/vfx_mage/vfx_arcane_burst.png",
     vfx_fire_explosion: "assets/generated/Fire Effect 2/Explosion SpriteSheet.png",
+    vfx_void_rift: "assets/generated/vfx_skills/vfx_void_rift.png",
+    vfx_storm_field: "assets/generated/vfx_skills/vfx_storm_field.png",
+    vfx_gravity_well: "assets/generated/vfx_skills/vfx_gravity_well.png",
+    vfx_thorn_shot: "assets/generated/vfx_skills/vfx_thorn_shot.png",
+    vfx_vine_snare: "assets/generated/vfx_skills/vfx_vine_snare.png",
+    vfx_leaf_storm: "assets/generated/vfx_skills/vfx_leaf_storm.png",
+    vfx_water_bolt: "assets/generated/vfx_skills/vfx_water_bolt.png",
+    vfx_lightning_impact: "assets/generated/vfx_skills/vfx_lightning_impact.png",
+    vfx_holy_impact: "assets/generated/vfx_skills/vfx_holy_impact.png",
+    vfx_water_impact: "assets/generated/vfx_skills/vfx_water_impact.png",
+    vfx_thorn_impact: "assets/generated/vfx_skills/vfx_thorn_impact.png",
   };
 
   const list = Object.entries(manifest);

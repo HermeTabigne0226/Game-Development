@@ -39,6 +39,17 @@ const VFX_SHEET_META = {
   vfx_magic_missile: { fw: 156, fh: 60, cols: 8, frames: 28 },
   vfx_arcane_burst: { fw: 72, fh: 72, cols: 8, frames: 20 },
   vfx_fire_explosion: { fw: 64, fh: 64, cols: 4, frames: 16 },
+  vfx_void_rift: { fw: 64, fh: 94, cols: 8, frames: 24 },
+  vfx_storm_field: { fw: 124, fh: 129, cols: 8, frames: 24 },
+  vfx_gravity_well: { fw: 112, fh: 100, cols: 8, frames: 24 },
+  vfx_thorn_shot: { fw: 64, fh: 28, cols: 8, frames: 8 },
+  vfx_vine_snare: { fw: 56, fh: 56, cols: 8, frames: 19 },
+  vfx_leaf_storm: { fw: 80, fh: 56, cols: 8, frames: 18 },
+  vfx_water_bolt: { fw: 56, fh: 28, cols: 8, frames: 6 },
+  vfx_lightning_impact: { fw: 64, fh: 64, cols: 8, frames: 12 },
+  vfx_holy_impact: { fw: 72, fh: 72, cols: 8, frames: 17 },
+  vfx_water_impact: { fw: 72, fh: 52, cols: 8, frames: 18 },
+  vfx_thorn_impact: { fw: 64, fh: 40, cols: 8, frames: 17 },
 };
 
 const PROJ_SHEET_MAP = {
@@ -49,8 +60,10 @@ const PROJ_SHEET_MAP = {
   lightning_bolt: { key: "vfx_lightning_bolt", dw: 42, dh: 18 },
   holy_lance: { key: "vfx_holy_lance", dw: 44, dh: 18 },
   sun_orb: { key: "vfx_holy_lance", dw: 44, dh: 18 },
+  water_bolt: { key: "vfx_water_bolt", dw: 38, dh: 18 },
   arcane_orb: { key: "vfx_arcane_orb", dw: 48, dh: 22 },
   void_orb: { key: "vfx_arcane_orb", dw: 48, dh: 22 },
+  thorn_shot: { key: "vfx_thorn_shot", dw: 40, dh: 18 },
 };
 
 function drawGridVfxFrame(targetCtx, sheet, meta, frameIdx, dx, dy, dw, dh) {

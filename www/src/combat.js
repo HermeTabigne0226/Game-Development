@@ -1445,6 +1445,141 @@ export function castSpell(spellId) {
     if (s.isPvp) broadcastPvpAction({ kind: "arrow_storm", x: tx, y: ty, radius, duration: dur, tickInterval: spell.tickInterval || 0.35 });
     addFloat(tx, ty - 0.5, "ARROW STORM!", "#fde047");
     addLog(`${spell.name}: Raining arrows for ${dur.toFixed(1)}s!`, "story");
+    return;
+  }
+
+  if (spell.type === "void_rift") {
+    const dist = Math.min(spell.range || 5.0, 4.4);
+    const tx = Math.max(1.5, Math.min(MAP_W - 1.5, p.x + Math.cos(angle) * dist));
+    const ty = Math.max(1.5, Math.min(MAP_H - 1.5, p.y + Math.sin(angle) * dist));
+    const rad = spell.radius || 2.3;
+    const dmg = Math.round(stats.atk * spell.mults[rIdx]) + (spell.flats?.[rIdx] || 0);
+    const chillDur = spell.chills?.[rIdx] || 2.0;
+    sfx.nova();
+    s.shake = Math.max(s.shake, 5.5);
+    spawnVfxAnim(tx, ty, "vfx_void_rift", rad * TILE_SIZE * 1.9, 0.9);
+    spawnRing(tx, ty, rad * TILE_SIZE, "#c084fc", 0.45);
+    spawnBurst(tx, ty, "#a855f7", 18, 1.3);
+    if (s.isPvp) {
+      broadcastPvpAction({ kind: "vfx_anim", x: tx, y: ty, sheetKey: "vfx_void_rift", sizePx: rad * TILE_SIZE * 1.9, duration: 0.9 });
+      broadcastPvpAction({ kind: "ring", x: tx, y: ty, radPx: rad * TILE_SIZE, color: "#c084fc", dur: 0.45 });
+    }
+    for (const e of [...s.level.enemies]) {
+      const d = Math.hypot(e.x - tx, e.y - ty);
+      if (d <= rad + 0.5) {
+        const pullAng = Math.atan2(ty - e.y, tx - e.x);
+        e.chilled = Math.max(e.chilled || 0, chillDur);
+        damageEnemy(e, dmg, false, spell.name, Math.cos(pullAng) * 2.2, Math.sin(pullAng) * 2.2, { isSkill: true, isAoe: true });
+      }
+    }
+    addFloat(tx, ty - 0.4, "VOID RIFT!", "#c084fc");
+    return;
+  }
+
+  if (spell.type === "tempest_field") {
+    const dur = spell.duration || 3.6;
+    const dmg = Math.round(stats.atk * spell.mults[rIdx]) + (spell.flats?.[rIdx] || 0);
+    sfx.nova();
+    p.hasteTimer = Math.max(p.hasteTimer || 0, 2.5);
+    p.stormField = { timer: dur, tickInterval: spell.tickInterval || 0.6, tickTimer: 0, radius: spell.radius || 2.4, dmg, spell };
+    spawnVfxAnim(p.x, p.y, "vfx_storm_field", (spell.radius || 2.4) * TILE_SIZE * 1.85, 0.8);
+    if (s.isPvp) broadcastPvpAction({ kind: "vfx_anim", x: p.x, y: p.y, sheetKey: "vfx_storm_field", sizePx: (spell.radius || 2.4) * TILE_SIZE * 1.85, duration: 0.8 });
+    addFloat(p.x, p.y - 0.4, "TEMPEST FIELD!", "#38bdf8");
+    return;
+  }
+
+  if (spell.type === "gravity_singularity") {
+    const dist = Math.min(spell.range || 5.5, 4.8);
+    const tx = Math.max(1.5, Math.min(MAP_W - 1.5, p.x + Math.cos(angle) * dist));
+    const ty = Math.max(1.5, Math.min(MAP_H - 1.5, p.y + Math.sin(angle) * dist));
+    const rad = spell.radii[rIdx];
+    const dmg = Math.round(stats.atk * spell.mults[rIdx]) + (spell.flats?.[rIdx] || 0);
+    const stunDur = spell.stuns?.[rIdx] || 1.8;
+    sfx.ultSlam();
+    sfx.nova();
+    s.shake = Math.max(s.shake, 10);
+    spawnVfxAnim(tx, ty, "vfx_gravity_well", rad * TILE_SIZE * 2.1, 1.05);
+    spawnVfxAnim(tx, ty, "vfx_arcane_burst", rad * TILE_SIZE * 1.75, 0.55);
+    spawnRing(tx, ty, rad * TILE_SIZE, "#a855f7", 0.5);
+    spawnBurst(tx, ty, "#c084fc", 26, 1.6);
+    if (s.isPvp) {
+      broadcastPvpAction({ kind: "vfx_anim", x: tx, y: ty, sheetKey: "vfx_gravity_well", sizePx: rad * TILE_SIZE * 2.1, duration: 1.05 });
+      broadcastPvpAction({ kind: "vfx_anim", x: tx, y: ty, sheetKey: "vfx_arcane_burst", sizePx: rad * TILE_SIZE * 1.75, duration: 0.55 });
+      broadcastPvpAction({ kind: "ring", x: tx, y: ty, radPx: rad * TILE_SIZE, color: "#a855f7", dur: 0.5 });
+    }
+    for (const e of [...s.level.enemies]) {
+      const d = Math.hypot(e.x - tx, e.y - ty);
+      if (d <= rad + 0.65) {
+        const pullAng = Math.atan2(ty - e.y, tx - e.x);
+        e.stunned = Math.max(e.stunned || 0, stunDur);
+        damageEnemy(e, dmg, false, spell.name, Math.cos(pullAng) * 2.6, Math.sin(pullAng) * 2.6, { isSkill: true, isAoe: true, stunDur });
+      }
+    }
+    addFloat(tx, ty - 0.5, "SINGULARITY!", "#e9d5ff");
+    addLog(`${spell.name}: Collapsed a gravity well on enemies!`, "story");
+    return;
+  }
+
+  if (spell.type === "thorn_salvo") {
+    sfx.arrow();
+    p.anim = p.heroClass === "ranger" ? "bow" : "attack";
+    p.animTimer = 0.22;
+    const speed = 13.8;
+    const dmg = Math.round(stats.atk * spell.mults[rIdx]);
+    const chillDur = spell.chills?.[rIdx] || 1.8;
+    for (const offset of [-0.34, -0.17, 0, 0.17, 0.34]) {
+      const a = angle + offset;
+      const sx = p.x + Math.cos(a) * 0.35;
+      const sy = p.y + Math.sin(a) * 0.35;
+      s.projectiles.push({
+        x: sx, y: sy, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed,
+        radius: 0.22, color: spell.color, dmg, chill: chillDur,
+        isEnemy: false, isArrow: true, projKind: "thorn_shot", isSkill: true, life: 0.62, label: spell.name,
+      });
+      if (s.isPvp) {
+        broadcastPvpAction({ kind: "projectile", x: sx, y: sy, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, radius: 0.22, color: spell.color, isArrow: true, projKind: "thorn_shot", life: 0.62 });
+      }
+    }
+    return;
+  }
+
+  if (spell.type === "vine_snare") {
+    const dist = Math.min(spell.range || 4.5, 4.2);
+    const tx = Math.max(1.5, Math.min(MAP_W - 1.5, p.x + Math.cos(angle) * dist));
+    const ty = Math.max(1.5, Math.min(MAP_H - 1.5, p.y + Math.sin(angle) * dist));
+    const rad = spell.radius || 2.2;
+    const dmg = Math.round(stats.atk * spell.mults[rIdx]);
+    const stunDur = spell.stuns?.[rIdx] || 1.6;
+    sfx.hit();
+    spawnVfxAnim(tx, ty, "vfx_vine_snare", rad * TILE_SIZE * 1.9, 0.95);
+    spawnRing(tx, ty, rad * TILE_SIZE, "#22c55e", 0.42);
+    spawnBurst(tx, ty, "#4ade80", 16, 1.2);
+    if (s.isPvp) {
+      broadcastPvpAction({ kind: "vfx_anim", x: tx, y: ty, sheetKey: "vfx_vine_snare", sizePx: rad * TILE_SIZE * 1.9, duration: 0.95 });
+      broadcastPvpAction({ kind: "ring", x: tx, y: ty, radPx: rad * TILE_SIZE, color: "#22c55e", dur: 0.42 });
+    }
+    for (const e of [...s.level.enemies]) {
+      if (Math.hypot(e.x - tx, e.y - ty) <= rad + 0.35) {
+        e.stunned = Math.max(e.stunned || 0, stunDur);
+        damageEnemy(e, dmg, false, spell.name, 0, 0, { isSkill: true, isAoe: true, stunDur });
+      }
+    }
+    addFloat(tx, ty - 0.4, "SNARED!", "#4ade80");
+    return;
+  }
+
+  if (spell.type === "leaf_tempest") {
+    const dur = spell.duration || 2.6;
+    const rad = spell.radii[rIdx];
+    const dmg = Math.round(stats.atk * spell.mults[rIdx]) + (spell.flats?.[rIdx] || 0);
+    sfx.ultLeap();
+    p.hasteTimer = Math.max(p.hasteTimer || 0, dur);
+    p.hasteBonus = Math.max(p.hasteBonus || 0.7, 1.25);
+    p.leafTempest = { timer: dur, tickInterval: spell.tickInterval || 0.35, tickTimer: 0, radius: rad, dmg, spell };
+    spawnVfxAnim(p.x, p.y, "vfx_leaf_storm", rad * TILE_SIZE * 1.9, 0.7);
+    if (s.isPvp) broadcastPvpAction({ kind: "vfx_anim", x: p.x, y: p.y, sheetKey: "vfx_leaf_storm", sizePx: rad * TILE_SIZE * 1.9, duration: 0.7 });
+    addFloat(p.x, p.y - 0.5, "LEAF TEMPEST!", "#34d399");
+    addLog(`${spell.name}: Summoned a whirling emerald tempest!`, "story");
   }
 }
 

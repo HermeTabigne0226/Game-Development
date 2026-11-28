@@ -1631,7 +1631,11 @@ export function updateSimulation(dt) {
     if (pr.life <= 0 || blocked) {
       if (pr.isFrostLance) spawnFrostZone(blocked ? pr.x - pr.vx * dt * 0.6 : pr.x, blocked ? pr.y - pr.vy * dt * 0.6 : pr.y);
       else if (pr.projKind === "fireball") spawnVfxAnim(pr.x, pr.y, "vfx_fireball_impact", 72, 0.36);
-      else if (pr.projKind === "arcane_orb") spawnVfxAnim(pr.x, pr.y, "vfx_arcane_burst", 68, 0.32);
+      else if (pr.projKind === "arcane_orb" || pr.projKind === "void_orb") spawnVfxAnim(pr.x, pr.y, "vfx_arcane_burst", 68, 0.32);
+      else if (pr.projKind === "lightning_bolt") spawnVfxAnim(pr.x, pr.y, "vfx_lightning_impact", 64, 0.34);
+      else if (pr.projKind === "holy_lance" || pr.projKind === "sun_orb") spawnVfxAnim(pr.x, pr.y, "vfx_holy_impact", 68, 0.36);
+      else if (pr.projKind === "water_bolt") spawnVfxAnim(pr.x, pr.y, "vfx_water_impact", 64, 0.34);
+      else if (pr.projKind === "thorn_shot") spawnVfxAnim(pr.x, pr.y, "vfx_thorn_impact", 60, 0.32);
       else spawnBurst(pr.x, pr.y, pr.color, 6, 0.7);
       s.projectiles.splice(i, 1);
       continue;
@@ -1679,8 +1683,16 @@ export function updateSimulation(dt) {
                 damageEnemy(other, splashDmg, false, "Fireball Blast", 0, 0, { isAoe: true });
               }
             }
-          } else if (pr.projKind === "arcane_orb") {
+          } else if (pr.projKind === "arcane_orb" || pr.projKind === "void_orb") {
             spawnVfxAnim(e.x, e.y, "vfx_arcane_burst", 64, 0.3);
+          } else if (pr.projKind === "lightning_bolt") {
+            spawnVfxAnim(e.x, e.y, "vfx_lightning_impact", 64, 0.34);
+          } else if (pr.projKind === "holy_lance" || pr.projKind === "sun_orb") {
+            spawnVfxAnim(e.x, e.y, "vfx_holy_impact", 68, 0.36);
+          } else if (pr.projKind === "water_bolt") {
+            spawnVfxAnim(e.x, e.y, "vfx_water_impact", 64, 0.34);
+          } else if (pr.projKind === "thorn_shot") {
+            spawnVfxAnim(e.x, e.y, "vfx_thorn_impact", 60, 0.32);
           }
           if (pr.isFrostLance) spawnFrostZone(pr.x, pr.y);
           if ((pr.bouncesLeft || 0) > 0) {
@@ -1776,6 +1788,44 @@ export function updateSimulation(dt) {
   }
 
   // Siege Barrage Arrow Storms
+  if (p.stormField) {
+    const sf = p.stormField;
+    sf.timer -= dt;
+    sf.tickTimer -= dt;
+    if (sf.tickTimer <= 0) {
+      sf.tickTimer = sf.tickInterval;
+      sfx.zap?.() || sfx.slash();
+      spawnVfxAnim(p.x, p.y, "vfx_storm_field", sf.radius * TILE_SIZE * 1.85, 0.62);
+      spawnRing(p.x, p.y, sf.radius * TILE_SIZE, "rgba(56, 189, 248, 0.7)", 0.25);
+      if (s.isPvp) broadcastPvpAction({ kind: "vfx_anim", x: p.x, y: p.y, sheetKey: "vfx_storm_field", sizePx: sf.radius * TILE_SIZE * 1.85, duration: 0.62 });
+      for (const e of [...s.level.enemies]) {
+        if (Math.hypot(e.x - p.x, e.y - p.y) <= sf.radius + 0.35) {
+          damageEnemy(e, sf.dmg, false, sf.spell.name, 0, 0, { isSkill: true, isAoe: true });
+        }
+      }
+    }
+    if (sf.timer <= 0) p.stormField = null;
+  }
+
+  if (p.leafTempest) {
+    const lt = p.leafTempest;
+    lt.timer -= dt;
+    lt.tickTimer -= dt;
+    if (lt.tickTimer <= 0) {
+      lt.tickTimer = lt.tickInterval;
+      sfx.slash();
+      spawnVfxAnim(p.x, p.y, "vfx_leaf_storm", lt.radius * TILE_SIZE * 1.9, 0.42);
+      spawnRing(p.x, p.y, lt.radius * TILE_SIZE, "rgba(52, 211, 153, 0.7)", 0.25);
+      if (s.isPvp) broadcastPvpAction({ kind: "vfx_anim", x: p.x, y: p.y, sheetKey: "vfx_leaf_storm", sizePx: lt.radius * TILE_SIZE * 1.9, duration: 0.42 });
+      for (const e of [...s.level.enemies]) {
+        if (Math.hypot(e.x - p.x, e.y - p.y) <= lt.radius + 0.35) {
+          damageEnemy(e, lt.dmg, false, lt.spell.name, 0, 0, { isSkill: true, isAoe: true });
+        }
+      }
+    }
+    if (lt.timer <= 0) p.leafTempest = null;
+  }
+
   if (s.arrowStorms?.length) {
     for (let i = s.arrowStorms.length - 1; i >= 0; i--) {
       const st = s.arrowStorms[i];
