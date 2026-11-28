@@ -1168,19 +1168,12 @@ export function updateSimulation(dt) {
         sfx.smite();
         sfx.heavyImpact();
         s.shake = Math.max(s.shake, 10);
-        s.beams.push({ x: impactX * TILE_SIZE, y: impactY * TILE_SIZE, color: "#38bdf8", life: 0.28, maxLife: 0.28 });
-        s.slashes.push(
-          { x: impactX * TILE_SIZE, y: impactY * TILE_SIZE, angle: ang + 0.6, radius: 42, variant: "steel_cyan", flipY: false, life: 0.22, maxLife: 0.22, color: "#38bdf8" },
-          { x: impactX * TILE_SIZE, y: impactY * TILE_SIZE, angle: ang - 0.6, radius: 42, variant: "gold", flipY: true, life: 0.22, maxLife: 0.22, color: "#fde047" }
-        );
-        spawnBurst(impactX, impactY, "#facc15", 20, 1.45);
-        spawnBurst(impactX, impactY, "#38bdf8", 14, 1.25);
-        spawnRing(impactX, impactY, 1.75 * TILE_SIZE, "#38bdf8", 0.3, { delay: 0, lineWidth: 3 });
-        spawnRing(impactX, impactY, 2.05 * TILE_SIZE, "#fde047", 0.38, { delay: 0.06, lineWidth: 2.5 });
+        spawnBurst(impactX, impactY, "#facc15", 16, 1.35);
+        spawnBurst(impactX, impactY, "#38bdf8", 12, 1.2);
+        spawnRing(impactX, impactY, 1.65 * TILE_SIZE, "#38bdf8", 0.3, { delay: 0, lineWidth: 2.2 });
+        spawnRing(impactX, impactY, 1.95 * TILE_SIZE, "#fde047", 0.38, { delay: 0.06, lineWidth: 1.8 });
         spawnVfxAnim(impactX, impactY, "vfx_spear_thrust", 112, 0.42, { angle: ang, anchorX: 0.25 });
-        spawnVfxAnim(impactX, impactY, "vfx_shockwave_ring", 128, 0.48);
-        spawnGroundDecal(impactX, impactY, "vfx_spear_impact_crater", 104, 0.95, { scaleStart: 0.55, scaleEnd: 1.05 });
-        spawnGroundDecal(impactX, impactY, "vfx_ground_slam_shockwave", 92, 0.25, { angle: ang - Math.PI / 2, scaleStart: 0.45, scaleEnd: 1.55 });
+        spawnVfxAnim(impactX, impactY, "vfx_shockwave_ring", 128, 0.48, { alpha: 0.85 });
         if (s.isPvp) broadcastPvpAction({ kind: "valiant_slam", x: impactX, y: impactY, angle: ang });
         for (const e of [...s.level.enemies]) {
           if (Math.hypot(e.x - impactX, e.y - impactY) <= 1.75 || Math.hypot(e.x - p.x, e.y - p.y) <= 1.35) {

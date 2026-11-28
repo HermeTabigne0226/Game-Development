@@ -1596,29 +1596,25 @@ function drawEntityChargesAndAuras(ctx, assets, ts, entity) {
       ctx.stroke();
 
       ctx.setLineDash([]);
-      if (assets.vfx_spear_impact_crater) {
-        ctx.save();
-        ctx.imageSmoothingEnabled = false;
-        ctx.globalAlpha = 0.55 + prog * 0.45;
-        ctx.translate(markX, markY);
-        ctx.rotate(ts * 0.003);
-        const reticleSz = 42 + (1 - eased) * 16;
-        ctx.drawImage(assets.vfx_spear_impact_crater, -reticleSz / 2, -reticleSz / 2, reticleSz, reticleSz);
-        ctx.restore();
-      } else {
-        ctx.strokeStyle = `rgba(250, 204, 21, ${0.5 + prog * 0.45})`;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(markX, markY, 11 + (1 - eased) * 10, 0, Math.PI * 2);
-        ctx.stroke();
-      }
+      ctx.strokeStyle = `rgba(56, 189, 248, ${0.45 + prog * 0.45})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(markX, markY, 10 + (1 - eased) * 10, 0, Math.PI * 2);
+      ctx.stroke();
 
-      if (assets.vfx_spear_charge_lunge) {
-        ctx.imageSmoothingEnabled = false;
+      ctx.fillStyle = `rgba(250, 204, 21, ${0.35 + prog * 0.45})`;
+      ctx.beginPath();
+      ctx.arc(markX, markY, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (assets.vfx_spear_thrust) {
+        const meta = VFX_SHEET_META.vfx_spear_thrust;
+        const frameIdx = Math.min(meta.frames - 1, Math.floor(prog * meta.frames));
+        const dw = Math.max(48, spearLen + 14);
+        const dh = dw * (meta.fh / meta.fw);
         ctx.translate(sx, sy);
-        ctx.rotate(ang - Math.PI / 2);
-        const wPx = 42;
-        ctx.drawImage(assets.vfx_spear_charge_lunge, 0, 0, 128, 316, -wPx / 2, 0, wPx, spearLen + 4);
+        ctx.rotate(ang);
+        drawGridVfxFrame(ctx, assets.vfx_spear_thrust, meta, frameIdx, -dw * 0.15, -dh * 0.5, dw, dh);
       } else {
         const grad = ctx.createLinearGradient(sx, sy, tipX, tipY);
         grad.addColorStop(0, "rgba(56, 189, 248, 0.25)");
@@ -1642,15 +1638,11 @@ function drawEntityChargesAndAuras(ctx, assets, ts, entity) {
       wakeGrad.addColorStop(1, "rgba(250, 204, 21, 0.95)");
 
       ctx.save();
-      if (assets.vfx_spear_impact_crater) {
-        ctx.save();
-        ctx.imageSmoothingEnabled = false;
-        ctx.globalAlpha = 0.85;
-        ctx.translate(markX, markY);
-        ctx.rotate(ts * 0.004);
-        ctx.drawImage(assets.vfx_spear_impact_crater, -22, -22, 44, 44);
-        ctx.restore();
-      }
+      ctx.strokeStyle = "rgba(56, 189, 248, 0.55)";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(markX, markY, 12, 0, Math.PI * 2);
+      ctx.stroke();
 
       ctx.strokeStyle = wakeGrad;
       ctx.lineWidth = 12;
@@ -1667,14 +1659,14 @@ function drawEntityChargesAndAuras(ctx, assets, ts, entity) {
       ctx.lineTo(hx, hy);
       ctx.stroke();
 
-      if (assets.vfx_spear_charge_lunge) {
-        ctx.imageSmoothingEnabled = false;
-        const remPx = Math.max(16, Math.hypot(markX - hx, markY - hy));
-        const lenPx = Math.min(54, remPx + 14);
-        const wPx = 30;
+      if (assets.vfx_spear_thrust) {
+        const meta = VFX_SHEET_META.vfx_spear_thrust;
+        const frameIdx = Math.floor((ts * 0.03) % meta.frames);
+        const dw = 68;
+        const dh = dw * (meta.fh / meta.fw);
         ctx.translate(hx, hy - ez * 0.5);
-        ctx.rotate(ang - Math.PI / 2);
-        ctx.drawImage(assets.vfx_spear_charge_lunge, 0, 0, 128, 316, -wPx / 2, -6, wPx, lenPx);
+        ctx.rotate(ang);
+        drawGridVfxFrame(ctx, assets.vfx_spear_thrust, meta, frameIdx, -dw * 0.25, -dh * 0.5, dw, dh);
       } else {
         ctx.translate(hx, hy - ez * 0.5);
         ctx.rotate(ang);
