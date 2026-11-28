@@ -576,10 +576,19 @@ export function updateUI() {
 
   const invGrid = document.getElementById("inventory-grid");
   invGrid.innerHTML = "";
-  for (let i = startIdx; i < endIdx; i++) {
-    const item = p.inventory[i];
+  for (let offset = 0; offset < pageSize; offset++) {
+    const i = startIdx + offset;
     const btn = document.createElement("button");
     btn.type = "button";
+    if (i >= maxInv) {
+      btn.className = "inv-slot locked";
+      btn.disabled = true;
+      btn.title = "Locked Slot";
+      btn.innerHTML = `<svg viewBox="0 0 24 24" class="inv-lock-icon" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3h1a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h1zm2 0h6V7a3 3 0 0 0-6 0v3z" fill="currentColor"/></svg>`;
+      invGrid.appendChild(btn);
+      continue;
+    }
+    const item = p.inventory[i];
     const isUpgrade = item ? isBetterEquipmentItem(item, p) : false;
     const isSelected = batchSelectMode && batchSelected.has(i);
     btn.className = `inv-slot ${item ? "" : "empty"}${isUpgrade ? " upgrade-ready" : ""}${isSelected ? " batch-selected" : ""}`;
