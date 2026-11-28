@@ -13,6 +13,7 @@ import {
   getRarityInfo,
   getWeaponCategory,
   isBetterEquipmentItem,
+  isWeaponSubPairValid,
   loadSavedRun,
   runtime,
   saveRun,
@@ -75,6 +76,41 @@ function ensureInvToolbarWired() {
     saveRun();
     runtime.uiDirty = true;
     updateUI();
+  });
+  document.getElementById("inv-auto-equip")?.addEventListener("click", () => {
+    const p = runtime.state?.player;
+    if (!p) return;
+    let equippedCount = 0;
+    for (let pass = 0; pass < 8; pass++) {
+      let bestIdx = -1;
+      for (let i = 0; i < p.inventory.length; i++) {
+        if (isBetterEquipmentItem(p.inventory[i], p)) {
+          bestIdx = i;
+          break;
+        }
+      }
+      if (bestIdx < 0) break;
+      const item = p.inventory[bestIdx];
+      const prev = p.equipment[item.slot];
+      p.equipment[item.slot] = item;
+      p.inventory.splice(bestIdx, 1);
+      if (prev) p.inventory.push(prev);
+      if (item.slot === "weapon" && p.equipment.subweapon && !isWeaponSubPairValid(item, p.equipment.subweapon)) {
+        p.inventory.push(p.equipment.subweapon);
+        p.equipment.subweapon = null;
+      } else if (item.slot === "subweapon" && p.equipment.weapon && !isWeaponSubPairValid(p.equipment.weapon, item)) {
+        p.inventory.push(p.equipment.weapon);
+        p.equipment.weapon = null;
+      }
+      equippedCount += 1;
+    }
+    if (equippedCount > 0) {
+      sfx.loot();
+      addLog(`Auto-equipped ${equippedCount} gear upgrade${equippedCount > 1 ? "s" : ""}!`, "loot");
+      saveRun();
+      runtime.uiDirty = true;
+      updateUI();
+    }
   });
 }
 
@@ -462,12 +498,22 @@ export function updateUI() {
   const paperdollEl = document.getElementById("bag-equip-paperdoll");
   if (paperdollEl) {
     paperdollEl.innerHTML = "";
+    const isRanger = p.heroClass === "ranger";
+    const isMage = p.heroClass === "mage";
     const slotSilhouettes = {
       helmet: "assets/16x16 RPG Item Pack/Item__44.png",
       necklace: "assets/16x16 RPG Item Pack/Item__32.png",
       armor: "assets/16x16 RPG Item Pack/Item__57.png",
-      weapon: "assets/16x16 RPG Item Pack/Item__00.png",
-      subweapon: "assets/16x16 RPG Item Pack/Item__25.png",
+      weapon: isRanger
+        ? "assets/16x16 RPG Item Pack/Item__16.png"
+        : isMage
+          ? "assets/16x16 RPG Item Pack/Item__20.png"
+          : "assets/16x16 RPG Item Pack/Item__00.png",
+      subweapon: isRanger
+        ? "spritecook-inventory-icons/arrows.png"
+        : isMage
+          ? "assets/16x16 RPG Item Pack/Item__38.png"
+          : "assets/16x16 RPG Item Pack/Item__25.png",
       boots: "assets/16x16 RPG Item Pack/Item__49.png",
       ring: "assets/16x16 RPG Item Pack/Item__41.png",
     };
@@ -562,9 +608,11 @@ export function updateUI() {
   if (pageLabel) pageLabel.textContent = `${invPage + 1} / ${totalPages}`;
 
   const toggleBtn = document.getElementById("inv-batch-toggle");
+  const autoEquipBtn = document.getElementById("inv-auto-equip");
   const delBtn = document.getElementById("inv-batch-delete");
   const cancelBtn = document.getElementById("inv-batch-cancel");
   if (toggleBtn) toggleBtn.hidden = batchSelectMode || p.inventory.length === 0;
+  if (autoEquipBtn) autoEquipBtn.hidden = batchSelectMode || upgradeCount === 0;
   if (delBtn) {
     delBtn.hidden = !batchSelectMode;
     delBtn.disabled = batchSelected.size === 0;

@@ -456,12 +456,15 @@
         </section>
         <section class="inventory-section">
           <div class="section-head">
-            <h3>Inventory · <span id="inv-total">0</span> Items (<span id="inv-count">0</span>/<span id="inv-max">15</span>)</h3>
-            <span id="inv-upgrade-pill" class="inv-upgrade-pill" hidden>▲ Better Gear</span>
+            <div class="inv-head-left">
+              <h3>Inventory · <span id="inv-total">0</span> Items (<span id="inv-count">0</span>/<span id="inv-max">15</span>)</h3>
+              <span id="inv-upgrade-pill" class="inv-upgrade-pill" hidden>▲ Better Gear</span>
+            </div>
           </div>
           <div class="inv-toolbar">
             <div class="inv-batch-actions">
               <button type="button" id="inv-batch-toggle" class="btn btn-secondary inv-batch-btn">Select</button>
+              <button type="button" id="inv-auto-equip" class="btn btn-primary inv-batch-btn" hidden>Auto Equip</button>
               <button type="button" id="inv-batch-delete" class="btn btn-danger inv-batch-btn" hidden>Delete (0)</button>
               <button type="button" id="inv-batch-cancel" class="btn btn-secondary inv-batch-btn" hidden>Cancel</button>
             </div>
