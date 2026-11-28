@@ -51,6 +51,22 @@ const VFX_SHEET_META = {
   vfx_water_impact: { fw: 72, fh: 52, cols: 8, frames: 18 },
   vfx_thorn_impact: { fw: 64, fh: 40, cols: 8, frames: 17 },
   vfx_frost_explosion: { fw: 136, fh: 104, cols: 8, frames: 25 },
+  vfx_ground_slam: { fw: 128, fh: 64, cols: 8, frames: 19 },
+  vfx_sonic_boom: { fw: 128, fh: 96, cols: 8, frames: 16 },
+  vfx_greatsword_sweep: { fw: 104, fh: 64, cols: 8, frames: 15 },
+  vfx_holy_sword_fall: { fw: 104, fh: 112, cols: 8, frames: 14 },
+  vfx_shield_bubble: { fw: 72, fh: 88, cols: 8, frames: 16 },
+  vfx_shadow_step: { fw: 96, fh: 60, cols: 8, frames: 22 },
+  vfx_shadow_spikes: { fw: 136, fh: 64, cols: 8, frames: 22 },
+  vfx_soul_drain: { fw: 96, fh: 48, cols: 8, frames: 23 },
+  vfx_holy_smite: { fw: 80, fh: 120, cols: 8, frames: 14 },
+  vfx_holy_heal: { fw: 64, fh: 96, cols: 8, frames: 21 },
+  vfx_spin_slash: { fw: 120, fh: 72, cols: 8, frames: 14 },
+  vfx_spear_thrust: { fw: 72, fh: 32, cols: 8, frames: 10 },
+  vfx_shockwave_ring: { fw: 120, fh: 52, cols: 8, frames: 16 },
+  vfx_air_burst: { fw: 112, fh: 74, cols: 8, frames: 17 },
+  vfx_wind_blade: { fw: 96, fh: 44, cols: 8, frames: 16 },
+  vfx_bloom_heal: { fw: 56, fh: 64, cols: 8, frames: 22 },
 };
 
 const PROJ_SHEET_MAP = {
@@ -606,7 +622,7 @@ export function renderFrame(ts) {
     const cx = e.x * TILE_SIZE;
     const cy = e.y * TILE_SIZE;
     const ez = e.z || 0;
-    const size = e.isPvpPlayer ? 40 : e.isBoss ? TILE_SIZE + 10 : e.isElite ? TILE_SIZE + 5 : TILE_SIZE;
+    const size = e.isPvpPlayer ? 40 : e.isBoss ? TILE_SIZE + 22 : e.isElite ? TILE_SIZE + 5 : TILE_SIZE;
     const speedAnim = e.id === "bat" ? 0.014 : 0.008;
     const bob = e.isSheet || ez > 0 ? 0 : Math.sin(ts * speedAnim + e.bobPhase) * (e.id === "bat" ? 4 : 2.2);
     const squash = e.id === "slime" ? 1 + Math.sin(ts * 0.01 + e.bobPhase) * 0.1 : 1;
@@ -642,18 +658,25 @@ export function renderFrame(ts) {
       ctx.restore();
     }
 
-    const drawW = size * squash * (e.drawScale || 1);
+    const sheetAspect = e.sheetFw && e.sheetFh ? e.sheetFw / e.sheetFh : 1;
+    const drawW = size * sheetAspect * squash * (e.drawScale || 1);
     const drawH = (size / squash) * (e.drawScale || 1);
     const dx = cx - drawW / 2;
-    const dy = cy - drawH / 2 + bob - ez - (e.isBoss ? 3 : 0);
+    const dy = cy - drawH / 2 + bob - ez - (e.isBoss ? 3 : 0) - (e.sheetYOffset || 0);
 
     ctx.save();
     if (e.isClone) ctx.globalAlpha = 0.72;
+    if (e.isMirrorBoss) {
+      ctx.shadowColor = "#a855f7";
+      ctx.shadowBlur = 10;
+    }
     if (e.isSheet) {
       let spriteKey = e.sprite;
-      if (e.anim === "attack" && e.attackSprite) spriteKey = e.attackSprite;
+      if (e.anim === "combo" && e.comboSprite) spriteKey = e.comboSprite;
+      else if (e.anim === "dash" && e.dashSprite) spriteKey = e.dashSprite;
+      else if (e.anim === "attack" && e.attackSprite) spriteKey = e.attackSprite;
       else if (e.anim === "walk" && e.walkSprite) spriteKey = e.walkSprite;
-      drawSheetFrame(ctx, assets[spriteKey] || assets[e.sprite], animFrame, dx, dy, drawW, drawH, e.facingLeft);
+      drawSheetFrame(ctx, assets[spriteKey] || assets[e.sprite], animFrame, dx, dy, drawW, drawH, e.facingLeft, e.sheetFw || null);
     } else if (assets[e.sprite]) {
       if (e.facingLeft && e.id !== "slime") {
         ctx.translate(dx + drawW, dy);

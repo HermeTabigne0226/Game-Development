@@ -18,16 +18,16 @@ function pick(arr) {
 }
 
 export function getActForFloor(floor) {
-  if (floor <= 12) {
+  if (floor <= 16) {
     return ACTS.find((a) => a.floors.includes(floor)) || ACTS[ACTS.length - 1];
   }
-  const endlessDepth = floor - 12;
+  const endlessDepth = floor - 16;
   const cycle = Math.floor((endlessDepth - 1) / 4);
-  const bossCycle = ["royal_goblin", "gilded_knight", "void_king"];
+  const bossCycle = ["royal_goblin", "foundry_executioner", "void_king", "mirror_self"];
   const bossId = bossCycle[cycle % bossCycle.length];
-  const tileCycle = [0, 1, 3];
+  const tileCycle = [0, 1, 3, 3];
   const floorTileIdx = tileCycle[cycle % tileCycle.length];
-  const bossFloor = 12 + (cycle + 1) * 4;
+  const bossFloor = 16 + (cycle + 1) * 4;
   return {
     id: 4 + cycle,
     name: `Endless Abyss — Depth ${endlessDepth}`,
@@ -120,11 +120,11 @@ function carveCorridorAvoiding(grid, ax, ay, bx, by, isBlocked) {
 export function createScaledEnemy(templateId, floor, difficultyId = "normal", roomIndex = 1, x = 2, y = 2, options = {}) {
   const diff = DIFFICULTIES[difficultyId] || DIFFICULTIES.normal;
   const tpl = ENEMIES[templateId] || ENEMIES.slime;
-  const endlessExtra = floor > 12 ? (floor - 12) * 0.22 : 0;
+  const endlessExtra = floor > 16 ? (floor - 16) * 0.22 : 0;
   const scale = (1 + (floor - 1) * 0.28 + Math.floor((floor - 1) / 4) * 0.25 + endlessExtra) * diff.hpMult;
   const atkScale = (1 + (floor - 1) * 0.22 + Math.floor((floor - 1) / 4) * 0.18 + endlessExtra * 0.7) * diff.atkMult;
   const scaledDef = Math.round(
-    ((tpl.def || 0) + (floor - 1) * 1.15 + Math.floor((floor - 1) / 4) * 2) * (0.85 + diff.hpMult * 0.15)
+    ((tpl.def || 0) + (floor - 1) * 1.35 + Math.floor((floor - 1) / 4) * 2.5) * (0.9 + diff.hpMult * 0.16)
   );
 
   const affix = options.affix ? ELITE_AFFIXES[options.affix] : null;
@@ -417,7 +417,7 @@ function buildFloorCandidate(floor, difficultyId = "normal") {
     }
   }
 
-  if (([2, 4, 5, 7, 10].includes(floor) || (floor > 12 && floor % 2 === 0)) && rooms.length > 2) {
+  if (([2, 4, 5, 7, 10, 13, 15].includes(floor) || (floor > 16 && floor % 2 === 0)) && rooms.length > 2) {
     const wPos = freeTileInRoom(rooms[1]);
     if (wPos) {
       props.push({ id: "well", kind: "well", x: wPos.x, y: wPos.y, solid: false, used: false });
@@ -532,7 +532,7 @@ function buildFloorCandidate(floor, difficultyId = "normal") {
       const ePos = freeTileInRoom(r);
       if (!ePos) continue;
       const tplId = pick(pool);
-      const makeElite = elitesSpawned < maxElites && i >= 2 && Math.random() < (floor > 12 ? 0.28 : 0.16);
+      const makeElite = elitesSpawned < maxElites && i >= 2 && Math.random() < (floor > 16 ? 0.28 : 0.16);
       const affix = makeElite ? pick(eliteKeys) : null;
       if (makeElite) elitesSpawned += 1;
       enemies.push(
@@ -546,10 +546,10 @@ function buildFloorCandidate(floor, difficultyId = "normal") {
 
   if (isBossFloor) {
     const tpl = ENEMIES[act.bossId];
-    const endlessExtra = floor > 12 ? (floor - 12) * 0.18 : 0;
-    const bossHpScale = (1 + Math.max(0, floor - 4) * 0.06 + endlessExtra) * diff.hpMult;
-    const bossAtkScale = (1 + Math.max(0, floor - 4) * 0.04 + endlessExtra * 0.6) * diff.atkMult;
-    const bossDef = Math.round(((tpl.def || 4) + floor * 1.4) * (0.85 + diff.hpMult * 0.15));
+    const endlessExtra = floor > 16 ? (floor - 16) * 0.18 : 0;
+    const bossHpScale = (1 + Math.max(0, floor - 4) * 0.1 + endlessExtra) * diff.hpMult;
+    const bossAtkScale = (1 + Math.max(0, floor - 4) * 0.045 + endlessExtra * 0.6) * diff.atkMult;
+    const bossDef = Math.round(((tpl.def || 8) + floor * 1.8) * (0.9 + diff.hpMult * 0.18));
     enemies.push({
       uid: `boss_${act.bossId}_${floor}`,
       ...tpl,

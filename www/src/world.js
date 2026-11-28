@@ -139,9 +139,9 @@ export function createNewRun(heroName, difficultyId, loadout = DEFAULT_LOADOUT, 
     maxHp,
     mp: maxMp,
     maxMp,
-    baseAtk: 7 + might + cls.bonusAtk,
+    baseAtk: 6 + might + cls.bonusAtk,
     baseDef: 2 + cls.bonusDef,
-    baseCrit: 10 + cls.bonusCrit,
+    baseCrit: 6 + cls.bonusCrit,
     gold: 15 + sfGold,
     equipment: {
       weapon: startWeapon,
@@ -188,7 +188,7 @@ export function createNewRun(heroName, difficultyId, loadout = DEFAULT_LOADOUT, 
     invFullMsgCd: 0,
     lastFovTile: { x: -1, y: -1 },
     seenBosses: new Set(),
-    shardsCollected: [false, false, false],
+    shardsCollected: [false, false, false, false],
     spellCooldowns: Object.fromEntries(SPELLS.map((s) => [s.id, 0])),
     player,
     projectiles: [],
@@ -401,7 +401,7 @@ export function restoreRun(saved) {
     invFullMsgCd: 0,
     lastFovTile: { x: -1, y: -1 },
     seenBosses: new Set(saved.seenBosses || []),
-    shardsCollected: saved.shardsCollected || [false, false, false],
+    shardsCollected: (() => { const sc = [...(saved.shardsCollected || [])]; while (sc.length < 4) sc.push(false); return sc; })(),
     spellCooldowns: saved.spellCooldowns || Object.fromEntries(SPELLS.map((s) => [s.id, 0])),
     player: saved.player,
     projectiles: [],
@@ -809,6 +809,7 @@ export function updateSimulation(dt) {
       s.shake = Math.max(s.shake, 7);
       spawnBurst(p.x, p.y, "#38bdf8", 22, 1.35);
       spawnRing(p.x, p.y, ab.radius * TILE_SIZE, "#facc15", 0.38);
+      spawnVfxAnim(p.x, p.y, "vfx_shockwave_ring", ab.radius * TILE_SIZE * 2.0, 0.5);
       spawnGroundDecal(p.x, p.y, "vfx_aegis_guard", ab.radius * TILE_SIZE * 2.0, 0.38, { scaleStart: 0.55, scaleEnd: 1.15, spin: 1.0 });
       if (s.isPvp) {
         broadcastPvpAction({ kind: "ring", x: p.x, y: p.y, radPx: ab.radius * TILE_SIZE, color: "#facc15", dur: 0.38 });
@@ -1064,6 +1065,7 @@ export function updateSimulation(dt) {
       });
       spawnBurst(p.x + dirX * 0.5, p.y + dirY * 0.5, "#fb923c", 16, 1.2);
       spawnRing(p.x, p.y, 38, "#fde047", 0.28);
+      spawnVfxAnim(p.x + dirX * 0.45, p.y + dirY * 0.45, "vfx_greatsword_sweep", 104, 0.38, { angle: rc.angle });
       s.projectiles.push({
         x: p.x + dirX * 0.65, y: p.y + dirY * 0.65, vx: dirX * waveSpeed, vy: dirY * waveSpeed,
         dmg: rc.dmg, color: rc.spell.color || "#fb923c", radius: 0.95, life: waveRange / waveSpeed, maxLife: waveRange / waveSpeed,
@@ -1207,6 +1209,7 @@ export function updateSimulation(dt) {
         const impactY = p.y + vc.dirY * 0.75;
         p.valiantCharge = null;
         sfx.smite();
+        sfx.heavyImpact();
         s.shake = Math.max(s.shake, 10);
         s.beams.push({ x: impactX * TILE_SIZE, y: impactY * TILE_SIZE, color: "#38bdf8", life: 0.28, maxLife: 0.28 });
         s.slashes.push(
@@ -1217,6 +1220,8 @@ export function updateSimulation(dt) {
         spawnBurst(impactX, impactY, "#38bdf8", 14, 1.25);
         spawnRing(impactX, impactY, 1.75 * TILE_SIZE, "#38bdf8", 0.3, { delay: 0, lineWidth: 3 });
         spawnRing(impactX, impactY, 2.05 * TILE_SIZE, "#fde047", 0.38, { delay: 0.06, lineWidth: 2.5 });
+        spawnVfxAnim(impactX, impactY, "vfx_spear_thrust", 112, 0.42, { angle: ang, anchorX: 0.25 });
+        spawnVfxAnim(impactX, impactY, "vfx_shockwave_ring", 128, 0.48);
         spawnGroundDecal(impactX, impactY, "vfx_spear_impact_crater", 104, 0.95, { scaleStart: 0.55, scaleEnd: 1.05 });
         spawnGroundDecal(impactX, impactY, "vfx_ground_slam_shockwave", 92, 0.25, { angle: ang - Math.PI / 2, scaleStart: 0.45, scaleEnd: 1.55 });
         if (s.isPvp) broadcastPvpAction({ kind: "valiant_slam", x: impactX, y: impactY, angle: ang });
@@ -1276,6 +1281,7 @@ export function updateSimulation(dt) {
       s.shake = 18;
       s.hitstop = 0.065;
       sfx.ultSlam();
+      sfx.heavyImpact();
       sfx.nova();
       const radius = spell.radii[rankIdx];
       const dmg = Math.round(stats.atk * spell.mults[rankIdx]) + spell.flats[rankIdx];
@@ -1285,6 +1291,9 @@ export function updateSimulation(dt) {
       spawnRing(p.x, p.y, radPx * 1.12, "#f97316", 0.52, { delay: 0.14, lineWidth: 2.8 });
       spawnRing(p.x, p.y, radPx * 0.72, "#38bdf8", 0.44, { delay: 0.21, lineWidth: 2.4 });
       spawnRing(p.x, p.y, radPx * 1.24, "#fef08a", 0.56, { delay: 0.28, lineWidth: 2 });
+      spawnVfxAnim(p.x, p.y, "vfx_holy_sword_fall", radPx * 2.2, 0.62);
+      spawnVfxAnim(p.x, p.y, "vfx_holy_smite", radPx * 1.85, 0.65);
+      spawnVfxAnim(p.x, p.y, "vfx_shockwave_ring", radPx * 2.3, 0.52);
       spawnGroundDecal(p.x, p.y, "vfx_ground_slam_shockwave", radPx * 1.45, 0.24, { scaleStart: 0.1, scaleEnd: 2.0 });
       spawnGroundDecal(p.x, p.y, "vfx_skyfall_impact", radPx * 2.25, 0.8, { scaleStart: 0.72, scaleEnd: 1.12, spin: 0.35 });
       s.beams.push({ x: p.x * TILE_SIZE, y: p.y * TILE_SIZE, color: "#fde047", life: 0.44, maxLife: 0.44 });

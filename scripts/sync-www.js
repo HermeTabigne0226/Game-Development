@@ -26,6 +26,8 @@ const ITEMS_TO_COPY = [
   "assets/generated/skill_leaf_tempest.png",
   "assets/generated/vfx",
   "assets/generated/vfx_skills",
+  "assets/generated/boss_act2",
+  "assets/generated/hero_icons",
   "assets/generated/maps",
   "assets/generated/vfx_mage",
   "assets/generated/mage_hero",

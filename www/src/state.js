@@ -238,10 +238,11 @@ export function getPlayerStats(p = runtime.state?.player) {
     atk += Math.min(10, Math.floor((p.gold || 0) / 100));
   }
 
+  const critCap = runtime.state?.isPvp ? 75 : 55;
   return {
     atk,
     def,
-    crit: Math.min(75, crit),
+    crit: Math.min(critCap, crit),
     maxHp: p.maxHp + bonusHp,
     maxMp: p.maxMp + bonusMp,
     moveSpeed: 4.5 + speedBonus + (p.hasteTimer > 0 ? (p.hasteBonus || 0.7) : 0),

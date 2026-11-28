@@ -104,6 +104,51 @@ class SoundEngine {
     this.playTone(95, 0.38, "sawtooth", 0.14, 32);
     this.playTone(160, 0.25, "square", 0.1, 45);
   }
+  heavyImpact() {
+    const ctx = this._ensureCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const dur = 0.24;
+    const bufSize = Math.floor(ctx.sampleRate * dur);
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufSize, 1.8);
+    const noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(420, now);
+    filter.frequency.exponentialRampToValueAtTime(90, now + dur);
+    const nGain = ctx.createGain();
+    nGain.gain.setValueAtTime(0.22 * this.volumeScale, now);
+    nGain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+    noise.connect(filter);
+    filter.connect(nGain);
+    nGain.connect(ctx.destination);
+    noise.start(now);
+    this.playTone(88, 0.32, "sine", 0.16, 32);
+    this.playTone(145, 0.18, "triangle", 0.1, 52);
+  }
+  shieldClang() {
+    this.playTone(680, 0.14, "triangle", 0.09, 510);
+    this.playTone(1040, 0.18, "sine", 0.07, 790);
+  }
+  bossWarn() {
+    this.playTone(110, 0.36, "sawtooth", 0.08, 165);
+    setTimeout(() => this.playTone(165, 0.34, "triangle", 0.09, 220), 90);
+  }
+  critHit() {
+    this.playTone(920, 0.08, "triangle", 0.07, 1380);
+  }
+  windVolley() {
+    this.playTone(460, 0.12, "triangle", 0.08, 220);
+    setTimeout(() => this.playTone(640, 0.1, "sine", 0.06, 340), 45);
+    setTimeout(() => this.playTone(760, 0.09, "triangle", 0.05, 420), 90);
+  }
+  pierceShot() {
+    this.playTone(840, 0.14, "sawtooth", 0.07, 320);
+    this.playTone(1260, 0.11, "sine", 0.06, 620);
+  }
   spell() { this.playTone(520, 0.22, "sine", 0.09, 880); }
   heal() {
     this.playTone(440, 0.12, "sine", 0.07, 554);

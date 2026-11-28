@@ -116,10 +116,18 @@ export function grantXP(amount) {
     p.level += 1;
     p.skillPoints = (p.skillPoints || 0) + 1;
     p.xpNext = 20 + (p.level - 1) * 10;
-    p.maxHp += 8;
-    p.maxMp += 4;
-    p.baseAtk += 2;
-    p.baseDef += 1;
+    const isMage = p.heroClass === "mage";
+    const isRanger = p.heroClass === "ranger";
+    const hpGain = isMage ? 7 : isRanger ? 8 : 10;
+    const mpGain = isMage ? 6 : isRanger ? 4 : 3;
+    const atkGain = isMage ? (p.level % 4 === 0 ? 2 : 1) : (p.level % 3 === 0 ? 2 : 1);
+    const defGain = isMage ? (p.level % 2 === 0 ? 1 : 0) : isRanger ? (p.level % 3 === 0 ? 0 : 1) : (p.level % 2 === 0 ? 2 : 1);
+    const critGain = isRanger && p.level % 3 === 0 ? 1 : 0;
+    p.maxHp += hpGain;
+    p.maxMp += mpGain;
+    p.baseAtk += atkGain;
+    p.baseDef += defGain;
+    p.baseCrit = (p.baseCrit || 0) + critGain;
     const stats = getPlayerStats();
     p.hp = stats.maxHp;
     p.mp = stats.maxMp;
@@ -127,7 +135,9 @@ export function grantXP(amount) {
     addFloat(p.x, p.y, "LEVEL UP! +1 SKILL PT", "#facc15");
     spawnBurst(p.x, p.y, "#facc15", 20, 1.3);
     spawnRing(p.x, p.y, 48, "#facc15", 0.45);
-    addLog(`Level ${p.level} reached! +1 Skill Point, +8 HP, +4 MP, +2 ATK, +1 DEF.`, "loot");
+    const critMsg = critGain ? `, +${critGain}% CRIT` : "";
+    const defMsg = defGain ? `, +${defGain} DEF` : "";
+    addLog(`Level ${p.level} reached! +1 Skill Point, +${hpGain} HP, +${mpGain} MP, +${atkGain} ATK${defMsg}${critMsg}.`, "loot");
   }
   runtime.uiDirty = true;
   saveRun();
@@ -211,6 +221,7 @@ export function damageEnemy(enemy, rawDmg, isCrit = false, sourceLabel = "strike
     const attackFromFront = enemy.facingLeft ? p.x < enemy.x : p.x > enemy.x;
     if (attackFromFront) {
       shieldMult = 0.4;
+      sfx.shieldClang();
       addFloat(enemy.x, enemy.y - 0.55, "SHIELDED!", "#94a3b8");
     }
   }
@@ -270,18 +281,25 @@ export function damageEnemy(enemy, rawDmg, isCrit = false, sourceLabel = "strike
     return;
   }
 
+  if (enemy.isBoss && !options.isSkill) {
+    modDmg *= 0.82;
+  }
+
   const baseDef = (enemy.def || 0) + (enemy.bonusDef || 0);
   const sunderPenalty = (enemy.sunderTimer || 0) > 0 ? Math.max(3, Math.floor(baseDef * 0.35)) : 0;
   const effectiveDef = Math.max(0, baseDef - sunderPenalty);
-  const flatBlock = Math.floor(effectiveDef * 0.28);
-  const pctMult = 100 / (100 + effectiveDef * 1.8);
+  const flatBlock = Math.floor(effectiveDef * 0.32);
+  const pctMult = 100 / (100 + effectiveDef * 2.5);
   const dmg = Math.max(1, Math.round(Math.max(1, modDmg - flatBlock) * pctMult));
   enemy.hp -= dmg;
   enemy.hurtTimer = 0.16;
   enemy.kbX += knockX;
   enemy.kbY += knockY;
   s.shake = Math.max(s.shake, isCrit ? 5 : 2.5);
-  if (isCrit) s.hitstop = Math.max(s.hitstop, 0.03);
+  if (isCrit) {
+    s.hitstop = Math.max(s.hitstop, 0.03);
+    sfx.critHit();
+  }
 
   addFloat(enemy.x, enemy.y, `${dmg}${isCrit ? "!" : ""}`, isCrit ? "#fde047" : "#f87171");
   spawnBurst(enemy.x, enemy.y, isCrit ? "#fde047" : "#ef4444", isCrit ? 12 : 8);
@@ -477,7 +495,7 @@ export function handleBossDefeated(boss) {
   const bossBar = document.getElementById("boss-hud-bar");
   if (bossBar) bossBar.hidden = true;
 
-  if (s.floor === 12 && !s.isEndless) {
+  if (s.floor === 16 && !s.isEndless) {
     runtime.meta.victories += 1;
     runtime.meta.soulShards += 5 + bonus;
     saveMeta();
@@ -518,8 +536,10 @@ export function performMeleeAttack() {
     p.attackCd = weapon.attackCd || 0.36;
 
     const isCrit = Math.random() * 100 < stats.crit;
-    const bonusShotMult = (isKeenShot || isResonanceShot) ? 1.35 : 1;
-    const baseDmg = Math.round(stats.atk * (isCrit ? 1.65 : 1) * bonusShotMult);
+    const critMult = s.isPvp ? 1.65 : 1.4;
+    const procMult = s.isPvp ? 1.35 : 1.2;
+    const bonusShotMult = (isKeenShot || isResonanceShot) ? procMult : 1;
+    const baseDmg = Math.round(stats.atk * (isCrit ? critMult : 1) * bonusShotMult);
     const speed = (weapon.projSpeed || (isBow ? 13.0 : 12.0)) * ((isKeenShot || isResonanceShot) ? 1.18 : 1);
     const projKind = isResonanceShot
       ? "arcane_orb"
@@ -627,7 +647,7 @@ export function performMeleeAttack() {
       if (diff > Math.PI) diff = Math.PI * 2 - diff;
       if (diff <= 1.25 || dist < 0.7) {
         const isCrit = Math.random() * 100 < stats.crit;
-        const dmg = Math.round(stats.atk * (isCrit ? 1.65 : 1));
+        const dmg = Math.round(stats.atk * (isCrit ? (s.isPvp ? 1.65 : 1.4) : 1));
         const nx = dist > 0.01 ? dx / dist : Math.cos(angle);
         const ny = dist > 0.01 ? dy / dist : Math.sin(angle);
         damageEnemy(e, dmg, isCrit, "blade", nx * 3.8, ny * 3.8);
@@ -1070,6 +1090,7 @@ export function castSpell(spellId) {
 
     spawnBurst(targetX, targetY, spell.color, 18, 1.2);
     spawnRing(targetX, targetY, 38, spell.color, 0.35);
+    spawnVfxAnim(targetX, targetY, "vfx_holy_smite", 104, 0.62);
     spawnGroundDecal(targetX, targetY, "vfx_holy_ground_impact", 84, 0.65, { scaleStart: 0.72, scaleEnd: 1.08, spin: 0.5 });
     s.beams.push({ x: targetX * TILE_SIZE, y: targetY * TILE_SIZE, color: spell.color, life: 0.36, maxLife: 0.36 });
     if (s.isPvp) {
@@ -1112,7 +1133,8 @@ export function castSpell(spellId) {
     p.tempDef = bonus;
     p.tempDefTimer = spell.duration;
     p.aegisBlast = { timer: spell.duration, stun: spell.stuns[rIdx], radius: spell.radius, spell };
-    sfx.heal();
+    sfx.shieldClang();
+    spawnVfxAnim(p.x, p.y, "vfx_shield_bubble", 86, 0.72);
     spawnBurst(p.x, p.y, "#38bdf8", 14, 1.1);
     spawnRing(p.x, p.y, 32, "#facc15", 0.35);
     if (s.isPvp) broadcastPvpAction({ kind: "ring", x: p.x, y: p.y, radPx: 32, color: "#facc15", dur: 0.35 });
@@ -1143,6 +1165,7 @@ export function castSpell(spellId) {
     p.hasteTimer = spell.duration;
     p.stunTimer = 0;
     sfx.heal();
+    spawnVfxAnim(p.x, p.y, "vfx_holy_heal", 92, 0.75);
     spawnBurst(p.x, p.y, "#34d399", 18, 1.2);
     spawnRing(p.x, p.y, 38, "#34d399", 0.4);
     spawnGroundDecal(p.x, p.y, "vfx_heal_haste_aura", 92, 0.48, { scaleStart: 0.65, scaleEnd: 1.25, spin: 1.2 });
@@ -1227,6 +1250,7 @@ export function castSpell(spellId) {
     p.retributionBurn = spell.burnDmg[rIdx];
     p.retributionTick = 0.2;
     p.retributionRadius = spell.radius;
+    spawnVfxAnim(p.x, p.y, "vfx_shockwave_ring", spell.radius * TILE_SIZE * 1.9, 0.52);
     spawnBurst(p.x, p.y, "#ef4444", 18, 1.2);
     spawnRing(p.x, p.y, spell.radius * TILE_SIZE, "#ef4444", 0.4);
     if (s.isPvp) broadcastPvpAction({ kind: "ring", x: p.x, y: p.y, radPx: spell.radius * TILE_SIZE, color: "#ef4444", dur: 0.4 });
@@ -1250,6 +1274,7 @@ export function castSpell(spellId) {
     sfx.slash();
     p.anim = "attack";
     p.animTimer = 0.25;
+    spawnVfxAnim(p.x, p.y, "vfx_spin_slash", spell.range * TILE_SIZE * 1.9, 0.45);
     s.slashes.push({ x: p.x * TILE_SIZE, y: p.y * TILE_SIZE, angle, radius: 44, variant: "gold", color: spell.color, life: 0.24, maxLife: 0.24 });
     spawnGroundDecal(p.x, p.y, "vfx_damage_aoe_field", spell.range * TILE_SIZE * 1.45, 0.3, { scaleStart: 0.55, scaleEnd: 1.05, spin: 1.4 });
     if (s.isPvp) {
@@ -1296,9 +1321,10 @@ export function castSpell(spellId) {
   }
 
   if (spell.type === "arrow_volley") {
-    sfx.arrow();
+    sfx.windVolley();
     p.anim = p.heroClass === "ranger" ? "bow" : "attack";
     p.animTimer = 0.22;
+    spawnVfxAnim(p.x + Math.cos(angle) * 0.45, p.y + Math.sin(angle) * 0.45, "vfx_air_burst", 76, 0.36, { angle });
     const speed = 13.0;
     const dmg = Math.round(stats.atk * spell.mults[rIdx]);
     for (const offset of [-0.22, 0, 0.22]) {
@@ -1335,9 +1361,10 @@ export function castSpell(spellId) {
   }
 
   if (spell.type === "piercing_shot") {
-    sfx.frost();
+    sfx.pierceShot();
     p.anim = p.heroClass === "ranger" ? "bow" : "attack";
     p.animTimer = 0.24;
+    spawnVfxAnim(p.x + Math.cos(angle) * 0.55, p.y + Math.sin(angle) * 0.55, "vfx_wind_blade", 96, 0.38, { angle });
     const speed = 15.0;
     s.projectiles.push({
       x: p.x + Math.cos(angle) * 0.4,
@@ -1378,6 +1405,7 @@ export function castSpell(spellId) {
     p.tempAtk = atkBonus;
     p.tempAtkTimer = spell.duration;
     sfx.levelUp();
+    spawnVfxAnim(p.x, p.y, "vfx_bloom_heal", 88, 0.72);
     spawnBurst(p.x, p.y, "#fb923c", 16, 1.2);
     spawnRing(p.x, p.y, 38, "#facc15", 0.35);
     spawnGroundDecal(p.x, p.y, "vfx_skyfall_reticle", 96, 0.45, { scaleStart: 0.5, scaleEnd: 1.15, spin: 1.1 });
@@ -1391,11 +1419,13 @@ export function castSpell(spellId) {
   }
 
   if (spell.type === "ultimate_barrage") {
-    sfx.ultLeap();
+    sfx.pierceShot();
+    sfx.windVolley();
     p.anim = p.heroClass === "ranger" ? "bow" : "attack";
     p.animTimer = 0.35;
     const { tx, ty } = findVisibleTargetPos(p, angle, 7.5, 2.8);
     const radius = spell.radii[rIdx];
+    spawnVfxAnim(tx, ty, "vfx_air_burst", radius * TILE_SIZE * 1.9, 0.55);
     const dmg = Math.round(stats.atk * spell.mults[rIdx]) + spell.flats[rIdx];
     const chillDur = spell.chills[rIdx];
     const dur = spell.duration || 3.0;
@@ -1510,7 +1540,7 @@ export function castSpell(spellId) {
   }
 
   if (spell.type === "thorn_salvo") {
-    sfx.arrow();
+    sfx.windVolley();
     p.anim = p.heroClass === "ranger" ? "bow" : "attack";
     p.animTimer = 0.22;
     const speed = 13.8;
@@ -1559,7 +1589,7 @@ export function castSpell(spellId) {
     const dur = spell.duration || 2.6;
     const rad = spell.radii[rIdx];
     const dmg = Math.round(stats.atk * spell.mults[rIdx]) + (spell.flats?.[rIdx] || 0);
-    sfx.ultLeap();
+    sfx.windVolley();
     p.hasteTimer = Math.max(p.hasteTimer || 0, dur);
     p.hasteBonus = Math.max(p.hasteBonus || 0.7, 1.25);
     p.leafTempest = { timer: dur, tickInterval: spell.tickInterval || 0.35, tickTimer: 0, radius: rad, dmg, spell };

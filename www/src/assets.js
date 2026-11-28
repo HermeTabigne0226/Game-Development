@@ -69,6 +69,11 @@ export async function loadAllAssets(onProgress = null) {
     clockwork_sentinel: "assets/generated/enemies/clockwork_sentinel.png",
     void_acolyte: "assets/generated/enemies/void_acolyte.png",
     void_king: "assets/generated/void_king_boss.png",
+    boss_act2_idle: "assets/generated/boss_act2/idle.png",
+    boss_act2_walk: "assets/generated/boss_act2/run.png",
+    boss_act2_attack: "assets/generated/boss_act2/attack.png",
+    boss_act2_combo: "assets/generated/boss_act2/attackcombo.png",
+    boss_act2_dash: "assets/generated/boss_act2/dash.png",
     dungeon_tiles: "assets/generated/dungeon_tiles.png",
 
     chest_closed: "spritecook-game-asset-pack/chest_closed.png",
@@ -175,6 +180,22 @@ export async function loadAllAssets(onProgress = null) {
     vfx_water_impact: "assets/generated/vfx_skills/vfx_water_impact.png",
     vfx_thorn_impact: "assets/generated/vfx_skills/vfx_thorn_impact.png",
     vfx_frost_explosion: "assets/generated/vfx_skills/vfx_frost_explosion.png",
+    vfx_ground_slam: "assets/generated/vfx_skills/ground_slam.png",
+    vfx_sonic_boom: "assets/generated/vfx_skills/sonic_boom.png",
+    vfx_greatsword_sweep: "assets/generated/vfx_skills/greatsword_sweep.png",
+    vfx_holy_sword_fall: "assets/generated/vfx_skills/holy_sword_fall.png",
+    vfx_shield_bubble: "assets/generated/vfx_skills/shield_bubble.png",
+    vfx_shadow_step: "assets/generated/vfx_skills/shadow_step.png",
+    vfx_shadow_spikes: "assets/generated/vfx_skills/shadow_spikes.png",
+    vfx_soul_drain: "assets/generated/vfx_skills/soul_drain.png",
+    vfx_holy_smite: "assets/generated/vfx_skills/holy_smite.png",
+    vfx_holy_heal: "assets/generated/vfx_skills/holy_heal.png",
+    vfx_spin_slash: "assets/generated/vfx_skills/spin_slash.png",
+    vfx_spear_thrust: "assets/generated/vfx_skills/spear_thrust.png",
+    vfx_shockwave_ring: "assets/generated/vfx_skills/shockwave_ring.png",
+    vfx_air_burst: "assets/generated/vfx_skills/air_burst.png",
+    vfx_wind_blade: "assets/generated/vfx_skills/wind_blade.png",
+    vfx_bloom_heal: "assets/generated/vfx_skills/bloom_heal.png",
   };
 
   const list = Object.entries(manifest);
@@ -191,10 +212,10 @@ export async function loadAllAssets(onProgress = null) {
   return Object.fromEntries(entries);
 }
 
-export function drawSheetFrame(ctx, img, frameIdx, dx, dy, dw, dh, flipX = false) {
+export function drawSheetFrame(ctx, img, frameIdx, dx, dy, dw, dh, flipX = false, fwOverride = null) {
   if (!img) return;
   const fh = img.height;
-  const fw = fh; // square frames across all spritecook sheets
+  const fw = fwOverride || fh; // square frames across spritecook sheets, or explicit fw for rectangular sheets
   const count = Math.max(1, Math.floor(img.width / fw));
   const sx = (frameIdx % count) * fw;
 

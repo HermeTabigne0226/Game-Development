@@ -308,6 +308,18 @@ export function updateUI() {
     classEl.innerHTML = `${cls.name} &middot; Lv <span id="stat-level">${p.level}</span>`;
     classEl.title = `${cls.passiveName}: ${cls.passiveDesc} | ${cls.dashName}: ${cls.dashDesc}`;
   }
+  const passiveCard = document.getElementById("hero-passive-card");
+  if (passiveCard) {
+    const passiveIcon = `assets/generated/hero_icons/passive_${cls.id === "gilded" ? "gilded" : cls.id === "ranger" ? "ranger" : "mage"}.png`;
+    passiveCard.innerHTML = `
+      <div class="hero-passive-head">
+        <img src="${passiveIcon}" alt="" class="hero-passive-icon" />
+        <div class="hero-passive-title">Passive &middot; ${cls.passiveName}</div>
+      </div>
+      <div class="hero-passive-desc">${cls.passiveDesc}</div>
+      ${cls.growthDesc ? `<div class="hero-passive-growth">${cls.growthDesc}</div>` : ""}
+    `;
+  }
   document.getElementById("act-subtitle").textContent = `Floor ${s.floor} — ${s.level.act.name}`;
   document.getElementById("mhud-name").textContent = p.name || "Sir Aldric";
   document.getElementById("mhud-level").textContent = p.level;
@@ -332,8 +344,9 @@ export function updateUI() {
 
   const count = s.shardsCollected.filter(Boolean).length;
   document.getElementById("shards-collected").textContent = count;
-  [1, 2, 3].forEach((n, i) => {
-    document.getElementById(`crown-shard-${n}`).classList.toggle("collected", s.shardsCollected[i]);
+  [1, 2, 3, 4].forEach((n, i) => {
+    const el = document.getElementById(`crown-shard-${n}`);
+    if (el) el.classList.toggle("collected", Boolean(s.shardsCollected[i]));
   });
 
   // Sync Mobile Attack Wheel knob icon with currently equipped weapon (sword / wand / arrow)

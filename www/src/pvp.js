@@ -984,7 +984,7 @@ function setupPvpMatchEntities(room, mySlot, isNextRound = false) {
     invFullMsgCd: 0,
     lastFovTile: { x: mySpawn.x, y: mySpawn.y },
     seenBosses: new Set(),
-    shardsCollected: [false, false, false],
+    shardsCollected: [false, false, false, false],
     spellCooldowns: Object.fromEntries(SPELLS.map((sp) => [sp.id, 0])),
     player,
     projectiles: [],
