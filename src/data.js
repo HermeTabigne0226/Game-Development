@@ -1,8 +1,23 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.2.0.1 Beta";
+export const GAME_VERSION = "v.1.2.0.2 Beta";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.2.0.2 Beta",
+    title: "Upgraded Pixel-Art Skill Icons",
+    icons: [
+      { src: "assets/generated/skill_void_rift.svg", label: "Void Rift" },
+      { src: "assets/generated/skill_tempest_field.svg", label: "Tempest Field" },
+      { src: "assets/generated/skill_gravity_singularity.svg", label: "Gravity Singularity" },
+      { src: "assets/generated/skill_thorn_salvo.svg", label: "Thorn Salvo" },
+      { src: "assets/generated/skill_briar_snare.svg", label: "Briar Snare" },
+      { src: "assets/generated/skill_leaf_tempest.svg", label: "Emerald Tempest" },
+    ],
+    notes: [
+      "Refreshed Skill Icons: Upgraded Void Rift, Tempest Field, Gravity Singularity, Thorn Salvo, Briar Snare, and Emerald Tempest with framed pixel-art glow & shading.",
+    ],
+  },
   {
     version: "v.1.2.0.1 Beta",
     title: "Patch Notes Accordions & Projectile Impact VFX",

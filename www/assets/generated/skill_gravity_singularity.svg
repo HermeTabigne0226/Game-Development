@@ -1,8 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <defs><radialGradient id="gw" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#090514"/><stop offset="40%" stop-color="#4c1d95"/><stop offset="75%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#090d1a"/></radialGradient></defs>
-  <rect width="64" height="64" rx="10" fill="#090d1a"/>
-  <circle cx="32" cy="32" r="25" fill="url(#gw)"/>
-  <circle cx="32" cy="32" r="18" fill="none" stroke="#a855f7" stroke-width="2.5"/>
-  <circle cx="32" cy="32" r="10" fill="#020617" stroke="#7dd3fc" stroke-width="2"/>
-  <path d="M12 32a20 20 0 0 1 20-20M52 32a20 20 0 0 1-20 20" stroke="#e9d5ff" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" shape-rendering="crispEdges">
+  <defs>
+    <radialGradient id="gs_bg" cx="50%" cy="50%" r="52%">
+      <stop offset="0%" stop-color="#020617"/>
+      <stop offset="45%" stop-color="#1e1b4b"/>
+      <stop offset="75%" stop-color="#4c1d95" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#090d1e"/>
+    </radialGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="10" fill="url(#gs_bg)" stroke="#6366f1" stroke-width="3"/>
+  <circle cx="32" cy="32" r="20" fill="none" stroke="#38bdf8" stroke-width="3.5"/>
+  <path d="M14 24a20 20 0 0 1 26-10M50 40a20 20 0 0 1-26 10" stroke="#e879f9" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  <circle cx="32" cy="32" r="12" fill="#020617" stroke="#7dd3fc" stroke-width="2.5"/>
+  <circle cx="32" cy="32" r="8" fill="#000000"/>
+  <rect x="12" y="13" width="2" height="2" fill="#e0f2fe"/>
+  <rect x="49" y="48" width="2" height="2" fill="#f0abfc"/>
+  <rect x="48" y="14" width="2" height="2" fill="#7dd3fc"/>
 </svg>
