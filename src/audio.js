@@ -163,6 +163,12 @@ class SoundEngine {
       setTimeout(() => this.playTone(f, 0.14, "triangle", 0.09), i * 85);
     });
   }
+  rallyHorn() {
+    this.playTone(220, 0.18, "sawtooth", 0.06, 233);
+    setTimeout(() => this.playTone(293.66, 0.18, "sawtooth", 0.065), 110);
+    setTimeout(() => this.playTone(392, 0.32, "sawtooth", 0.075, 415), 220);
+    setTimeout(() => this.playTone(196, 0.32, "triangle", 0.06), 220);
+  }
   stairs() { this.playTone(220, 0.24, "sine", 0.08, 440); }
 }
 

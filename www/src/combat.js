@@ -1413,7 +1413,7 @@ export function castSpell(spellId) {
     const atkBonus = spell.atkBonuses[rIdx];
     p.tempAtk = atkBonus;
     p.tempAtkTimer = spell.duration;
-    sfx.levelUp();
+    sfx.rallyHorn();
     spawnVfxAnim(p.x, p.y, "vfx_holy_heal", 68, 0.75, { anchorX: 0.5, anchorY: 0.78 });
     spawnBurst(p.x, p.y, "#fb923c", 14, 1.1);
     if (s.isPvp) {

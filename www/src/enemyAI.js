@@ -241,10 +241,10 @@ export function updateEnemiesAndBosses(dt) {
       e.poisonTick = (e.poisonTick || 0) - dt;
       if (e.poisonTick <= 0 && e.hp > 0) {
         e.poisonTick = 0.8;
-        const pDmg = Math.max(1, e.poisonDmg || 2);
-        e.hp -= pDmg;
-        addFloat(e.x, e.y - 0.3, `-${pDmg}`, "#4ade80");
+        const pDmg = Math.max(2, e.poisonDmg || 2);
         spawnBurst(e.x, e.y, "#22c55e", 4, 0.6);
+        damageEnemy(e, pDmg, false, "Venom Poison", 0, 0, { isSkill: true, isAoe: true });
+        if (e.hp <= 0) continue;
       }
     }
     e.dodgeCd = Math.max(0, (e.dodgeCd || 0) - dt);
