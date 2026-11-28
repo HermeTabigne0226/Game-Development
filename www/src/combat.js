@@ -1430,17 +1430,24 @@ export function castSpell(spellId) {
     const chillDur = spell.chills?.[rIdx] || 2.0;
     sfx.nova();
     s.shake = Math.max(s.shake, 5.5);
-    spawnVfxAnim(tx, ty, "vfx_void_rift", rad * TILE_SIZE * 1.9, 0.9);
+    spawnVfxAnim(tx, ty, "vfx_void_rift", rad * TILE_SIZE * 1.9, 0.9, { angle });
     spawnRing(tx, ty, rad * TILE_SIZE, "#c084fc", 0.45);
     spawnBurst(tx, ty, "#a855f7", 18, 1.3);
+    if (!s.gravityWells) s.gravityWells = [];
+    s.gravityWells.push({ x: tx, y: ty, radius: rad, timer: 0.42, pullSpeed: 3.4, detonate: false });
     if (s.isPvp) {
-      broadcastPvpAction({ kind: "vfx_anim", x: tx, y: ty, sheetKey: "vfx_void_rift", sizePx: rad * TILE_SIZE * 1.9, duration: 0.9 });
+      broadcastPvpAction({ kind: "vfx_anim", x: tx, y: ty, sheetKey: "vfx_void_rift", sizePx: rad * TILE_SIZE * 1.9, duration: 0.9, angle });
       broadcastPvpAction({ kind: "ring", x: tx, y: ty, radPx: rad * TILE_SIZE, color: "#c084fc", dur: 0.45 });
+      broadcastPvpAction({ kind: "gravity_well", x: tx, y: ty, radius: rad, duration: 0.42, pullSpeed: 3.4 });
     }
     for (const e of [...s.level.enemies]) {
       const d = Math.hypot(e.x - tx, e.y - ty);
       if (d <= rad + 0.5) {
         const pullAng = Math.atan2(ty - e.y, tx - e.x);
+        const pullStep = Math.min(d * 0.55, 0.95);
+        if (!e.isPvpPlayer && pullStep > 0.05) {
+          moveWithSlide(e, Math.cos(pullAng) * pullStep, Math.sin(pullAng) * pullStep, 0.25);
+        }
         e.chilled = Math.max(e.chilled || 0, chillDur);
         damageEnemy(e, dmg, false, spell.name, Math.cos(pullAng) * 2.2, Math.sin(pullAng) * 2.2, { isSkill: true, isAoe: true, freezeDur: chillDur * 0.5 });
       }
@@ -1464,30 +1471,44 @@ export function castSpell(spellId) {
   if (spell.type === "gravity_singularity") {
     const { tx, ty } = findVisibleTargetPos(p, angle, spell.range || 5.5, 4.2);
     const rad = spell.radii[rIdx];
-    const dmg = Math.round(stats.atk * spell.mults[rIdx]) + (spell.flats?.[rIdx] || 0);
+    const maxDmg = Math.round(stats.atk * spell.mults[rIdx]) + (spell.flats?.[rIdx] || 0);
+    const initialDmg = Math.max(2, Math.round(maxDmg * 0.25));
     const stunDur = spell.stuns?.[rIdx] || 1.8;
-    sfx.ultSlam();
-    sfx.nova();
-    s.shake = Math.max(s.shake, 10);
-    spawnVfxAnim(tx, ty, "vfx_gravity_well", rad * TILE_SIZE * 2.1, 1.05);
-    spawnVfxAnim(tx, ty, "vfx_arcane_burst", rad * TILE_SIZE * 1.75, 0.55);
+    const pullDuration = 2.0;
+    const rootDur = 0.75;
+    sfx.magicOrb();
+    s.shake = Math.max(s.shake, 4.5);
+    spawnVfxAnim(tx, ty, "vfx_gravity_well", rad * TILE_SIZE * 2.05, pullDuration);
     spawnRing(tx, ty, rad * TILE_SIZE, "#a855f7", 0.5);
-    spawnBurst(tx, ty, "#c084fc", 26, 1.6);
+    spawnBurst(tx, ty, "#c084fc", 16, 1.2);
+    if (!s.gravityWells) s.gravityWells = [];
+    s.gravityWells.push({
+      x: tx,
+      y: ty,
+      radius: rad,
+      timer: pullDuration,
+      duration: pullDuration,
+      pullSpeed: 2.35,
+      pulseCd: 0.45,
+      detonate: true,
+      maxDmg,
+      stunDur,
+      spell,
+    });
     if (s.isPvp) {
-      broadcastPvpAction({ kind: "vfx_anim", x: tx, y: ty, sheetKey: "vfx_gravity_well", sizePx: rad * TILE_SIZE * 2.1, duration: 1.05 });
-      broadcastPvpAction({ kind: "vfx_anim", x: tx, y: ty, sheetKey: "vfx_arcane_burst", sizePx: rad * TILE_SIZE * 1.75, duration: 0.55 });
+      broadcastPvpAction({ kind: "vfx_anim", x: tx, y: ty, sheetKey: "vfx_gravity_well", sizePx: rad * TILE_SIZE * 2.05, duration: pullDuration });
       broadcastPvpAction({ kind: "ring", x: tx, y: ty, radPx: rad * TILE_SIZE, color: "#a855f7", dur: 0.5 });
+      broadcastPvpAction({ kind: "gravity_well", x: tx, y: ty, radius: rad, duration: pullDuration, pullSpeed: 2.35 });
     }
     for (const e of [...s.level.enemies]) {
       const d = Math.hypot(e.x - tx, e.y - ty);
       if (d <= rad + 0.65) {
-        const pullAng = Math.atan2(ty - e.y, tx - e.x);
-        e.stunTimer = Math.max(e.stunTimer || 0, stunDur);
-        damageEnemy(e, dmg, false, spell.name, Math.cos(pullAng) * 2.6, Math.sin(pullAng) * 2.6, { isSkill: true, isAoe: true, stunDur });
+        e.stunTimer = Math.max(e.stunTimer || 0, rootDur);
+        damageEnemy(e, initialDmg, false, `${spell.name} Pull`, 0, 0, { isSkill: true, isAoe: true, stunDur: rootDur });
       }
     }
-    addFloat(tx, ty - 0.5, "SINGULARITY!", "#e9d5ff");
-    addLog(`${spell.name}: Collapsed a gravity well on enemies!`, "story");
+    addFloat(tx, ty - 0.5, "GRAVITY WELL!", "#e9d5ff");
+    addLog(`${spell.name}: Pulling enemies inward for 2.0s before collapse!`, "story");
     return;
   }
 

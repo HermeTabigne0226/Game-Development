@@ -1554,6 +1554,17 @@ function applyRemoteOpponentAction(msg) {
       frozenIds: new Set(),
       particleCd: 0,
     });
+  } else if (act.kind === "gravity_well") {
+    if (!s.gravityWells) s.gravityWells = [];
+    s.gravityWells.push({
+      x: act.x,
+      y: act.y,
+      radius: act.radius || 3.2,
+      timer: act.duration || 2.0,
+      pullSpeed: act.pullSpeed || 2.35,
+      pulseCd: 0.45,
+      isVisualOnly: true,
+    });
   } else if (act.kind === "arrow_storm") {
     if (!s.arrowStorms) s.arrowStorms = [];
     if (!s.fallingArrows) s.fallingArrows = [];

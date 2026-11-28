@@ -1,8 +1,20 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.2.1.1 Beta";
+export const GAME_VERSION = "v.1.2.2.0 Beta";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.2.2.0 Beta",
+    title: "Directional Void Rift & Strategic Gravity Singularity",
+    icons: [
+      { src: "assets/generated/skill_void_rift.png", label: "Void Rift" },
+      { src: "assets/generated/skill_gravity_singularity.png", label: "Gravity Singularity" },
+    ],
+    notes: [
+      "Gravity Singularity Rework: Light initial impact + 0.75s root, followed by 1.25s of continuous inward pull (escapable by walking/dashing) before collapsing for up to 345% ATK + stun based on proximity to center.",
+      "Directional Void Rift: Void Rift now slashes vertically, horizontally, or diagonally matching your cast direction and applies a real inward gravity pull.",
+    ],
+  },
   {
     version: "v.1.2.1.1 Beta",
     title: "Frost Orb Rework, Updated Mage Icons & Crisp Choice Icons",
@@ -48,14 +60,6 @@ export const PATCH_NOTES = [
   {
     version: "v.1.2.0.2 Beta",
     title: "Upgraded Pixel-Art Skill Icons",
-    icons: [
-      { src: "assets/generated/skill_void_rift.png", label: "Void Rift" },
-      { src: "assets/generated/skill_tempest_field.png", label: "Tempest Field" },
-      { src: "assets/generated/skill_gravity_singularity.png", label: "Gravity Singularity" },
-      { src: "assets/generated/skill_thorn_salvo.png", label: "Thorn Salvo" },
-      { src: "assets/generated/skill_briar_snare.png", label: "Briar Snare" },
-      { src: "assets/generated/skill_leaf_tempest.png", label: "Emerald Tempest" },
-    ],
     notes: [
       "Refreshed Skill Icons: Upgraded Void Rift, Tempest Field, Gravity Singularity, Thorn Salvo, Briar Snare, and Emerald Tempest with framed pixel-art glow & shading.",
     ],
@@ -71,14 +75,6 @@ export const PATCH_NOTES = [
   {
     version: "v.1.2.0.0 Beta",
     title: "Class-Locked Skill Sets (Skill 1 / 2 / 3 / Ultimate) & 6 New Skills",
-    icons: [
-      { src: "assets/generated/skill_void_rift.png", label: "Void Rift" },
-      { src: "assets/generated/skill_tempest_field.png", label: "Tempest Field" },
-      { src: "assets/generated/skill_gravity_singularity.png", label: "Gravity Singularity" },
-      { src: "assets/generated/skill_thorn_salvo.png", label: "Thorn Salvo" },
-      { src: "assets/generated/skill_briar_snare.png", label: "Briar Snare" },
-      { src: "assets/generated/skill_leaf_tempest.png", label: "Emerald Tempest" },
-    ],
     notes: [
       "Slot-Based Class Skill Sets: Skill selection is now organized into Skill 1, Skill 2, Skill 3, and Ultimate sets—filtered exclusively to your chosen Hero Class (in Quest Setup, PvP Lobby, and Quartermaster Skill Swap).",
       "6 New Skills, Icons & VFX: Added Void Rift, Tempest Field, and Gravity Singularity (Mage); Thorn Salvo, Briar Snare, and Emerald Tempest (Ranger)—powered by new animated VFX sprite sheets and custom icons.",
@@ -971,14 +967,14 @@ export const SPELLS = [
     reqLevels: [5, 10, 15],
     mpCost: 14,
     cooldowns: [15.0, 13.0, 11.0],
-    mults: [2.1, 2.6, 3.15],
-    flats: [10, 18, 26],
-    radii: [3.0, 3.3, 3.7],
+    mults: [2.3, 2.85, 3.45],
+    flats: [12, 20, 30],
+    radii: [3.2, 3.5, 3.9],
     stuns: [1.6, 1.9, 2.2],
     range: 5.5,
     type: "gravity_singularity",
     icon: "assets/generated/skill_gravity_singularity.png",
-    desc: "ULTIMATE [Mage] (Lv 5, 10, 15): Collapse a Gravity Well at your aim, pulling enemies inward & detonating for massive arcane damage + stun!",
+    desc: "ULTIMATE [Mage] (Lv 5, 10, 15): Briefly root & pull enemies inward for 2s (escapable after 0.75s), then collapse—dealing up to 345% ATK + stun based on proximity to center!",
     color: "#a855f7",
   },
 ];

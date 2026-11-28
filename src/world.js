@@ -199,6 +199,7 @@ export function createNewRun(heroName, difficultyId, loadout = DEFAULT_LOADOUT, 
     pendingMeteors: [],
     beams: [],
     arrowStorms: [],
+    gravityWells: [],
     frostZones: [],
     fallingArrows: [],
     enemyHazards: [],
@@ -411,6 +412,7 @@ export function restoreRun(saved) {
     pendingMeteors: [],
     beams: [],
     arrowStorms: [],
+    gravityWells: [],
     frostZones: [],
     fallingArrows: [],
     enemyHazards: [],
@@ -474,6 +476,7 @@ export function descendFloor() {
   s.vfxAnims = [];
   s.beams = [];
   s.arrowStorms = [];
+  s.gravityWells = [];
   s.frostZones = [];
   s.fallingArrows = [];
   s.enemyHazards = [];
@@ -1830,6 +1833,61 @@ export function updateSimulation(dt) {
       }
     }
     if (lt.timer <= 0) p.leafTempest = null;
+  }
+
+  if (s.gravityWells?.length) {
+    for (let i = s.gravityWells.length - 1; i >= 0; i--) {
+      const gw = s.gravityWells[i];
+      gw.timer -= dt;
+      gw.pulseCd = (gw.pulseCd || 0) - dt;
+      if (gw.pulseCd <= 0) {
+        gw.pulseCd = 0.45;
+        spawnRing(gw.x, gw.y, gw.radius * TILE_SIZE * 0.9, "rgba(192, 132, 252, 0.55)", 0.35);
+      }
+      if (gw.isVisualOnly) {
+        const d = Math.hypot(p.x - gw.x, p.y - gw.y);
+        if (d > 0.25 && d <= gw.radius + 0.7) {
+          const ang = Math.atan2(gw.y - p.y, gw.x - p.x);
+          const pull = (gw.pullSpeed || 2.35) * dt;
+          moveWithSlide(p, Math.cos(ang) * pull, Math.sin(ang) * pull, 0.28);
+        }
+      } else {
+        for (const e of s.level.enemies) {
+          if (e.isPvpPlayer || e.hp <= 0) continue;
+          const d = Math.hypot(e.x - gw.x, e.y - gw.y);
+          if (d > 0.2 && d <= gw.radius + 0.8) {
+            const ang = Math.atan2(gw.y - e.y, gw.x - e.x);
+            const pull = (gw.pullSpeed || 2.35) * dt * (e.isBoss ? 0.55 : 1);
+            moveWithSlide(e, Math.cos(ang) * pull, Math.sin(ang) * pull, 0.25);
+          }
+        }
+      }
+      if (gw.timer <= 0) {
+        if (gw.detonate && !gw.isVisualOnly) {
+          sfx.ultSlam();
+          sfx.nova();
+          s.shake = Math.max(s.shake, 10);
+          spawnVfxAnim(gw.x, gw.y, "vfx_arcane_burst", gw.radius * TILE_SIZE * 1.85, 0.58);
+          spawnRing(gw.x, gw.y, gw.radius * TILE_SIZE, "#a855f7", 0.5);
+          spawnBurst(gw.x, gw.y, "#e9d5ff", 28, 1.6);
+          if (s.isPvp) {
+            broadcastPvpAction({ kind: "vfx_anim", x: gw.x, y: gw.y, sheetKey: "vfx_arcane_burst", sizePx: gw.radius * TILE_SIZE * 1.85, duration: 0.58 });
+            broadcastPvpAction({ kind: "ring", x: gw.x, y: gw.y, radPx: gw.radius * TILE_SIZE, color: "#a855f7", dur: 0.5 });
+          }
+          for (const e of [...s.level.enemies]) {
+            const d = Math.hypot(e.x - gw.x, e.y - gw.y);
+            if (d <= gw.radius + 0.35) {
+              const centerFactor = 1 - Math.min(1, Math.max(0, (d - 0.5) / Math.max(0.5, gw.radius - 0.5))) * 0.5;
+              const finalDmg = Math.max(1, Math.round(gw.maxDmg * centerFactor));
+              e.stunTimer = Math.max(e.stunTimer || 0, gw.stunDur);
+              damageEnemy(e, finalDmg, centerFactor >= 0.9, gw.spell.name, 0, 0, { isSkill: true, isAoe: true, stunDur: gw.stunDur });
+            }
+          }
+          addFloat(gw.x, gw.y - 0.5, "SINGULARITY!", "#e9d5ff");
+        }
+        s.gravityWells.splice(i, 1);
+      }
+    }
   }
 
   if (s.arrowStorms?.length) {
