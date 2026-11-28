@@ -1724,12 +1724,22 @@ function drawEntityChargesAndAuras(ctx, assets, ts, entity) {
 
   if (entity.hasteTimer > 0) {
     ctx.save();
-    if (assets.vfx_heal_haste_aura) {
-      ctx.imageSmoothingEnabled = false;
-      ctx.globalAlpha = 0.8 + Math.sin(ts * 0.014) * 0.15;
-      ctx.translate(entity.x * TILE_SIZE, entity.y * TILE_SIZE - ez * 0.5);
-      ctx.rotate(-ts * 0.0018);
-      ctx.drawImage(assets.vfx_heal_haste_aura, -34, -34, 68, 68);
+    if (assets.vfx_regen_aura) {
+      const meta = VFX_SHEET_META.vfx_regen_aura;
+      const frameIdx = Math.floor((ts * 0.016) % meta.frames);
+      const dw = 44;
+      const dh = dw * (meta.fh / meta.fw);
+      ctx.globalAlpha = 0.85;
+      drawGridVfxFrame(
+        ctx,
+        assets.vfx_regen_aura,
+        meta,
+        frameIdx,
+        entity.x * TILE_SIZE - dw * 0.5,
+        entity.y * TILE_SIZE - ez * 0.5 - dh * 0.78,
+        dw,
+        dh
+      );
     } else {
       ctx.strokeStyle = `rgba(52, 211, 153, ${0.55 + Math.sin(ts * 0.014) * 0.25})`;
       ctx.lineWidth = 2;
