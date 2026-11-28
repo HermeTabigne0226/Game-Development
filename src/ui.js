@@ -42,7 +42,7 @@ function ensureInvToolbarWired() {
   });
   document.getElementById("inv-next-page")?.addEventListener("click", () => {
     const p = runtime.state?.player;
-    const totalPages = Math.max(1, Math.ceil(getMaxInventory(p) / 25));
+    const totalPages = Math.max(1, Math.ceil(getMaxInventory(p) / 15));
     if (invPage < totalPages - 1) {
       invPage += 1;
       runtime.uiDirty = true;
@@ -548,7 +548,7 @@ export function updateUI() {
     if (p.inventory[i] && isBetterEquipmentItem(p.inventory[i], p)) upgradeCount += 1;
   }
 
-  const pageSize = 25;
+  const pageSize = 15;
   const totalPages = Math.max(1, Math.ceil(maxInv / pageSize));
   if (invPage >= totalPages) invPage = totalPages - 1;
   const startIdx = invPage * pageSize;
