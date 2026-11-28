@@ -1244,16 +1244,19 @@ export function renderFrame(ts) {
     ctx.globalAlpha = 1;
   }
 
-  ctx.font = "bold 12px sans-serif";
+  ctx.save();
   ctx.textAlign = "center";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "rgba(6, 8, 14, 0.92)";
   for (const ft of s.floatingTexts) {
-    ctx.globalAlpha = Math.min(1, (ft.life / ft.maxLife) * 1.4);
-    ctx.fillStyle = "#000";
-    ctx.fillText(ft.text, ft.x + 1, ft.y + 1);
+    ctx.font = ft.kind === "skill" ? "800 11px sans-serif" : "bold 12px sans-serif";
+    ctx.globalAlpha = Math.min(1, (ft.life / ft.maxLife) * 1.45);
+    ctx.strokeText(ft.text, ft.x, ft.y);
     ctx.fillStyle = ft.color;
     ctx.fillText(ft.text, ft.x, ft.y);
-    ctx.globalAlpha = 1;
   }
+  ctx.restore();
 
   const ni = runtime.nearbyInteractable;
   if (ni && !modalOpen && !s.runEnded) {

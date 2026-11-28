@@ -840,6 +840,7 @@ export function castSpell(spellId) {
     }
   }
   runtime.uiDirty = true;
+  addFloat(p.x, p.y - 0.65, spell.name.toUpperCase(), spell.color || "#fde047", "skill");
 
   const angle = getAimAngle();
   p.aimAngle = angle;
@@ -1102,7 +1103,6 @@ export function castSpell(spellId) {
       spell,
     };
     spawnBurst(p.x, p.y, "#fde047", 14, 1.1);
-    addFloat(p.x, p.y - 0.5, "SKYFALL!", "#f97316");
     if (s.isPvp) broadcastPvpAction({ kind: "leap_start", x: p.x, y: p.y, duration: 1.25, radius: spell.radii[rIdx] });
     return;
   }
@@ -1230,7 +1230,6 @@ export function castSpell(spellId) {
     spawnBurst(p.x, p.y, "#ef4444", 18, 1.2);
     spawnRing(p.x, p.y, spell.radius * TILE_SIZE, "#ef4444", 0.4);
     if (s.isPvp) broadcastPvpAction({ kind: "ring", x: p.x, y: p.y, radPx: spell.radius * TILE_SIZE, color: "#ef4444", dur: 0.4 });
-    addFloat(p.x, p.y - 0.35, "RETRIBUTION", "#ef4444");
     addLog(`${spell.name}: Consecrated thorns active for ${spell.duration}s!`, "story");
     return;
   }
@@ -1418,7 +1417,6 @@ export function castSpell(spellId) {
     });
     spawnRing(tx, ty, radius * TILE_SIZE, "#facc15", 0.4);
     if (s.isPvp) broadcastPvpAction({ kind: "arrow_storm", x: tx, y: ty, radius, duration: dur, tickInterval: spell.tickInterval || 0.35 });
-    addFloat(tx, ty - 0.5, "ARROW STORM!", "#fde047");
     addLog(`${spell.name}: Raining arrows for ${dur.toFixed(1)}s!`, "story");
     return;
   }
@@ -1429,6 +1427,7 @@ export function castSpell(spellId) {
     const dmg = Math.round(stats.atk * spell.mults[rIdx]) + (spell.flats?.[rIdx] || 0);
     const chillDur = spell.chills?.[rIdx] || 2.0;
     sfx.nova();
+    sfx.gravityPull();
     s.shake = Math.max(s.shake, 5.5);
     spawnVfxAnim(tx, ty, "vfx_void_rift", rad * TILE_SIZE * 1.9, 0.9, { angle });
     spawnRing(tx, ty, rad * TILE_SIZE, "#c084fc", 0.45);
@@ -1452,7 +1451,6 @@ export function castSpell(spellId) {
         damageEnemy(e, dmg, false, spell.name, Math.cos(pullAng) * 2.2, Math.sin(pullAng) * 2.2, { isSkill: true, isAoe: true, freezeDur: chillDur * 0.5 });
       }
     }
-    addFloat(tx, ty - 0.4, "VOID RIFT!", "#c084fc");
     return;
   }
 
@@ -1464,7 +1462,6 @@ export function castSpell(spellId) {
     p.stormField = { timer: dur, tickInterval: spell.tickInterval || 0.6, tickTimer: 0, radius: spell.radius || 2.4, dmg, spell };
     spawnVfxAnim(p.x, p.y, "vfx_storm_field", (spell.radius || 2.4) * TILE_SIZE * 1.85, 0.8);
     if (s.isPvp) broadcastPvpAction({ kind: "vfx_anim", x: p.x, y: p.y, sheetKey: "vfx_storm_field", sizePx: (spell.radius || 2.4) * TILE_SIZE * 1.85, duration: 0.8 });
-    addFloat(p.x, p.y - 0.4, "TEMPEST FIELD!", "#38bdf8");
     return;
   }
 
@@ -1477,6 +1474,7 @@ export function castSpell(spellId) {
     const pullDuration = 2.0;
     const rootDur = 0.75;
     sfx.magicOrb();
+    sfx.gravityPull();
     s.shake = Math.max(s.shake, 4.5);
     spawnVfxAnim(tx, ty, "vfx_gravity_well", rad * TILE_SIZE * 2.05, pullDuration);
     spawnRing(tx, ty, rad * TILE_SIZE, "#a855f7", 0.5);
@@ -1507,7 +1505,6 @@ export function castSpell(spellId) {
         damageEnemy(e, initialDmg, false, `${spell.name} Pull`, 0, 0, { isSkill: true, isAoe: true, stunDur: rootDur });
       }
     }
-    addFloat(tx, ty - 0.5, "GRAVITY WELL!", "#e9d5ff");
     addLog(`${spell.name}: Pulling enemies inward for 2.0s before collapse!`, "story");
     return;
   }
@@ -1568,7 +1565,6 @@ export function castSpell(spellId) {
     p.leafTempest = { timer: dur, tickInterval: spell.tickInterval || 0.35, tickTimer: 0, radius: rad, dmg, spell };
     spawnVfxAnim(p.x, p.y, "vfx_leaf_storm", rad * TILE_SIZE * 1.9, 0.7);
     if (s.isPvp) broadcastPvpAction({ kind: "vfx_anim", x: p.x, y: p.y, sheetKey: "vfx_leaf_storm", sizePx: rad * TILE_SIZE * 1.9, duration: 0.7 });
-    addFloat(p.x, p.y - 0.5, "LEAF TEMPEST!", "#34d399");
     addLog(`${spell.name}: Summoned a whirling emerald tempest!`, "story");
   }
 }

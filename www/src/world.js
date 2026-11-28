@@ -1842,6 +1842,7 @@ export function updateSimulation(dt) {
       gw.pulseCd = (gw.pulseCd || 0) - dt;
       if (gw.pulseCd <= 0) {
         gw.pulseCd = 0.45;
+        sfx.gravityPull();
         spawnRing(gw.x, gw.y, gw.radius * TILE_SIZE * 0.9, "rgba(192, 132, 252, 0.55)", 0.35);
       }
       if (gw.isVisualOnly) {

@@ -95,6 +95,10 @@ class SoundEngine {
     this.playTone(330, 0.24, "sawtooth", 0.08, 165);
     this.playTone(495, 0.22, "sine", 0.07, 660);
   }
+  gravityPull() {
+    this.playTone(135, 0.28, "sine", 0.09, 55);
+    this.playTone(220, 0.22, "triangle", 0.05, 85);
+  }
   ultLeap() { this.playTone(200, 0.35, "sine", 0.09, 680); }
   ultSlam() {
     this.playTone(95, 0.38, "sawtooth", 0.14, 32);

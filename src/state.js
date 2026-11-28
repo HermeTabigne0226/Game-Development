@@ -54,7 +54,7 @@ export function loadMeta() {
     endlessBestFloor: 0,
     victories: 0,
     lastSeenPatchVersion: "",
-    settings: { sfxLevel: "high", musicLevel: "low", screenShake: true, showPerf: true, mobileButtonSize: "small" },
+    settings: { sfxLevel: "high", musicLevel: "low", screenShake: true, showPerf: true, mobileButtonSize: "small", floatingText: "all" },
   };
   if (!loaded || typeof loaded !== "object") return base;
   return {
@@ -273,16 +273,30 @@ export function showFloorBanner(text) {
   showFloorBanner._t = setTimeout(() => banner.classList.remove("visible"), 2600);
 }
 
-export function addFloat(tx, ty, text, color = "#fff") {
+export function addFloat(tx, ty, text, color = "#fff", kind = null) {
   const s = runtime.state;
   if (!s) return;
+  const mode = runtime.meta?.settings?.floatingText || "all";
+  if (mode === "off") return;
+  const resolvedKind = kind || (/^[+-]?\d+!?$/.test(String(text).trim()) ? "damage" : "skill");
+  if (mode === "damage" && resolvedKind !== "damage") return;
   if (s.floatingTexts.length >= 18) s.floatingTexts.shift();
+  const x = tx * TILE_SIZE;
+  let y = ty * TILE_SIZE - 10;
+  for (let pass = 0; pass < 4; pass++) {
+    if (s.floatingTexts.some((ft) => Math.abs(ft.x - x) < 64 && Math.abs(ft.y - y) < 14)) {
+      y -= 15;
+    } else {
+      break;
+    }
+  }
   s.floatingTexts.push({
-    x: tx * TILE_SIZE,
-    y: ty * TILE_SIZE - 10,
-    vy: -28,
+    x,
+    y,
+    vy: resolvedKind === "skill" ? -22 : -28,
     text,
     color,
+    kind: resolvedKind,
     life: 0.78,
     maxLife: 0.78,
   });

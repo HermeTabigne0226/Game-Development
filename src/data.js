@@ -1,8 +1,17 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.2.2.0 Beta";
+export const GAME_VERSION = "v.1.2.2.1 Beta";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.2.2.1 Beta",
+    title: "Gravity Pull SFX, Clean Skill Callouts & Floating Text Setting",
+    notes: [
+      "Gravity Pull SFX: Added sweeping gravity-pull sound effects for Void Rift and Gravity Singularity.",
+      "Clean Anti-Overlap Skill Callouts: Every skill now shows a single crisp skill title (removing duplicate 'TEMPEST FIELD!' / 'GRAVITY WELL!' labels) with automatic vertical stacking so Resonance/damage text never overlaps.",
+      "Floating Combat Text Setting: Added All / Damage Only / Off toggle in Settings to reduce visual clutter and boost performance.",
+    ],
+  },
   {
     version: "v.1.2.2.0 Beta",
     title: "Directional Void Rift & Strategic Gravity Singularity",

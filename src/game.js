@@ -328,6 +328,14 @@ function setupControls() {
     syncSettingsUI();
   });
 
+  const FLOAT_TEXT_CYCLE = ["all", "damage", "off"];
+  document.getElementById("setting-float-btn")?.addEventListener("click", () => {
+    const idx = FLOAT_TEXT_CYCLE.indexOf(runtime.meta.settings.floatingText || "all");
+    runtime.meta.settings.floatingText = FLOAT_TEXT_CYCLE[(idx + 1) % FLOAT_TEXT_CYCLE.length];
+    saveMeta();
+    syncSettingsUI();
+  });
+
   const BTN_SIZE_CYCLE = ["small", "medium", "big"];
   document.getElementById("setting-btn-size-btn")?.addEventListener("click", () => {
     const idx = BTN_SIZE_CYCLE.indexOf(runtime.meta.settings.mobileButtonSize || "small");

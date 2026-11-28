@@ -673,13 +673,15 @@ export function updatePerfHUD() {
 }
 
 const BTN_SIZE_LABELS = { small: "Small", medium: "Medium", big: "Big" };
+const FLOAT_TEXT_LABELS = { all: "All", damage: "Damage Only", off: "Off" };
 
 export function syncSettingsUI() {
   const m = runtime.meta;
-  if (!m.settings) m.settings = { sfxLevel: "high", musicLevel: "low", screenShake: true, showPerf: true, mobileButtonSize: "small" };
+  if (!m.settings) m.settings = { sfxLevel: "high", musicLevel: "low", screenShake: true, showPerf: true, mobileButtonSize: "small", floatingText: "all" };
   if (!m.settings.sfxLevel) m.settings.sfxLevel = m.settings.sfx === false ? "off" : "high";
   if (!m.settings.musicLevel) m.settings.musicLevel = "low";
   if (!BTN_SIZE_LABELS[m.settings.mobileButtonSize]) m.settings.mobileButtonSize = "small";
+  if (!FLOAT_TEXT_LABELS[m.settings.floatingText]) m.settings.floatingText = "all";
 
   sfx.setLevel(m.settings.sfxLevel);
   bgm.setLevel(m.settings.musicLevel);
@@ -700,6 +702,8 @@ export function syncSettingsUI() {
   if (perfSettingBtn) perfSettingBtn.textContent = m.settings.showPerf !== false ? "On" : "Off";
   const btnSizeBtn = document.getElementById("setting-btn-size-btn");
   if (btnSizeBtn) btnSizeBtn.textContent = BTN_SIZE_LABELS[m.settings.mobileButtonSize] || "Small";
+  const floatBtn = document.getElementById("setting-float-btn");
+  if (floatBtn) floatBtn.textContent = FLOAT_TEXT_LABELS[m.settings.floatingText] || "All";
   updatePerfHUD();
 }
 
