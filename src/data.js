@@ -1,8 +1,17 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.2.0.3 Beta";
+export const GAME_VERSION = "v.1.2.0.4 Beta";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.2.0.4 Beta",
+    title: "Smart Ground Skill Targeting & Inventory Item Fixes",
+    notes: [
+      "Smart Non-Projectile Targeting: Ground/AoE skills (Holy Smite, Meteor Strike, Siege Barrage, Void Rift, Gravity Singularity, Briar Snare) now snap to the nearest visible enemy in range, or cast directionally if no enemy is visible.",
+      "Inventory & Equipped Gear Controls: Fixed item click modal, added Unequip & Delete options for equipped gear, and restricted Quick Shortcuts to consumables only.",
+      "Dash OOM Badge: Matched Dash's Out of Mana indicator to the basic skill buttons.",
+    ],
+  },
   {
     version: "v.1.2.0.3 Beta",
     title: "Class Equipment Restrictions, Starting Gear & Dash OOM Indicator",

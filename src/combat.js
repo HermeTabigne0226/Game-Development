@@ -71,6 +71,38 @@ export function getAimAngle() {
   return p.aimAngle;
 }
 
+/** Find nearest visible enemy in range, or fall back to directional ground point before walls. */
+function findVisibleTargetPos(p, angle, maxRange, fallbackDist = Math.min(3.8, maxRange * 0.72)) {
+  const s = runtime.state;
+  let bestEnemy = null;
+  let bestDist = maxRange + 0.4;
+  for (const e of s.level.enemies) {
+    if (e.isBoss && !s.bossFightStarted) continue;
+    if (!s.level.visible[Math.floor(e.y)]?.[Math.floor(e.x)]) continue;
+    const d = Math.hypot(e.x - p.x, e.y - p.y);
+    if (d <= bestDist) {
+      bestDist = d;
+      bestEnemy = e;
+    }
+  }
+  if (bestEnemy) {
+    p.facingLeft = bestEnemy.x < p.x;
+    return { tx: bestEnemy.x, ty: bestEnemy.y, target: bestEnemy };
+  }
+  const dirX = Math.cos(angle);
+  const dirY = Math.sin(angle);
+  let dist = 0.8;
+  for (let step = 0.3; step <= fallbackDist; step += 0.3) {
+    if (canOccupy(p.x + dirX * step, p.y + dirY * step, 0.25)) dist = step;
+    else break;
+  }
+  return {
+    tx: Math.max(1.5, Math.min(MAP_W - 1.5, p.x + dirX * dist)),
+    ty: Math.max(1.5, Math.min(MAP_H - 1.5, p.y + dirY * dist)),
+    target: null,
+  };
+}
+
 export function grantXP(amount) {
   const s = runtime.state;
   const p = s.player;
@@ -913,44 +945,8 @@ export function castSpell(spellId) {
     p.anim = "attack";
     p.animTimer = 0.32;
     const dirX = Math.cos(angle);
-    const dirY = Math.sin(angle);
-    const maxRange = spell.range || 5.4;
-    let maxWalkableDist = 1.0;
-    for (let step = 0.3; step <= maxRange; step += 0.3) {
-      if (canOccupy(p.x + dirX * step, p.y + dirY * step, 0.25)) {
-        maxWalkableDist = step;
-      } else {
-        break;
-      }
-    }
-
-    let aimDist = Math.min(maxWalkableDist, 3.8);
-    if (!touchAim.active && mouse.inside && mouse.x !== null && mouse.y !== null) {
-      aimDist = Math.max(1.2, Math.min(maxWalkableDist, Math.hypot(mouse.x - p.x, mouse.y - p.y)));
-    }
-
-    let bestEnemy = null;
-    let bestScore = Infinity;
-    for (const e of s.level.enemies) {
-      if (e.isBoss && !s.bossFightStarted) continue;
-      if (!s.level.visible[Math.floor(e.y)]?.[Math.floor(e.x)]) continue;
-      const ex = e.x - p.x;
-      const ey = e.y - p.y;
-      const d = Math.hypot(ex, ey);
-      if (d > maxRange + 0.5 || d < 0.01) continue;
-      const forwardProj = ex * dirX + ey * dirY;
-      if (forwardProj < 0.35) continue; // Only target enemies in the direction hero is facing
-      const perpDist = Math.abs(ex * dirY - ey * dirX);
-      if (perpDist > 1.75) continue;
-      const score = perpDist * 2.2 + Math.abs(forwardProj - aimDist) * 0.45;
-      if (score < bestScore) {
-        bestScore = score;
-        bestEnemy = e;
-      }
-    }
-
-    const tx = bestEnemy ? bestEnemy.x : p.x + dirX * aimDist;
-    const ty = bestEnemy ? bestEnemy.y : p.y + dirY * aimDist;
+    const maxRange = spell.range || 6.2;
+    const { tx, ty } = findVisibleTargetPos(p, angle, maxRange, 3.8);
     const rad = spell.radii[rIdx];
     const dmg = Math.round(stats.atk * spell.mults[rIdx]) + spell.flats[rIdx];
     const stun = spell.stuns?.[rIdx] || 1.6;
@@ -1064,21 +1060,7 @@ export function castSpell(spellId) {
     p.anim = "attack";
     p.animTimer = 0.22;
 
-    let bestEnemy = null;
-    let bestDist = spell.range + 0.4;
-    for (const e of s.level.enemies) {
-      if (e.isBoss && !s.bossFightStarted) continue;
-      if (!s.level.visible[Math.floor(e.y)]?.[Math.floor(e.x)]) continue;
-      const d = Math.hypot(e.x - p.x, e.y - p.y);
-      if (d <= bestDist) {
-        bestDist = d;
-        bestEnemy = e;
-      }
-    }
-
-    const targetX = bestEnemy ? bestEnemy.x : p.x + Math.cos(angle) * 2.2;
-    const targetY = bestEnemy ? bestEnemy.y : p.y + Math.sin(angle) * 2.2;
-    if (bestEnemy) p.facingLeft = bestEnemy.x < p.x;
+    const { tx: targetX, ty: targetY } = findVisibleTargetPos(p, angle, spell.range || 4.8, 2.5);
 
     spawnBurst(targetX, targetY, spell.color, 18, 1.2);
     spawnRing(targetX, targetY, 38, spell.color, 0.35);
@@ -1408,19 +1390,7 @@ export function castSpell(spellId) {
     sfx.ultLeap();
     p.anim = p.heroClass === "ranger" ? "bow" : "attack";
     p.animTimer = 0.35;
-    let bestEnemy = null;
-    let bestDist = 7.5;
-    for (const e of s.level.enemies) {
-      if (e.isBoss && !s.bossFightStarted) continue;
-      if (!s.level.visible[Math.floor(e.y)]?.[Math.floor(e.x)]) continue;
-      const d = Math.hypot(e.x - p.x, e.y - p.y);
-      if (d <= bestDist) {
-        bestDist = d;
-        bestEnemy = e;
-      }
-    }
-    const tx = bestEnemy ? bestEnemy.x : p.x + Math.cos(angle) * 2.8;
-    const ty = bestEnemy ? bestEnemy.y : p.y + Math.sin(angle) * 2.8;
+    const { tx, ty } = findVisibleTargetPos(p, angle, 7.5, 2.8);
     const radius = spell.radii[rIdx];
     const dmg = Math.round(stats.atk * spell.mults[rIdx]) + spell.flats[rIdx];
     const chillDur = spell.chills[rIdx];
@@ -1449,9 +1419,7 @@ export function castSpell(spellId) {
   }
 
   if (spell.type === "void_rift") {
-    const dist = Math.min(spell.range || 5.0, 4.4);
-    const tx = Math.max(1.5, Math.min(MAP_W - 1.5, p.x + Math.cos(angle) * dist));
-    const ty = Math.max(1.5, Math.min(MAP_H - 1.5, p.y + Math.sin(angle) * dist));
+    const { tx, ty } = findVisibleTargetPos(p, angle, spell.range || 5.0, 3.8);
     const rad = spell.radius || 2.3;
     const dmg = Math.round(stats.atk * spell.mults[rIdx]) + (spell.flats?.[rIdx] || 0);
     const chillDur = spell.chills?.[rIdx] || 2.0;
@@ -1489,9 +1457,7 @@ export function castSpell(spellId) {
   }
 
   if (spell.type === "gravity_singularity") {
-    const dist = Math.min(spell.range || 5.5, 4.8);
-    const tx = Math.max(1.5, Math.min(MAP_W - 1.5, p.x + Math.cos(angle) * dist));
-    const ty = Math.max(1.5, Math.min(MAP_H - 1.5, p.y + Math.sin(angle) * dist));
+    const { tx, ty } = findVisibleTargetPos(p, angle, spell.range || 5.5, 4.2);
     const rad = spell.radii[rIdx];
     const dmg = Math.round(stats.atk * spell.mults[rIdx]) + (spell.flats?.[rIdx] || 0);
     const stunDur = spell.stuns?.[rIdx] || 1.8;
@@ -1544,9 +1510,7 @@ export function castSpell(spellId) {
   }
 
   if (spell.type === "vine_snare") {
-    const dist = Math.min(spell.range || 4.5, 4.2);
-    const tx = Math.max(1.5, Math.min(MAP_W - 1.5, p.x + Math.cos(angle) * dist));
-    const ty = Math.max(1.5, Math.min(MAP_H - 1.5, p.y + Math.sin(angle) * dist));
+    const { tx, ty } = findVisibleTargetPos(p, angle, spell.range || 4.5, 3.6);
     const rad = spell.radius || 2.2;
     const dmg = Math.round(stats.atk * spell.mults[rIdx]);
     const stunDur = spell.stuns?.[rIdx] || 1.6;
