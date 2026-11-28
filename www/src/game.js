@@ -81,9 +81,14 @@ function setupControls() {
       mouse.x = pos.x;
       mouse.y = pos.y;
       mouse.inside = true;
+      mouse.down = true;
       performMeleeAttack();
     }
   });
+  window.addEventListener("mouseup", (e) => {
+    if (e.button === 0) mouse.down = false;
+  });
+  window.addEventListener("blur", () => { mouse.down = false; });
 
   document.getElementById("btn-skills").addEventListener("click", openSkillDialog);
   document.getElementById("btn-attack").addEventListener("click", performMeleeAttack);

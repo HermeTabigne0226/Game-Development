@@ -1,8 +1,15 @@
 // Game data: classes, storyline acts, relics, items, spells, enemies, elites, and meta-upgrades
 
-export const GAME_VERSION = "v.1.2.2.1 Beta";
+export const GAME_VERSION = "v.1.2.2.2 Beta";
 
 export const PATCH_NOTES = [
+  {
+    version: "v.1.2.2.2 Beta",
+    title: "Hold-to-Repeat Web Attack (Left Click & J)",
+    notes: [
+      "Hold-to-Repeat Basic Attack: Holding Left Click or the J key on desktop/web now continuously repeats basic attacks on cooldown toward your cursor or movement direction.",
+    ],
+  },
   {
     version: "v.1.2.2.1 Beta",
     title: "Gravity Pull SFX, Clean Skill Callouts & Floating Text Setting",

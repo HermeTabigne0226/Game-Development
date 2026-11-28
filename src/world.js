@@ -1394,6 +1394,10 @@ export function updateSimulation(dt) {
     if (p.attackCd <= 0) {
       performMeleeAttack();
     }
+  } else if ((mouse.down || keys.has("j")) && !s.runEnded && s.dyingTimer <= 0 && !document.querySelector("dialog[open]")) {
+    if (p.attackCd <= 0) {
+      performMeleeAttack();
+    }
   }
 
   updateFOVIfNeeded(false);

@@ -19,7 +19,7 @@ export const storyPortraitCanvas = document.getElementById("story-portrait");
 export const storyPortraitCtx = storyPortraitCanvas.getContext("2d");
 
 export const keys = new Set();
-export const mouse = { x: null, y: null, inside: false };
+export const mouse = { x: null, y: null, inside: false, down: false };
 export const touchMove = { x: 0, y: 0, active: false };
 export const touchAim = { x: 0, y: 0, angle: 0, active: false };
 export const camera = { x: 0, y: 0 };
